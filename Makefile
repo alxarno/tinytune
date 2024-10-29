@@ -26,6 +26,10 @@ clean: ## clean
 test: ## test
 	go test -v -timeout 5m ./... -coverprofile=coverage.out
 
+.PHONY: ubuntu
+ubuntu: ## Install deps for ubuntu (libvips, ffmpeg) 
+	apt install libvips pkg-config
+
 .PHONY: coverage
 coverage: ## coverage
 	make test
@@ -35,8 +39,8 @@ coverage: ## coverage
 lint: ## lint
 	golangci-lint run --enable-all
 
-.PHONY: check-quality
-check-quality: ## check-quality
+.PHONY: quality
+quality: ## check-quality
 	make lint
 	make fmt
 

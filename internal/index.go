@@ -7,6 +7,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"time"
 )
 
 const INDEX_HEADER = "TINYTUNE_INDEX"
@@ -21,6 +22,7 @@ type IndexMeta struct {
 	Path    string
 	Name    string
 	Hash    string
+	ModTime time.Time
 	IsDir   bool
 	Preview IndexMetaPreview
 }

@@ -34,8 +34,8 @@ func TestIndexParseDump(t *testing.T) {
 	buff := new(bytes.Buffer)
 	wrote, err := indexOriginal.Dump(buff)
 	assert.NoError(t, err)
-	assert.EqualValues(t, 458, wrote)
-	assert.EqualValues(t, 458, buff.Len())
+	assert.EqualValues(t, 488, wrote)
+	assert.EqualValues(t, 488, buff.Len())
 	// Parse
 	indexDerivative := NewIndex(buff)
 	assert.Equal(t, len(indexOriginal.meta), len(indexDerivative.meta))
