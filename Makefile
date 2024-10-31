@@ -28,7 +28,7 @@ test: ## test
 
 .PHONY: ubuntu
 ubuntu: ## Install deps for ubuntu (libvips, ffmpeg) 
-	apt install libvips pkg-config
+	apt install build-essential libvips pkg-config libvips-dev ffmpeg -y
 
 .PHONY: coverage
 coverage: ## coverage
