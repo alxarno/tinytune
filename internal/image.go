@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/davidbyttow/govips/v2/vips"
 )
@@ -16,8 +15,8 @@ func init() {
 	vips.Startup(nil)
 }
 
-func ImagePreview(r io.Reader) ([]byte, error) {
-	image, err := vips.NewImageFromReader(r)
+func ImagePreview(path string) ([]byte, error) {
+	image, err := vips.NewImageFromFile(path)
 	if err != nil {
 		panic(err)
 	}

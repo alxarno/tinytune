@@ -2,16 +2,13 @@ package internal
 
 import (
 	"bytes"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPreviewImage(t *testing.T) {
-	f, err := os.Open("../test/image.jpg")
-	assert.NoError(t, err)
-	previewBytes, err := ImagePreview(f)
+	previewBytes, err := ImagePreview("../test/image.jpg")
 	assert.NoError(t, err)
 	assert.EqualValues(t, 18452, len(previewBytes))
 	r := bytes.NewReader(previewBytes)

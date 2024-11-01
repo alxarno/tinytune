@@ -20,6 +20,10 @@ type CrawlerOSFile struct {
 	path string
 }
 
+func (cosf CrawlerOSFile) Path() string {
+	return cosf.path
+}
+
 type CrawlerOS struct {
 	path string
 }
@@ -28,7 +32,7 @@ func NewCrawlerOS(path string) CrawlerOS {
 	return CrawlerOS{path}
 }
 
-func (c CrawlerOS) Scan() ([]RawFile, error) {
+func (c CrawlerOS) Scan() ([]FileMeta, error) {
 	fileInfo, err := os.Stat(c.path)
 	if err != nil {
 		return nil, err
@@ -36,7 +40,7 @@ func (c CrawlerOS) Scan() ([]RawFile, error) {
 	if !fileInfo.IsDir() {
 		return nil, errors.New("path is not dir")
 	}
-	files := []RawFile{}
+	files := []FileMeta{}
 	err = filepath.Walk(c.path,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -45,7 +49,7 @@ func (c CrawlerOS) Scan() ([]RawFile, error) {
 			if path == c.path {
 				return nil
 			}
-			files = append(files, CrawlerOSFile{info, path})
+			files = append(files, &CrawlerOSFile{info, path})
 			return nil
 		})
 	if err != nil {

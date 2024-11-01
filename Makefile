@@ -23,8 +23,8 @@ clean: ## clean
 	rm -f coverage*.out
 
 .PHONY: test
-test: ## test
-	go test -v -timeout 5m ./... -coverprofile=coverage.out
+test: ## test -coverprofile=coverage.out
+	go test -v -timeout 1m ./... 
 
 .PHONY: ubuntu
 ubuntu: ## Install deps for ubuntu (libvips, ffmpeg) 
