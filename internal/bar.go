@@ -2,10 +2,10 @@ package internal
 
 import "github.com/schollz/progressbar/v3"
 
-func Bar(len int, desription string) *progressbar.ProgressBar {
+func Bar(len int, description string) *progressbar.ProgressBar {
 	return progressbar.NewOptions(
 		len,
-		progressbar.OptionSetDescription(desription),
+		progressbar.OptionSetDescription(description),
 		progressbar.OptionEnableColorCodes(true),
 		progressbar.OptionFullWidth(),
 		progressbar.OptionSetRenderBlankState(true),

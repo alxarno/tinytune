@@ -27,6 +27,7 @@ type Index struct {
 	context  context.Context
 	progress func()
 	newFiles func()
+	workers  int
 }
 
 type IndexOption func(*Index)
@@ -80,6 +81,7 @@ func NewIndex(r io.Reader, opts ...IndexOption) Index {
 		outDated: false,
 		progress: func() {},
 		newFiles: func() {},
+		workers:  4,
 	}
 	for _, opt := range opts {
 		opt(&index)
@@ -129,6 +131,11 @@ func WithNewFiles(f func()) IndexOption {
 	}
 }
 
+func WithWorkers(w int) IndexOption {
+	return func(i *Index) {
+		i.workers = w
+	}
+}
 func (index Index) OutDated() bool {
 	return index.outDated
 }
@@ -164,6 +171,7 @@ type poolPreviewWorkerResult struct {
 func (index Index) poolPreviewWorker(metaCh chan IndexMeta, result chan poolPreviewWorkerResult, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for meta := range metaCh {
+		time.Sleep(time.Second * 5)
 		duration, t, data, err := index.preview(meta.Path)
 		if err != nil {
 			fmt.Println(err)
@@ -184,13 +192,11 @@ func (index Index) poolPreviewWorker(metaCh chan IndexMeta, result chan poolPrev
 }
 
 func (index *Index) loadFiles() error {
-	// logBar := bar(len(index.files), "Processing files for index...")
 	metaChannel := make(chan IndexMeta)
 	resultChannel := make(chan poolPreviewWorkerResult, len(index.files))
 	wg := new(sync.WaitGroup)
-	workers := 1
-	wg.Add(workers)
-	for i := 0; i < workers; i++ {
+	wg.Add(index.workers)
+	for i := 0; i < index.workers; i++ {
 		go index.poolPreviewWorker(metaChannel, resultChannel, wg)
 	}
 	for _, p := range index.files {
@@ -210,10 +216,16 @@ func (index *Index) loadFiles() error {
 			IsDir:        p.IsDir(),
 			ID:           id,
 		}
-		metaChannel <- meta
+		select {
+		case metaChannel <- meta:
+			continue
+		case <-index.context.Done():
+			return fmt.Errorf("Index files processing stopped")
+		}
 	}
 	close(metaChannel)
 	wg.Wait()
+
 	close(resultChannel)
 	for r := range resultChannel {
 		index.newFiles()
