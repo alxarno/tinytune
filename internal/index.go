@@ -1,33 +1,38 @@
 package internal
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/gob"
 	"fmt"
 	"io"
+	"log"
 	"sync"
 	"time"
 )
 
 type Index struct {
-	meta    map[string]IndexMeta
-	data    []byte
-	preview func(string) (time.Duration, int, []byte, error)
-	id      func(m FileMeta) (string, error)
-	files   []FileMeta
+	meta     map[string]IndexMeta
+	data     []byte
+	outDated bool
+	preview  func(string) (time.Duration, int, []byte, error)
+	id       func(m FileMeta) (string, error)
+	files    []FileMeta
+	context  context.Context
 }
 
 type IndexOption func(*Index)
 
 type IndexMeta struct {
-	Path     string
-	Name     string
-	ModTime  time.Time
-	Hash     string
-	IsDir    bool
-	Preview  IndexMetaPreview
-	Duration time.Duration
-	Type     int
+	ID           string
+	Path         string
+	RelativePath string
+	Name         string
+	ModTime      time.Time
+	IsDir        bool
+	Preview      IndexMetaPreview
+	Duration     time.Duration
+	Type         int
 }
 
 type IndexMetaPreview struct {
@@ -37,6 +42,7 @@ type IndexMetaPreview struct {
 
 type FileMeta interface {
 	Path() string
+	RelativePath() string
 	Name() string
 	ModTime() time.Time
 	IsDir() bool
@@ -57,11 +63,13 @@ func NewIndex(r io.Reader, opts ...IndexOption) Index {
 		}
 	)
 	index := Index{
-		data:    defaultData,
-		meta:    defaultMeta,
-		preview: defaultPreview,
-		id:      defaultID,
-		files:   defaultFiles,
+		data:     defaultData,
+		meta:     defaultMeta,
+		preview:  defaultPreview,
+		id:       defaultID,
+		files:    defaultFiles,
+		context:  context.Background(),
+		outDated: false,
 	}
 	for _, opt := range opts {
 		opt(&index)
@@ -93,6 +101,16 @@ func WithFiles(files []FileMeta) IndexOption {
 	}
 }
 
+func WithContext(ctx context.Context) IndexOption {
+	return func(h *Index) {
+		h.context = ctx
+	}
+}
+
+func (index Index) OutDated() bool {
+	return index.outDated
+}
+
 func (index Index) PullPreview(hash string) ([]byte, error) {
 	m, ok := index.meta[hash]
 	if !ok {
@@ -112,10 +130,6 @@ type poolPreviewWorkerResult struct {
 func (index Index) poolPreviewWorker(metaCh chan IndexMeta, result chan poolPreviewWorkerResult, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for meta := range metaCh {
-		if meta.IsDir {
-			result <- poolPreviewWorkerResult{meta, nil}
-			continue
-		}
 		duration, t, data, err := index.preview(meta.Path)
 		if err != nil {
 			fmt.Println(err)
@@ -127,42 +141,55 @@ func (index Index) poolPreviewWorker(metaCh chan IndexMeta, result chan poolPrev
 			Length: uint32(len(data)),
 		}
 		result <- poolPreviewWorkerResult{meta, data}
+		select {
+		case <-index.context.Done():
+			return
+		default:
+		}
 	}
 }
 
 func (index *Index) loadFiles() error {
-	pathCh := make(chan IndexMeta)
-	resultCh := make(chan poolPreviewWorkerResult, len(index.files))
+	logBar := bar(len(index.files), "Processing files for index...")
+	metaChannel := make(chan IndexMeta)
+	resultChannel := make(chan poolPreviewWorkerResult, len(index.files))
 	wg := new(sync.WaitGroup)
-	workers := 4
+	workers := 1
 	wg.Add(workers)
 	for i := 0; i < workers; i++ {
-		go index.poolPreviewWorker(pathCh, resultCh, wg)
+		go index.poolPreviewWorker(metaChannel, resultChannel, wg)
 	}
 	for _, p := range index.files {
-		hash, err := index.id(p)
+		logBar.Add(1)
+		id, err := index.id(p)
 		if err != nil {
 			return err
 		}
-		meta := IndexMeta{
-			Path:    p.Path(),
-			Name:    p.Name(),
-			ModTime: p.ModTime(),
-			IsDir:   p.IsDir(),
-			Hash:    hash,
+		if _, ok := index.meta[id]; ok {
+			continue
 		}
-		pathCh <- meta
+		meta := IndexMeta{
+			Path:         p.Path(),
+			RelativePath: p.RelativePath(),
+			Name:         p.Name(),
+			ModTime:      p.ModTime(),
+			IsDir:        p.IsDir(),
+			ID:           id,
+		}
+		metaChannel <- meta
 	}
-	close(pathCh)
+	close(metaChannel)
 	wg.Wait()
-	close(resultCh)
-	for r := range resultCh {
+	close(resultChannel)
+	for r := range resultChannel {
 		if r.meta.Preview.Length != 0 {
 			r.meta.Preview.Offset = uint32(len(index.data))
 			index.data = append(index.data, r.data...)
 		}
-		index.meta[r.meta.Hash] = r.meta
+		index.meta[r.meta.ID] = r.meta
+		index.outDated = true
 	}
+	log.Println("Indexing done!")
 	return nil
 
 }

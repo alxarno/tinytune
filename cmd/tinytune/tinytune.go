@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/alxarno/tinytune/internal"
 	"github.com/urfave/cli/v2"
@@ -33,9 +35,42 @@ func main() {
 }
 
 func start(c config) {
-	entries, err := internal.NewCrawlerOS(c.dir).Scan()
+	indexFilePath := filepath.Join(c.dir, "index.tinytune")
+	files, err := internal.NewCrawlerOS(c.dir).Scan(indexFilePath)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(entries)
+	indexFile, err := os.OpenFile(indexFilePath, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fileInfo, err := indexFile.Stat()
+	if err != nil {
+		panic(err)
+	}
+	if fileInfo.Size() != 0 {
+		log.Printf("Found index file! %d", fileInfo.Size())
+	}
+	index := internal.NewIndex(
+		indexFile,
+		internal.WithFiles(files),
+		internal.WithPreview(internal.GeneratePreview),
+		internal.WithID(func(p internal.FileMeta) (string, error) {
+			idSource := []byte(fmt.Sprintf("%s%s", p.RelativePath(), p.ModTime()))
+			id, err := internal.SHA256Hash(bytes.NewReader(idSource))
+			if err != nil {
+				return id, err
+			}
+			id = id[:10]
+			return id, nil
+		}))
+	if index.OutDated() {
+		indexFile.Truncate(0)
+		indexFile.Seek(0, 0)
+		count, err := index.Encode(indexFile)
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("Wrote %d", count)
+	}
 }

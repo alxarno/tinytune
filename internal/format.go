@@ -15,7 +15,7 @@ const INDEX_DELIMITER = "TINYTUNE_DELIMITER"
 func indexDelimiterSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	// Find the delimiter
 	if i := bytes.Index(data, []byte(INDEX_DELIMITER)); i >= 0 {
-		return i + 1, data[0:i], nil
+		return i + 1 + len([]byte(INDEX_DELIMITER)), data[0:i], nil
 	}
 	// If at end of file and no comma found, return the entire remaining data
 	if atEOF {
@@ -54,11 +54,12 @@ func (index *Index) Decode(r io.Reader) error {
 		if err := decoder.Decode(&m); err != nil {
 			return err
 		}
-		index.meta[m.Hash] = m
+		index.meta[m.ID] = m
 	}
 	// read binary data
-	scanner.Scan()
-	index.data = scanner.Bytes()[len([]byte(INDEX_DELIMITER))-1:]
+	if index.data, err = io.ReadAll(r); err != nil {
+		return err
+	}
 	return nil
 }
 

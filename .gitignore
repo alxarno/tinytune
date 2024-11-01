@@ -1,2 +1,3 @@
-./coverage.out
-./tmp.txt
+/coverage.out
+/tmp.txt
+/test/index.tinytune

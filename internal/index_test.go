@@ -15,13 +15,13 @@ func TestIndexEncodeDecode(t *testing.T) {
 		"5762029e772e6587ddd90f08c1bf374486436eb11f81dd6a8f03bcd82d335a7f": {
 			Path:  "/home/test/",
 			Name:  "test",
-			Hash:  "5762029e772e6587ddd90f08c1bf374486436eb11f81dd6a8f03bcd82d335a7f",
+			ID:    "5762029e772e6587ddd90f08c1bf374486436eb11f81dd6a8f03bcd82d335a7f",
 			IsDir: true,
 		},
 		"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824": {
 			Path:  "/home/test/abc.jpg",
 			Name:  "abc.jpg",
-			Hash:  "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			ID:    "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
 			IsDir: false,
 			Preview: IndexMetaPreview{
 				Length: 100,
@@ -34,8 +34,8 @@ func TestIndexEncodeDecode(t *testing.T) {
 	buff := new(bytes.Buffer)
 	wrote, err := indexOriginal.Encode(buff)
 	assert.NoError(t, err)
-	assert.EqualValues(t, 510, wrote)
-	assert.EqualValues(t, 510, buff.Len())
+	assert.EqualValues(t, 525, wrote)
+	assert.EqualValues(t, 525, buff.Len())
 	// Parse
 	indexDerivative := NewIndex(buff)
 	assert.Equal(t, len(indexOriginal.meta), len(indexDerivative.meta))
@@ -52,8 +52,8 @@ func TestIndexFiles(t *testing.T) {
 		WithFiles(files),
 		WithPreview(GeneratePreview),
 		WithID(func(p FileMeta) (string, error) {
-			return SHA256Hash(bytes.NewReader([]byte(fmt.Sprintf("%s%s", p.Name(), p.ModTime()))))
+			return SHA256Hash(bytes.NewReader([]byte(fmt.Sprintf("%s%s", p.RelativePath(), p.ModTime()))))
 		}))
-	fmt.Println(index.meta)
-	fmt.Println(len(index.data))
+	assert.Equal(t, 7, len(index.meta))
+	assert.EqualValues(t, 327340, len(index.data))
 }

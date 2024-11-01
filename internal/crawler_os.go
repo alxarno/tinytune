@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 )
 
@@ -17,11 +18,16 @@ type RawFile interface {
 
 type CrawlerOSFile struct {
 	os.FileInfo
-	path string
+	path         string
+	relativePath string
 }
 
 func (cosf CrawlerOSFile) Path() string {
 	return cosf.path
+}
+
+func (cosf CrawlerOSFile) RelativePath() string {
+	return cosf.relativePath
 }
 
 type CrawlerOS struct {
@@ -32,7 +38,7 @@ func NewCrawlerOS(path string) CrawlerOS {
 	return CrawlerOS{path}
 }
 
-func (c CrawlerOS) Scan() ([]FileMeta, error) {
+func (c CrawlerOS) Scan(exclude ...string) ([]FileMeta, error) {
 	fileInfo, err := os.Stat(c.path)
 	if err != nil {
 		return nil, err
@@ -49,7 +55,14 @@ func (c CrawlerOS) Scan() ([]FileMeta, error) {
 			if path == c.path {
 				return nil
 			}
-			files = append(files, &CrawlerOSFile{info, path})
+			if slices.Contains(exclude, path) {
+				return nil
+			}
+			relativePath, err := filepath.Rel(c.path, path)
+			if err != nil {
+				return err
+			}
+			files = append(files, &CrawlerOSFile{info, path, relativePath})
 			return nil
 		})
 	if err != nil {
