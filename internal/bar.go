@@ -2,7 +2,7 @@ package internal
 
 import "github.com/schollz/progressbar/v3"
 
-func bar(len int, desription string) *progressbar.ProgressBar {
+func Bar(len int, desription string) *progressbar.ProgressBar {
 	return progressbar.NewOptions(
 		len,
 		progressbar.OptionSetDescription(desription),

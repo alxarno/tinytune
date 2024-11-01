@@ -4,13 +4,8 @@ import (
 	"path/filepath"
 	"slices"
 	"time"
-)
 
-const (
-	_ = iota
-	ContentTypeVideo
-	ContentTypeImage
-	ContentTypeOther
+	"github.com/alxarno/tinytune/pkg/index"
 )
 
 func getSupportedVideoFormats() []string {
@@ -24,15 +19,15 @@ func getSupportedImageFormats() []string {
 func GeneratePreview(path string) (time.Duration, int, []byte, error) {
 	ext := filepath.Ext(path)
 	if len(ext) < 2 {
-		return 0, ContentTypeOther, nil, nil
+		return 0, index.ContentTypeOther, nil, nil
 	}
 	if slices.Contains(getSupportedImageFormats(), ext[1:]) {
 		data, err := ImagePreview(path)
-		return 0, ContentTypeImage, data, err
+		return 0, index.ContentTypeImage, data, err
 	}
 	if slices.Contains(getSupportedVideoFormats(), ext[1:]) {
 		data, err := VideoPreview(path, time.Second*10)
-		return 0, ContentTypeVideo, data, err
+		return 0, index.ContentTypeVideo, data, err
 	}
-	return 0, ContentTypeOther, nil, nil
+	return 0, index.ContentTypeOther, nil, nil
 }

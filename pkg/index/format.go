@@ -1,4 +1,4 @@
-package internal
+package index
 
 import (
 	"bufio"
@@ -7,6 +7,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+
+	"github.com/alxarno/tinytune/pkg/bytesutil"
 )
 
 const INDEX_HEADER = "TINYTUNE_INDEX"
@@ -65,7 +67,7 @@ func (index *Index) Decode(r io.Reader) error {
 
 func (i Index) Encode(w io.Writer) (uint64, error) {
 	// write header
-	wc := NewWriterCounter(w)
+	wc := bytesutil.NewWriterCounter(w)
 	if _, err := wc.Write([]byte(INDEX_HEADER)); err != nil {
 		return 0, err
 	}

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"slices"
 	"time"
+
+	"github.com/alxarno/tinytune/pkg/index"
 )
 
 type RawFile interface {
@@ -38,7 +40,7 @@ func NewCrawlerOS(path string) CrawlerOS {
 	return CrawlerOS{path}
 }
 
-func (c CrawlerOS) Scan(exclude ...string) ([]FileMeta, error) {
+func (c CrawlerOS) Scan(exclude ...string) ([]index.FileMeta, error) {
 	fileInfo, err := os.Stat(c.path)
 	if err != nil {
 		return nil, err
@@ -46,7 +48,7 @@ func (c CrawlerOS) Scan(exclude ...string) ([]FileMeta, error) {
 	if !fileInfo.IsDir() {
 		return nil, errors.New("path is not dir")
 	}
-	files := []FileMeta{}
+	files := []index.FileMeta{}
 	err = filepath.Walk(c.path,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {

@@ -1,4 +1,4 @@
-package internal
+package index
 
 import (
 	"context"
@@ -6,9 +6,15 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"log"
 	"sync"
 	"time"
+)
+
+const (
+	_ = iota
+	ContentTypeVideo
+	ContentTypeImage
+	ContentTypeOther
 )
 
 type Index struct {
@@ -19,6 +25,8 @@ type Index struct {
 	id       func(m FileMeta) (string, error)
 	files    []FileMeta
 	context  context.Context
+	progress func()
+	newFiles func()
 }
 
 type IndexOption func(*Index)
@@ -70,6 +78,8 @@ func NewIndex(r io.Reader, opts ...IndexOption) Index {
 		files:    defaultFiles,
 		context:  context.Background(),
 		outDated: false,
+		progress: func() {},
+		newFiles: func() {},
 	}
 	for _, opt := range opts {
 		opt(&index)
@@ -84,26 +94,38 @@ func NewIndex(r io.Reader, opts ...IndexOption) Index {
 }
 
 func WithPreview(f func(path string) (time.Duration, int, []byte, error)) IndexOption {
-	return func(h *Index) {
-		h.preview = f
+	return func(i *Index) {
+		i.preview = f
 	}
 }
 
 func WithID(f func(m FileMeta) (string, error)) IndexOption {
-	return func(h *Index) {
-		h.id = f
+	return func(i *Index) {
+		i.id = f
 	}
 }
 
 func WithFiles(files []FileMeta) IndexOption {
-	return func(h *Index) {
-		h.files = files
+	return func(i *Index) {
+		i.files = files
 	}
 }
 
 func WithContext(ctx context.Context) IndexOption {
-	return func(h *Index) {
-		h.context = ctx
+	return func(i *Index) {
+		i.context = ctx
+	}
+}
+
+func WithProgress(f func()) IndexOption {
+	return func(i *Index) {
+		i.progress = f
+	}
+}
+
+func WithNewFiles(f func()) IndexOption {
+	return func(i *Index) {
+		i.newFiles = f
 	}
 }
 
@@ -120,6 +142,18 @@ func (index Index) PullPreview(hash string) ([]byte, error) {
 		return nil, nil
 	}
 	return index.data[m.Preview.Offset : m.Preview.Offset+m.Preview.Length], nil
+}
+
+func (index Index) FilesWithPreviewStat() (int, uint32) {
+	count := 0
+	size := uint32(0)
+	for _, v := range index.meta {
+		if v.Preview.Length != 0 {
+			count++
+			size += v.Preview.Length
+		}
+	}
+	return count, size
 }
 
 type poolPreviewWorkerResult struct {
@@ -150,7 +184,7 @@ func (index Index) poolPreviewWorker(metaCh chan IndexMeta, result chan poolPrev
 }
 
 func (index *Index) loadFiles() error {
-	logBar := bar(len(index.files), "Processing files for index...")
+	// logBar := bar(len(index.files), "Processing files for index...")
 	metaChannel := make(chan IndexMeta)
 	resultChannel := make(chan poolPreviewWorkerResult, len(index.files))
 	wg := new(sync.WaitGroup)
@@ -160,7 +194,7 @@ func (index *Index) loadFiles() error {
 		go index.poolPreviewWorker(metaChannel, resultChannel, wg)
 	}
 	for _, p := range index.files {
-		logBar.Add(1)
+		index.progress()
 		id, err := index.id(p)
 		if err != nil {
 			return err
@@ -182,6 +216,7 @@ func (index *Index) loadFiles() error {
 	wg.Wait()
 	close(resultChannel)
 	for r := range resultChannel {
+		index.newFiles()
 		if r.meta.Preview.Length != 0 {
 			r.meta.Preview.Offset = uint32(len(index.data))
 			index.data = append(index.data, r.data...)
@@ -189,7 +224,5 @@ func (index *Index) loadFiles() error {
 		index.meta[r.meta.ID] = r.meta
 		index.outDated = true
 	}
-	log.Println("Indexing done!")
 	return nil
-
 }
