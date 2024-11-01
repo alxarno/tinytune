@@ -6,10 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndexEncodeDecode(t *testing.T) {
-	indexOriginal := NewIndex(nil)
+	indexOriginal, err := NewIndex(nil)
+	require.NoError(t, err)
 	indexOriginal.meta = map[string]IndexMeta{
 		"5762029e772e6587ddd90f08c1bf374486436eb11f81dd6a8f03bcd82d335a7f": {
 			Path:  "/home/test/",
@@ -36,7 +38,8 @@ func TestIndexEncodeDecode(t *testing.T) {
 	assert.EqualValues(t, 525, wrote)
 	assert.EqualValues(t, 525, buff.Len())
 	// Parse
-	indexDerivative := NewIndex(buff)
+	indexDerivative, err := NewIndex(buff)
+	require.NoError(t, err)
 	assert.Equal(t, len(indexOriginal.meta), len(indexDerivative.meta))
 	assert.Equal(t, indexOriginal.meta, indexDerivative.meta)
 	assert.Equal(t, len(indexOriginal.data), len(indexDerivative.data))

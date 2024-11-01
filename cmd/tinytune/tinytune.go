@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"os"
@@ -19,6 +20,8 @@ import (
 	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v2"
 )
+
+const INDEX_FILE_NAME = "index.tinytune"
 
 type config struct {
 	dir string
@@ -48,39 +51,40 @@ func init() {
 }
 
 func start(c config) {
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-done
-		slog.Warn("A shutdown request has been received!")
-		cancel()
-	}()
+	ctx := gracefulShutdownCtx()
+	indexFilePath := filepath.Join(c.dir, INDEX_FILE_NAME)
 
-	indexFilePath := filepath.Join(c.dir, "index.tinytune")
 	files, err := internal.NewCrawlerOS(c.dir).Scan(indexFilePath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	indexFile, err := os.OpenFile(indexFilePath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer indexFile.Close()
+	indexFileReader := io.Reader(indexFile)
+
 	fileInfo, err := indexFile.Stat()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+
 	if fileInfo.Size() != 0 {
 		slog.Info(
 			"Found index file",
 			slog.String("size", bytesutil.PrettyByteSize(fileInfo.Size())),
+			slog.String("path", indexFilePath),
 		)
+	} else {
+		slog.Info("Created new index file", slog.String("path", indexFilePath))
+		indexFileReader = nil
 	}
 	slog.Info("Indexing started")
 	indexProgressBar := internal.Bar(len(files), "Processing ...")
 	indexNewFiles := 0
-	index := index.NewIndex(
-		indexFile,
+	index, err := index.NewIndex(
+		indexFileReader,
 		index.WithID(idGenerator),
 		index.WithFiles(files),
 		index.WithPreview(internal.GeneratePreview),
@@ -88,6 +92,10 @@ func start(c config) {
 		index.WithContext(ctx),
 		index.WithProgress(func() { indexProgressBar.Add(1) }),
 		index.WithNewFiles(func() { indexNewFiles++ }))
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	if indexNewFiles != 0 {
 		slog.Info("New files found", slog.Int("files", indexNewFiles))
@@ -129,4 +137,16 @@ func idGenerator(p index.FileMeta) (string, error) {
 	} else {
 		return id[:10], nil
 	}
+}
+
+func gracefulShutdownCtx() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-done
+		slog.Warn("A shutdown request has been received!")
+		cancel()
+	}()
+	return ctx
 }

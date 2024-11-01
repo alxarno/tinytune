@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -58,7 +60,7 @@ type FileMeta interface {
 	Size() int64
 }
 
-func NewIndex(r io.Reader, opts ...IndexOption) Index {
+func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 	gob.Register(IndexMeta{})
 	var (
 		defaultData    = []byte{}
@@ -86,13 +88,21 @@ func NewIndex(r io.Reader, opts ...IndexOption) Index {
 	for _, opt := range opts {
 		opt(&index)
 	}
-	if r != nil {
-		index.Decode(r)
+
+	if err := index.Decode(r); err != nil {
+		if errors.Is(err, io.EOF) {
+			slog.Warn("The index file could not be fully read, it may be corrupted or empty")
+		} else {
+			return index, err
+		}
 	}
+
 	if len(index.files) != 0 {
-		index.loadFiles()
+		if err := index.loadFiles(); err != nil {
+			return index, err
+		}
 	}
-	return index
+	return index, nil
 }
 
 func WithPreview(f func(path string) (time.Duration, int, []byte, error)) IndexOption {
@@ -171,10 +181,9 @@ type poolPreviewWorkerResult struct {
 func (index Index) poolPreviewWorker(metaCh chan IndexMeta, result chan poolPreviewWorkerResult, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for meta := range metaCh {
-		time.Sleep(time.Second * 5)
 		duration, t, data, err := index.preview(meta.Path)
 		if err != nil {
-			fmt.Println(err)
+			slog.Error("poolPreviewWorker", err.Error(), slog.String("file", meta.Path))
 			continue
 		}
 		meta.Duration = duration
@@ -203,7 +212,7 @@ func (index *Index) loadFiles() error {
 		index.progress()
 		id, err := index.id(p)
 		if err != nil {
-			return err
+			return fmt.Errorf("index.id error: %s", err)
 		}
 		if _, ok := index.meta[id]; ok {
 			continue

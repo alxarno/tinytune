@@ -28,6 +28,9 @@ func indexDelimiterSplit(data []byte, atEOF bool) (advance int, token []byte, er
 }
 
 func (index *Index) Decode(r io.Reader) error {
+	if r == nil {
+		return nil
+	}
 	// read header
 	header := make([]byte, len([]byte(INDEX_HEADER)))
 	n, err := r.Read(header)
