@@ -12,12 +12,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/alxarno/tinytune/internal"
 	"github.com/alxarno/tinytune/pkg/bytesutil"
 	"github.com/alxarno/tinytune/pkg/index"
-	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v2"
 )
 
@@ -44,10 +42,6 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func init() {
-	setLogger()
 }
 
 func start(c config) {
@@ -119,16 +113,11 @@ func start(c config) {
 		}
 		slog.Info("Index file saved", slog.String("size", bytesutil.PrettyByteSize(count)))
 	}
-	slog.Info("Successful shutdown")
-}
 
-func setLogger() {
-	slog.SetDefault(slog.New(
-		tint.NewHandler(os.Stdout, &tint.Options{
-			Level:      slog.LevelDebug,
-			TimeFormat: time.DateTime,
-		}),
-	))
+	_ = internal.NewServer(ctx)
+	slog.Info("Server started")
+	<-ctx.Done()
+	slog.Info("Successful shutdown")
 }
 
 func idGenerator(p index.FileMeta) (string, error) {
