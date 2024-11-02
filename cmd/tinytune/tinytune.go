@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"syscall"
 	"time"
 
@@ -88,7 +87,8 @@ func start(c config) {
 		index.WithID(idGenerator),
 		index.WithFiles(files),
 		index.WithPreview(internal.GeneratePreview),
-		index.WithWorkers(runtime.NumCPU()),
+		// index.WithWorkers(runtime.NumCPU()),
+		index.WithWorkers(1),
 		index.WithContext(ctx),
 		index.WithProgress(func() { indexProgressBar.Add(1) }),
 		index.WithNewFiles(func() { indexNewFiles++ }))

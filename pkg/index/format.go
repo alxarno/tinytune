@@ -11,20 +11,32 @@ import (
 	"github.com/alxarno/tinytune/pkg/bytesutil"
 )
 
+func init() {
+	gob.Register(IndexMeta{})
+}
+
 const INDEX_HEADER = "TINYTUNE_INDEX"
 const INDEX_DELIMITER = "TINYTUNE_DELIMITER"
 
-func indexDelimiterSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	// Find the delimiter
-	if i := bytes.Index(data, []byte(INDEX_DELIMITER)); i >= 0 {
-		return i + 1 + len([]byte(INDEX_DELIMITER)), data[0:i], nil
+func searchDelimiter(r *bufio.Reader, delimiter []byte) ([]byte, error) {
+	buff := make([]byte, 0, 1024)
+	possibleDelimiter := make([]byte, len(delimiter)-1)
+	for {
+		b, err := r.ReadBytes(delimiter[0])
+		if err != nil {
+			return nil, err
+		}
+		buff = append(buff, b...)
+		_, err = r.Read(possibleDelimiter)
+		if err != nil {
+			return nil, err
+		}
+		if bytes.Equal(possibleDelimiter, delimiter[1:]) {
+			return buff[:len(buff)-1], nil
+		} else {
+			buff = append(buff, possibleDelimiter...)
+		}
 	}
-	// If at end of file and no comma found, return the entire remaining data
-	if atEOF {
-		return len(data), data, nil
-	}
-	// Request more data
-	return 0, nil, nil
 }
 
 func (index *Index) Decode(r io.Reader) error {
@@ -50,10 +62,11 @@ func (index *Index) Decode(r io.Reader) error {
 	}
 	metaLength := binary.LittleEndian.Uint32(bs)
 	// read meta
-	scanner := bufio.NewScanner(r)
-	scanner.Split(indexDelimiterSplit)
-	scanner.Scan()
-	decoder := gob.NewDecoder(bytes.NewBuffer(scanner.Bytes()))
+	metaBytes, err := searchDelimiter(bufio.NewReader(r), []byte(INDEX_DELIMITER))
+	if err != nil {
+		return err
+	}
+	decoder := gob.NewDecoder(bytes.NewReader(metaBytes))
 	for i := 0; i < int(metaLength); i++ {
 		m := IndexMeta{}
 		if err := decoder.Decode(&m); err != nil {

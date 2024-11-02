@@ -2,14 +2,14 @@ package index
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -19,12 +19,15 @@ const (
 	ContentTypeOther
 )
 
+type PreviewGenerator func(string) (time.Duration, int, []byte, error)
+type IDGenerator func(m FileMeta) (string, error)
+
 type Index struct {
 	meta     map[string]IndexMeta
 	data     []byte
 	outDated bool
-	preview  func(string) (time.Duration, int, []byte, error)
-	id       func(m FileMeta) (string, error)
+	preview  PreviewGenerator
+	id       IDGenerator
 	files    []FileMeta
 	context  context.Context
 	progress func()
@@ -44,6 +47,7 @@ type IndexMeta struct {
 	Preview      IndexMetaPreview
 	Duration     time.Duration
 	Type         int
+	Children     []string
 }
 
 type IndexMetaPreview struct {
@@ -61,24 +65,12 @@ type FileMeta interface {
 }
 
 func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
-	gob.Register(IndexMeta{})
-	var (
-		defaultData    = []byte{}
-		defaultMeta    = map[string]IndexMeta{}
-		defaultFiles   = []FileMeta{}
-		defaultPreview = func(string) (time.Duration, int, []byte, error) { return 0, ContentTypeOther, nil, nil }
-		defaultID      = func(m FileMeta) (string, error) {
-			buff := make([]byte, 100)
-			rand.Read(buff)
-			return string(buff), nil
-		}
-	)
 	index := Index{
-		data:     defaultData,
-		meta:     defaultMeta,
-		preview:  defaultPreview,
-		id:       defaultID,
-		files:    defaultFiles,
+		data:     []byte{},
+		meta:     map[string]IndexMeta{},
+		preview:  func(string) (time.Duration, int, []byte, error) { return 0, ContentTypeOther, nil, nil },
+		id:       func(m FileMeta) (string, error) { return m.Path(), nil },
+		files:    []FileMeta{},
 		context:  context.Background(),
 		outDated: false,
 		progress: func() {},
@@ -96,11 +88,12 @@ func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 			return index, err
 		}
 	}
+	if err := index.loadFiles(); err != nil {
+		return index, err
+	}
 
-	if len(index.files) != 0 {
-		if err := index.loadFiles(); err != nil {
-			return index, err
-		}
+	if err := index.dirsChildrenProcessing(); err != nil {
+		return index, err
 	}
 	return index, nil
 }
@@ -173,69 +166,30 @@ func (index Index) FilesWithPreviewStat() (int, uint32) {
 	return count, size
 }
 
-type poolPreviewWorkerResult struct {
-	meta IndexMeta
-	data []byte
-}
-
-func (index Index) poolPreviewWorker(metaCh chan IndexMeta, result chan poolPreviewWorkerResult, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for meta := range metaCh {
-		duration, t, data, err := index.preview(meta.Path)
-		if err != nil {
-			slog.Error("poolPreviewWorker", err.Error(), slog.String("file", meta.Path))
-			continue
-		}
-		meta.Duration = duration
-		meta.Type = t
-		meta.Preview = IndexMetaPreview{
-			Length: uint32(len(data)),
-		}
-		result <- poolPreviewWorkerResult{meta, data}
-		select {
-		case <-index.context.Done():
-			return
-		default:
-		}
-	}
-}
-
 func (index *Index) loadFiles() error {
-	metaChannel := make(chan IndexMeta)
-	resultChannel := make(chan poolPreviewWorkerResult, len(index.files))
 	wg := new(sync.WaitGroup)
-	wg.Add(index.workers)
-	for i := 0; i < index.workers; i++ {
-		go index.poolPreviewWorker(metaChannel, resultChannel, wg)
-	}
-	for _, p := range index.files {
-		index.progress()
-		id, err := index.id(p)
-		if err != nil {
-			return fmt.Errorf("index.id error: %s", err)
-		}
-		if _, ok := index.meta[id]; ok {
-			continue
-		}
-		meta := IndexMeta{
-			Path:         p.Path(),
-			RelativePath: p.RelativePath(),
-			Name:         p.Name(),
-			ModTime:      p.ModTime(),
-			IsDir:        p.IsDir(),
-			ID:           id,
-		}
-		select {
-		case metaChannel <- meta:
-			continue
-		case <-index.context.Done():
-			return fmt.Errorf("Index files processing stopped")
-		}
-	}
-	close(metaChannel)
-	wg.Wait()
+	sem := semaphore.NewWeighted(int64(index.workers))
+	resultChannel := make(chan *fileProcessorResult, len(index.files))
 
+	for _, file := range index.files {
+		if err := sem.Acquire(index.context, 1); err != nil {
+			return err
+		}
+		wg.Add(1)
+		index.progress()
+		go processFile(
+			file,
+			withID(index.id),
+			withPreview(index.preview),
+			withIDCheck(func(id string) bool { _, ok := index.meta[id]; return !ok }),
+			withChan(resultChannel),
+			withSemaphore(sem),
+			withWaitGroup(wg))
+	}
+
+	wg.Wait()
 	close(resultChannel)
+
 	for r := range resultChannel {
 		index.newFiles()
 		if r.meta.Preview.Length != 0 {
@@ -245,5 +199,10 @@ func (index *Index) loadFiles() error {
 		index.meta[r.meta.ID] = r.meta
 		index.outDated = true
 	}
+
+	return nil
+}
+
+func (index *Index) dirsChildrenProcessing() error {
 	return nil
 }
