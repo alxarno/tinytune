@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -24,6 +25,7 @@ type IDGenerator func(m FileMeta) (string, error)
 
 type Index struct {
 	meta     map[string]IndexMeta
+	tree     map[string][]string
 	data     []byte
 	outDated bool
 	preview  PreviewGenerator
@@ -47,7 +49,6 @@ type IndexMeta struct {
 	Preview      IndexMetaPreview
 	Duration     time.Duration
 	Type         int
-	Children     []string
 }
 
 type IndexMetaPreview struct {
@@ -71,6 +72,7 @@ func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 		preview:  func(string) (time.Duration, int, []byte, error) { return 0, ContentTypeOther, nil, nil },
 		id:       func(m FileMeta) (string, error) { return m.Path(), nil },
 		files:    []FileMeta{},
+		tree:     map[string][]string{},
 		context:  context.Background(),
 		outDated: false,
 		progress: func() {},
@@ -92,7 +94,7 @@ func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 		return index, err
 	}
 
-	if err := index.dirsChildrenProcessing(); err != nil {
+	if err := index.loadTree(); err != nil {
 		return index, err
 	}
 	return index, nil
@@ -206,6 +208,25 @@ func (index *Index) loadFiles() error {
 	return nil
 }
 
-func (index *Index) dirsChildrenProcessing() error {
+func (index *Index) loadTree() error {
+	index.tree["root"] = make([]string, 0)
+	for _, meta := range index.meta {
+		if filepath.Dir(meta.RelativePath) == "." {
+			index.tree["root"] = append(index.tree["root"], meta.ID)
+		}
+		if !meta.IsDir {
+			continue
+		}
+
+		for _, possibleChild := range index.meta {
+			if meta.RelativePath != filepath.Dir(possibleChild.RelativePath) {
+				continue
+			}
+			if _, ok := index.tree[meta.ID]; !ok {
+				index.tree[meta.ID] = make([]string, 0)
+			}
+			index.tree[meta.ID] = append(index.tree[meta.ID], possibleChild.ID)
+		}
+	}
 	return nil
 }

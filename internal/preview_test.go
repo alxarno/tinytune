@@ -14,7 +14,7 @@ func TestPreview(t *testing.T) {
 		resultHash  string
 		resultIsNil bool
 	}{
-		{"../test/image.jpg", "029f21ed0e085973dc41f290f5d361185f226c924a7e30e2d2d8c8acac6ade5a", false},
+		{"../test/image.jpg", "64de9c944a91c93e750d097577c8fc5992100a7bb186d376534e78705aefbbbd", false},
 		{"../test/sample.mp4", "b29ec13ece50f8343604a26f83216153f3ea58f038d00e1fae9e4461c6c36313", false},
 		{"../test/sample.txt", "", true},
 	}

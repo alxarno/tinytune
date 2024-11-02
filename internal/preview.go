@@ -26,7 +26,7 @@ func GeneratePreview(path string) (time.Duration, int, []byte, error) {
 		return 0, index.ContentTypeImage, data, err
 	}
 	if slices.Contains(getSupportedVideoFormats(), ext[1:]) {
-		data, err := VideoPreview(path, time.Second*10)
+		data, err := VideoPreview(path, time.Minute*10)
 		return 0, index.ContentTypeVideo, data, err
 	}
 	return 0, index.ContentTypeOther, nil, nil

@@ -29,6 +29,10 @@ func probeOutputFrames(a string) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
+	// if no frames count in metadata, then just use some default for 1 min video, 24fps
+	if len(pd.Streams) == 0 || pd.Streams[0].Frames == "" {
+		return 3000, nil
+	}
 	f, err := strconv.ParseFloat(pd.Streams[0].Frames, 64)
 	if err != nil {
 		return 0, err

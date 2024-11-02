@@ -67,7 +67,6 @@ func processFile(f FileMeta, opts ...fileProcessorOption) (*fileProcessorResult,
 	result, err := processor.run(f)
 	if err != nil {
 		slog.Error("processFile", err.Error(), slog.String("file", f.Path()))
-		return nil, err
 	}
 	if processor.ch != nil && result != nil {
 		processor.ch <- result

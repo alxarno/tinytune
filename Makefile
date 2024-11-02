@@ -9,8 +9,8 @@ BINARY_NAME=tinytune-linux
 .PHONY: build
 build: ## build
 	mkdir -p out/
-	GOARCH=amd64 GOOS=linux go build -o ${BINARY_NAME} cmd/tinytune/tinytune.go
-	chmod +x 
+	GOARCH=amd64 GOOS=linux go build -o out/${BINARY_NAME} cmd/tinytune/tinytune.go
+	chmod +x out/${BINARY_NAME}
 
 .PHONY: run
 run: ## run
