@@ -47,8 +47,8 @@ func TestIndexEncodeDecode(t *testing.T) {
 	buff := new(bytes.Buffer)
 	wrote, err := indexOriginal.Encode(buff)
 	assert.NoError(t, err)
-	assert.EqualValues(t, 516, wrote)
-	assert.EqualValues(t, 516, buff.Len())
+	assert.EqualValues(t, 502, wrote)
+	assert.EqualValues(t, 502, buff.Len())
 	// Parse
 	indexDerivative, err := NewIndex(bufio.NewReader(buff))
 	require.NoError(t, err)

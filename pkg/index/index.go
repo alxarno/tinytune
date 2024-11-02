@@ -173,6 +173,9 @@ func (index *Index) loadFiles() error {
 
 	for _, file := range index.files {
 		if err := sem.Acquire(index.context, 1); err != nil {
+			if errors.Is(err, context.Canceled) {
+				return nil
+			}
 			return err
 		}
 		wg.Add(1)
