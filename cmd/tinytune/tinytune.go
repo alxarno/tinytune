@@ -114,7 +114,10 @@ func start(c config) {
 		slog.Info("Index file saved", slog.String("size", bytesutil.PrettyByteSize(count)))
 	}
 
-	_ = internal.NewServer(ctx)
+	_ = internal.NewServer(
+		ctx,
+		internal.WithSource(index),
+	)
 	slog.Info("Server started")
 	<-ctx.Done()
 	slog.Info("Successful shutdown")

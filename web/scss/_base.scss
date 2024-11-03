@@ -1,0 +1,48 @@
+$primary-color: #333;
+// $background-color: #313338;
+$background-color: #1E1F22;
+$border-color: #27282C;
+$accent-color: #0dd354;
+$font-color: white;
+// $border-color: #3F4147;
+
+$font-family-sans-serif:
+    // Cross-platform generic font family (default user interface font)
+    system-ui,
+    // Safari for macOS and iOS (San Francisco)
+    -apple-system,
+    // Windows
+    "Segoe UI",
+    // Android
+    Roboto,
+    // older macOS and iOS
+    "Helvetica Neue",
+    // Linux
+    "Noto Sans",
+    "Liberation Sans",
+    // Basic web fallback
+    Arial,
+    // Sans serif fallback
+    sans-serif,
+    // Emoji fonts
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+
+:root {
+    --bs-breadcrumb-item-active-color: white;
+}
+
+a {
+    color: $accent-color;
+}
+
+.breadcrumb-item.active{
+    --bs-breadcrumb-item-active-color: gray;
+}
+.breadcrumb-item+.breadcrumb-item::before {
+    --bs-breadcrumb-divider-color: gray;
+}
+
+.breadcrumb{
+    --bs-breadcrumb-margin-bottom: 0;
+    font-size: 1.2rem;
+}

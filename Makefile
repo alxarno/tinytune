@@ -14,7 +14,17 @@ build: ## build
 
 .PHONY: run
 run: ## run
-	./out/${BINARY_NAME}
+	go run cmd/tinytune/tinytune.go ./test/
+
+
+.PHONY: watch
+watch: ## watch
+	reflex -c scripts/reflex.conf
+
+.PHONY: sass
+sass: ## sass
+	sass -c -s compressed web/scss/index.scss web/assets/main.css
+
 
 .PHONY: clean
 clean: ## clean
@@ -27,7 +37,7 @@ test: ## test -coverprofile=coverage.out
 	go test -v -timeout 1m ./... 
 
 .PHONY: ubuntu
-ubuntu: ## Install deps for ubuntu (libvips, ffmpeg) 
+ubuntu: ## Install deps for ubuntu (libvips, ffmpeg)
 	apt install build-essential libvips pkg-config libvips-dev ffmpeg -y
 
 .PHONY: coverage

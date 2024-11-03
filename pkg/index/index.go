@@ -7,17 +7,11 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"golang.org/x/sync/semaphore"
-)
-
-const (
-	_ = iota
-	ContentTypeVideo
-	ContentTypeImage
-	ContentTypeOther
 )
 
 type PreviewGenerator func(string) (time.Duration, int, []byte, error)
@@ -38,23 +32,6 @@ type Index struct {
 }
 
 type IndexOption func(*Index)
-
-type IndexMeta struct {
-	ID           string
-	Path         string
-	RelativePath string
-	Name         string
-	ModTime      time.Time
-	IsDir        bool
-	Preview      IndexMetaPreview
-	Duration     time.Duration
-	Type         int
-}
-
-type IndexMetaPreview struct {
-	Length uint32
-	Offset uint32
-}
 
 type FileMeta interface {
 	Path() string
@@ -156,6 +133,31 @@ func (index Index) PullPreview(hash string) ([]byte, error) {
 	return index.data[m.Preview.Offset : m.Preview.Offset+m.Preview.Length], nil
 }
 
+func (index Index) PullChildren(id string) []IndexMeta {
+	result := make([]IndexMeta, 0)
+
+	// return root children
+	if id == "" {
+		for _, m := range index.meta {
+			if !strings.Contains(m.RelativePath, "/") {
+				result = append(result, m)
+			}
+		}
+		return result
+	}
+
+	childrenIds := []string{}
+	if children, ok := index.tree[id]; ok {
+		childrenIds = children
+	}
+	for _, id := range childrenIds {
+		if m, ok := index.meta[id]; ok {
+			result = append(result, m)
+		}
+	}
+	return result
+}
+
 func (index Index) FilesWithPreviewStat() (int, uint32) {
 	count := 0
 	size := uint32(0)
@@ -200,6 +202,9 @@ func (index *Index) loadFiles() error {
 		if r.meta.Preview.Length != 0 {
 			r.meta.Preview.Offset = uint32(len(index.data))
 			index.data = append(index.data, r.data...)
+		}
+		if r.meta.IsDir {
+			r.meta.Type = ContentTypeDir
 		}
 		index.meta[r.meta.ID] = r.meta
 		index.outDated = true

@@ -1,0 +1,13 @@
+@use 'base';
+@use 'dir';
+
+body {
+    background-color: base.$background-color;
+    font-family: base.$font-family-sans-serif;
+    color: base.$font-color;
+    margin: 0;
+}
+
+.wrapper {
+    padding: 0;
+}
