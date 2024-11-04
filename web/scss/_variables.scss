@@ -1,8 +1,10 @@
 $primary-color: #333;
-// $background-color: #313338;
-$background-color: #1E1F22;
+$dark-color: #1E1F22;
 $border-color: #27282C;
-$accent-color: #0dd354;
+// $accent-color: #0dd354;
+$accent-color: #6ee598;
+$background-color: #212529;
+
 $font-color: white;
 // $border-color: #3F4147;
 
@@ -27,22 +29,27 @@ $font-family-sans-serif:
     // Emoji fonts
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 
-:root {
-    --bs-breadcrumb-item-active-color: white;
-}
+// $theme-colors: (
+//     "primary": $accent-color,
+//     "danger": #ff4136
+// );
 
-a {
-    color: $accent-color;
-}
+// :root {
+//     --bs-breadcrumb-item-active-color: white;
+// }
 
-.breadcrumb-item.active{
-    --bs-breadcrumb-item-active-color: gray;
-}
-.breadcrumb-item+.breadcrumb-item::before {
-    --bs-breadcrumb-divider-color: gray;
-}
+// a {
+//     color: $accent-color;
+// }
 
-.breadcrumb{
-    --bs-breadcrumb-margin-bottom: 0;
-    font-size: 1.2rem;
-}
+// .breadcrumb-item.active{
+//     --bs-breadcrumb-item-active-color: gray;
+// }
+// .breadcrumb-item+.breadcrumb-item::before {
+//     --bs-breadcrumb-divider-color: gray;
+// }
+
+// .breadcrumb{
+//     --bs-breadcrumb-margin-bottom: 0;
+//     font-size: 1.2rem;
+// }

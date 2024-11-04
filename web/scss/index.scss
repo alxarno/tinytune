@@ -1,13 +1,22 @@
-@use 'base';
+@use 'bootstrap';
+@use 'variables';
 @use 'dir';
 
 body {
-    background-color: base.$background-color;
-    font-family: base.$font-family-sans-serif;
-    color: base.$font-color;
+    background-color: variables.$background-color;
+    font-family: variables.$font-family-sans-serif;
+    color: variables.$font-color;
     margin: 0;
 }
 
 .wrapper {
     padding: 0;
+}
+
+.tiny-control{
+    background-color: variables.$background-color;
+}
+
+.sort-icon{
+    margin-bottom: 2px;
 }

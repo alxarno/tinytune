@@ -23,7 +23,7 @@ watch: ## watch
 
 .PHONY: sass
 sass: ## sass
-	sass -c -s compressed web/scss/index.scss web/assets/main.css
+	sass -c -s compressed -q web/scss/index.scss web/assets/main.css 
 
 
 .PHONY: clean

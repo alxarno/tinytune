@@ -26,23 +26,6 @@ func (s *server) LoadTemplates() {
 	s.Templates["index.html"] = template.Must(template.ParseGlob("./web/templates/*.html"))
 }
 
-// func exactlyPathHandler(path string, h http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		if r.URL.Path != path {
-// 			w.WriteHeader(http.StatusNotFound)
-// 			fmt.Fprint(w, "404")
-// 			return
-// 		}
-// 		h.ServeHTTP(w, r)
-// 	})
-// }
-
-// func getRedirectHandler(to string) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		http.Redirect(w, r, to, http.StatusFound)
-// 	})
-// }
-
 func (s *server) indexHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
@@ -76,13 +59,6 @@ func (s *server) originHandler() http.Handler {
 	})
 }
 
-// func (s *server) staticHandler() http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		w.WriteHeader(http.StatusOK)
-// 		fmt.Fprintf(w, "Static %s!", r.PathValue("fileID"))
-// 	})
-// }
-
 type ServerOption func(*server)
 
 func WithSource(source source) ServerOption {
@@ -105,12 +81,12 @@ func NewServer(ctx context.Context, opts ...ServerOption) *server {
 		Handler:     mux,
 	}
 	chain := alice.New(httputil.LoggingHandler)
-	// rootHandler := exactlyPathHandler("/", getRedirectHandler("/dir/root"))
+	staticHandler := http.StripPrefix("/static", http.FileServer(http.Dir("./web/assets/")))
 	mux.Handle("GET /", chain.Then(server.indexHandler()))
 	mux.Handle("GET /dir/{dirID}/", chain.Then(server.dirServeHandler()))
 	mux.Handle("GET /preview/{fileID}/", chain.Then(server.previewHandler()))
 	mux.Handle("GET /origin/{fileID}/", chain.Then(server.originHandler()))
-	mux.Handle("GET /static/", chain.Then(http.StripPrefix("/static", http.FileServer(http.Dir("./web/assets/")))))
+	mux.Handle("GET /static/", chain.Then(staticHandler))
 
 	go httpServer.ListenAndServe()
 	return nil

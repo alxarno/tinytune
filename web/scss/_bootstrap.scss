@@ -1,0 +1,13 @@
+@import "variables";
+
+$primary: $accent-color;
+// $secondary: #212529;
+$enable-shadows: true;
+$breadcrumb-active-color: gray;
+$breadcrumb-divider-color: gray;
+$breadcrumb-margin-bottom: 0;
+$dark: $dark-color;
+$prefix: "tinytune-";
+
+@import "./bootstrap/scss/bootstrap";
+
