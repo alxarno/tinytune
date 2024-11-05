@@ -13,7 +13,8 @@ import (
 )
 
 type source interface {
-	PullChildren(id string) []index.IndexMeta
+	PullChildren(string) []index.IndexMeta
+	PullPreview(string) ([]byte, error)
 }
 
 type server struct {
@@ -34,7 +35,7 @@ func (s *server) indexHandler() http.Handler {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		s.Templates["index.html"].ExecuteTemplate(w, "index", s.Source.PullChildren(""))
+		s.Templates["index.html"].ExecuteTemplate(w, "index", metaSortType(s.Source.PullChildren("")))
 	})
 }
 
@@ -48,7 +49,13 @@ func (s *server) dirServeHandler() http.Handler {
 func (s *server) previewHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Preview %s!", r.PathValue("fileID"))
+		data, err := s.Source.PullPreview(r.PathValue("fileID"))
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404")
+			return
+		}
+		w.Write(data)
 	})
 }
 

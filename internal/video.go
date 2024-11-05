@@ -60,7 +60,7 @@ func VideoPreview(path string, timeOut time.Duration) ([]byte, error) {
 		ctx, cancel = context.WithTimeout(context.Background(), timeOut)
 		defer cancel()
 	}
-	cmd := exec.CommandContext(ctx, "ffmpeg", "-y", "-vsync", "0", "-hwaccel", "cuda", "-i", path, "-frames", "1", "-vf", fmt.Sprintf(`select=%s,scale=w='min(512\, iw*3/2):h=-1',tile=1x5`, previewSelectString), "-f", "webp", "pipe:1")
+	cmd := exec.CommandContext(ctx, "ffmpeg", "-y", "-vsync", "0", "-hwaccel", "cuda", "-i", path, "-frames", "1", "-vf", fmt.Sprintf(`select=%s,scale=w='min(512\, iw*3/2):h=-1',tile=1x5`, previewSelectString), "-f", "image2", "pipe:1")
 	buf := bytes.NewBuffer(nil)
 	stdErrBuf := bytes.NewBuffer(nil)
 	cmd.Stdout = buf
