@@ -73,3 +73,32 @@ const onSort = (radio) => {
     Cookies.set('sort', radio.value);
     htmx.ajax('GET', window.location.pathname)
 }
+
+const onSearch = () => {
+    let url = window.location.pathname
+    const searchInput = document.getElementById("search-input")
+    url = url.replace("/d/", "/s/")
+    if (!url.includes("/s")) {
+        url += "s"
+    }
+    url += `?query=${encodeURIComponent(searchInput.value)}`
+    htmx.ajax('GET', url).then((event) => {
+        highlightSearchResults()
+    })
+}
+
+const highlightSearchResults = () => {
+    const foundElement = document.getElementById("found")
+    const searchInput = document.getElementById("search-input")
+    if(!foundElement) return;
+    const labels =  Array.from(document.getElementsByClassName("figure-caption"))
+    labels.forEach((element) => {
+        const start = element.textContent.indexOf(searchInput.value)
+        const htmlValue = `${element.textContent.substring(0, start)}<span class="bg-primary text-dark rounded-1">${element.textContent.substring(start, start + searchInput.value.length)}</span>${element.textContent.substring(start + searchInput.value.length)}`
+        element.innerHTML = htmlValue
+    })
+}
+
+window.onload = () => {
+    highlightSearchResults()
+}

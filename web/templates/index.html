@@ -4,6 +4,7 @@
     <body class="zoom-{{ .Zoom }}">
         {{ template "navbar" . }}
         <div class="container-xl wrapper" id="content">
+            {{ if .Search }} <h4 id="found" class="mt-5">Found <span class="text-primary">{{ len .Items }}</span> elements</h4> {{ end }}
             {{template "dir" .Items }}
         </div>
     </body>

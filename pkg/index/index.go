@@ -188,6 +188,31 @@ func (index Index) PullPaths(id string) ([]*IndexMeta, error) {
 	return result, nil
 }
 
+func (index Index) Search(query string, dir string) []*IndexMeta {
+	result := []*IndexMeta{}
+	query = strings.ToLower(query)
+	filter := func(v *IndexMeta) {
+		if strings.Contains(strings.ToLower(v.Name), query) {
+			result = append(result, v)
+		}
+	}
+	if dir == "" {
+		for _, v := range index.meta {
+			filter(v)
+		}
+		return result
+	}
+	if children, ok := index.tree[dir]; !ok {
+		return result
+	} else {
+		for _, v := range children {
+			filter(v)
+		}
+	}
+
+	return result
+}
+
 func (index Index) FilesWithPreviewStat() (int, uint32) {
 	count := 0
 	size := uint32(0)

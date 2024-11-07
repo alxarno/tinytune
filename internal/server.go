@@ -19,6 +19,7 @@ type source interface {
 	PullChildren(string) ([]*index.IndexMeta, error)
 	PullPreview(string) ([]byte, error)
 	PullPaths(string) ([]*index.IndexMeta, error)
+	Search(string, string) []*index.IndexMeta
 }
 
 type server struct {
@@ -54,6 +55,33 @@ type PageData struct {
 	Zoom       string
 	Sorts      []string
 	ActiveSort string
+	Search     string
+}
+
+func applyCookies(r *http.Request, data PageData) PageData {
+	sorts := maps.Keys(getSorts())
+	slices.Sort(sorts)
+	data.Sorts = sorts
+
+	if cookie, err := r.Cookie("zoom"); err == nil {
+		data.Zoom = cookie.Value
+	} else {
+		data.Zoom = "medium"
+	}
+
+	if cookie, err := r.Cookie("sort"); err == nil {
+		if decodedValue, err := url.QueryUnescape(cookie.Value); err != nil {
+			data.ActiveSort = "Type"
+		} else {
+			data.ActiveSort = decodedValue
+		}
+	} else {
+		data.ActiveSort = "Type"
+	}
+	if s, ok := getSorts()[data.ActiveSort]; ok {
+		data.Items = s(data.Items)
+	}
+	return data
 }
 
 func (s *server) indexHandler() http.Handler {
@@ -72,30 +100,45 @@ func (s *server) indexHandler() http.Handler {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
+		data = applyCookies(r, data)
+		w.WriteHeader(http.StatusOK)
+		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
+	})
+}
 
-		sorts := maps.Keys(getSorts())
-		slices.Sort(sorts)
-		data.Sorts = sorts
-
-		if cookie, err := r.Cookie("zoom"); err == nil {
-			data.Zoom = cookie.Value
-		} else {
-			data.Zoom = "medium"
+func (s *server) searchHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Expose-Headers", "Hx-Push-Url")
+		w.Header().Set("HX-Push-Url", r.RequestURI)
+		err := error(nil)
+		data := PageData{
+			Items: []*index.IndexMeta{},
+			Path:  []*index.IndexMeta{},
+			Sorts: []string{},
 		}
+		params, _ := url.ParseQuery(r.URL.RawQuery)
+		data.Search = params.Get("query")
+		if data.Search == "" {
+			http.Redirect(w, r, "/", http.StatusNotFound)
+		}
+		if data.Search, err = url.QueryUnescape(data.Search); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		dirID := r.PathValue("dirID")
 
-		if cookie, err := r.Cookie("sort"); err == nil {
-			if decodedValue, err := url.QueryUnescape(cookie.Value); err != nil {
-				data.ActiveSort = "Type"
-			} else {
-				data.ActiveSort = decodedValue
+		if dirID != "" {
+			if data.Path, err = s.Source.PullPaths(r.PathValue("dirID")); err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				return
 			}
-		} else {
-			data.ActiveSort = "Type"
-		}
-		if s, ok := getSorts()[data.ActiveSort]; ok {
-			data.Items = s(data.Items)
 		}
 
+		data.Items = s.Source.Search(data.Search, dirID)
+		data.Path = append(data.Path, &index.IndexMeta{
+			Name: "Search",
+		})
+		data = applyCookies(r, data)
 		w.WriteHeader(http.StatusOK)
 		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
@@ -146,6 +189,8 @@ func NewServer(ctx context.Context, opts ...ServerOption) *server {
 	staticHandler := http.StripPrefix("/static", http.FileServer(http.Dir("./web/assets/")))
 	mux.Handle("GET /", chain.Then(server.indexHandler()))
 	mux.Handle("GET /d/{dirID}/", chain.Then(server.indexHandler()))
+	mux.Handle("GET /s", chain.Then(server.searchHandler()))
+	mux.Handle("GET /s/{dirID}/", chain.Then(server.searchHandler()))
 	mux.Handle("GET /preview/{fileID}/", chain.Then(server.previewHandler()))
 	mux.Handle("GET /origin/{fileID}/", chain.Then(server.originHandler()))
 	mux.Handle("GET /static/", chain.Then(staticHandler))
