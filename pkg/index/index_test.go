@@ -18,7 +18,7 @@ import (
 func TestIndexEncodeDecode(t *testing.T) {
 	indexOriginal, err := NewIndex(nil)
 	require.NoError(t, err)
-	indexOriginal.meta = map[string]IndexMeta{
+	indexOriginal.meta = map[string]*IndexMeta{
 		"5762029e772": {
 			Path:         "/home/test/",
 			Name:         "test",

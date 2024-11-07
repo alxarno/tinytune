@@ -1,6 +1,4 @@
-{{define "file-item"}}<li class="col">
-    <a href="#">
-        <figure class="figure dir-list-item">
+{{define "file-item"}}<figure class="figure dir-list-item">
             <svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" width="80" height="100" viewBox="0 0 24 24" version="1.1">
                 <g transform="translate(0 -1028.4)">
                     <path d="m5 1030.4c-1.1046 0-2 0.9-2 2v8 4 6c0 1.1 0.8954 2 2 2h14c1.105 0 2-0.9 2-2v-6-4-4l-6-6h-10z" fill="#D1D1D1"/>
@@ -9,7 +7,4 @@
                 </g>
             </svg>
             <figcaption class="figure-caption">{{ .Name }}</figcaption>
-        </figure>
-    </a>
-
-</li>{{end}}
+        </figure>{{end}}

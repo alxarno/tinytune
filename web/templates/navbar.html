@@ -7,10 +7,12 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item"><a href="#">Library</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Data</li>
+                    <ol class="breadcrumb" hx-boost="true">
+                        {{ $length := len . }}{{ if eq $length 0 }}<li class="breadcrumb-item active" aria-current="page">Home</li>{{ else }}
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>{{ end }}
+                        {{ range $i, $e := .}}
+                            {{if last $i $}}<li class="breadcrumb-item active" aria-current="page">{{ $e.Name }}</li> {{ else }}<li class="breadcrumb-item"><a href="/d/{{ $e.ID }}">{{ $e.Name }}</a></li> {{ end }}
+                        {{ end }}
                     </ol>
                 </li>
             </ul>

@@ -1,11 +1,7 @@
-{{define "image-item"}}<li class="col">
-    <a href="#">
-        <figure class="figure dir-list-item">
+{{define "image-item"}}<a href="#"><figure class="figure dir-list-item">
             <div class="wrap">
                 <div class="spacer"></div>
                 <img src="/preview/{{ .ID }}" class="figure-img img-fluid rounded" alt="{{ .Name }}">
             </div>
             <figcaption class="figure-caption">{{ .Name }}</figcaption>
-        </figure>
-    </a>
-</li>{{end}}
+        </figure></a>{{end}}

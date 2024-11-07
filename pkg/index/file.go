@@ -13,10 +13,10 @@ type fileProcessor struct {
 	idPass    fileIDPass
 	semaphore *semaphore.Weighted
 	waitGroup *sync.WaitGroup
-	ch        chan *fileProcessorResult
+	ch        chan fileProcessorResult
 }
 type fileProcessorResult struct {
-	meta IndexMeta
+	meta *IndexMeta
 	data []byte
 }
 
@@ -53,7 +53,7 @@ func withWaitGroup(wg *sync.WaitGroup) fileProcessorOption {
 	}
 }
 
-func withChan(ch chan *fileProcessorResult) fileProcessorOption {
+func withChan(ch chan fileProcessorResult) fileProcessorOption {
 	return func(fp *fileProcessor) {
 		fp.ch = ch
 	}
@@ -69,7 +69,7 @@ func processFile(f FileMeta, opts ...fileProcessorOption) (*fileProcessorResult,
 		slog.Error("processFile", err.Error(), slog.String("file", f.Path()))
 	}
 	if processor.ch != nil && result != nil {
-		processor.ch <- result
+		processor.ch <- *result
 	}
 	if processor.semaphore != nil {
 		processor.semaphore.Release(1)
@@ -105,5 +105,5 @@ func (fp *fileProcessor) run(f FileMeta) (*fileProcessorResult, error) {
 	meta.Preview = IndexMetaPreview{
 		Length: uint32(len(data)),
 	}
-	return &fileProcessorResult{meta, data}, nil
+	return &fileProcessorResult{&meta, data}, nil
 }

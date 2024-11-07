@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"reflect"
 
 	"github.com/alxarno/tinytune/pkg/httputil"
 	"github.com/alxarno/tinytune/pkg/index"
@@ -13,8 +14,9 @@ import (
 )
 
 type source interface {
-	PullChildren(string) []index.IndexMeta
+	PullChildren(string) ([]*index.IndexMeta, error)
 	PullPreview(string) ([]byte, error)
+	PullPaths(string) ([]*index.IndexMeta, error)
 }
 
 type server struct {
@@ -23,8 +25,18 @@ type server struct {
 }
 
 func (s *server) LoadTemplates() {
+	funcs := template.FuncMap{
+		"last": func(x int, a interface{}) bool {
+			return x == reflect.ValueOf(a).Len()-1
+		},
+	}
 	s.Templates = make(map[string]*template.Template)
-	s.Templates["index.html"] = template.Must(template.ParseGlob("./web/templates/*.html"))
+	s.Templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseGlob("./web/templates/*.html"))
+}
+
+type PageData struct {
+	Items []*index.IndexMeta
+	Path  []*index.IndexMeta
 }
 
 func (s *server) indexHandler() http.Handler {
@@ -34,15 +46,32 @@ func (s *server) indexHandler() http.Handler {
 			fmt.Fprint(w, "404")
 			return
 		}
+		items, _ := s.Source.PullChildren("")
+		data := PageData{
+			Items: metaSortType(items),
+			Path:  []*index.IndexMeta{},
+		}
 		w.WriteHeader(http.StatusOK)
-		s.Templates["index.html"].ExecuteTemplate(w, "index", metaSortType(s.Source.PullChildren("")))
+		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
 }
 
 func (s *server) dirServeHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Dir %s!", r.PathValue("dirID"))
+		items, err := s.Source.PullChildren(r.PathValue("dirID"))
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404")
+			return
+		}
+		path, _ := s.Source.PullPaths(r.PathValue("dirID"))
+
+		data := PageData{
+			Items: metaSortType(items),
+			Path:  path,
+		}
+		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
 }
 
@@ -90,7 +119,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) *server {
 	chain := alice.New(httputil.LoggingHandler)
 	staticHandler := http.StripPrefix("/static", http.FileServer(http.Dir("./web/assets/")))
 	mux.Handle("GET /", chain.Then(server.indexHandler()))
-	mux.Handle("GET /dir/{dirID}/", chain.Then(server.dirServeHandler()))
+	mux.Handle("GET /d/{dirID}/", chain.Then(server.dirServeHandler()))
 	mux.Handle("GET /preview/{fileID}/", chain.Then(server.previewHandler()))
 	mux.Handle("GET /origin/{fileID}/", chain.Then(server.originHandler()))
 	mux.Handle("GET /static/", chain.Then(staticHandler))

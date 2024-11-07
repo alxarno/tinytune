@@ -50,7 +50,11 @@ body {
         flex-direction: column;
 
         > .figure-img{
-            margin-bottom: 0;
+            // margin-bottom: 0;
+            // object-fit: contain;
+            height: 100%;
+            width: fit-content;
+            margin: auto;
         }
         > .preview{
             margin-bottom: 0;

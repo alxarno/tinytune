@@ -56,7 +56,7 @@ func (index *Index) Decode(r io.Reader) error {
 		if err := decoder.Decode(&m); err != nil {
 			return err
 		}
-		index.meta[m.ID] = m
+		index.meta[m.ID] = &m
 	}
 	// read binary data
 	if index.data, err = io.ReadAll(r); err != nil {

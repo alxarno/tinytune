@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -14,12 +16,15 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+var NotFoundError = fmt.Errorf("not found")
+
 type PreviewGenerator func(string) (time.Duration, int, []byte, error)
 type IDGenerator func(m FileMeta) (string, error)
 
 type Index struct {
-	meta     map[string]IndexMeta
-	tree     map[string][]string
+	meta     map[string]*IndexMeta
+	tree     map[string][]*IndexMeta
+	paths    map[string]*IndexMeta
 	data     []byte
 	outDated bool
 	preview  PreviewGenerator
@@ -45,11 +50,12 @@ type FileMeta interface {
 func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 	index := Index{
 		data:     []byte{},
-		meta:     map[string]IndexMeta{},
+		meta:     map[string]*IndexMeta{},
 		preview:  func(string) (time.Duration, int, []byte, error) { return 0, ContentTypeOther, nil, nil },
 		id:       func(m FileMeta) (string, error) { return m.Path(), nil },
 		files:    []FileMeta{},
-		tree:     map[string][]string{},
+		tree:     map[string][]*IndexMeta{},
+		paths:    map[string]*IndexMeta{},
 		context:  context.Background(),
 		outDated: false,
 		progress: func() {},
@@ -72,6 +78,10 @@ func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 	}
 
 	if err := index.loadTree(); err != nil {
+		return index, err
+	}
+
+	if err := index.loadPaths(); err != nil {
 		return index, err
 	}
 	return index, nil
@@ -122,10 +132,10 @@ func (index Index) OutDated() bool {
 	return index.outDated
 }
 
-func (index Index) PullPreview(hash string) ([]byte, error) {
-	m, ok := index.meta[hash]
+func (index Index) PullPreview(id string) ([]byte, error) {
+	m, ok := index.meta[id]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, NotFoundError
 	}
 	if m.Preview.Length == 0 {
 		return nil, nil
@@ -133,8 +143,8 @@ func (index Index) PullPreview(hash string) ([]byte, error) {
 	return index.data[m.Preview.Offset : m.Preview.Offset+m.Preview.Length], nil
 }
 
-func (index Index) PullChildren(id string) []IndexMeta {
-	result := make([]IndexMeta, 0)
+func (index Index) PullChildren(id string) ([]*IndexMeta, error) {
+	result := make([]*IndexMeta, 0)
 
 	// return root children
 	if id == "" {
@@ -143,19 +153,36 @@ func (index Index) PullChildren(id string) []IndexMeta {
 				result = append(result, m)
 			}
 		}
-		return result
+		return result, nil
 	}
 
-	childrenIds := []string{}
 	if children, ok := index.tree[id]; ok {
-		childrenIds = children
+		result = children
+	} else {
+		return nil, NotFoundError
 	}
-	for _, id := range childrenIds {
-		if m, ok := index.meta[id]; ok {
-			result = append(result, m)
-		}
+	return result, nil
+}
+
+func (index Index) PullPaths(id string) ([]*IndexMeta, error) {
+	result := []*IndexMeta{}
+	m, ok := index.meta[id]
+	if !ok || !m.IsDir {
+		return nil, NotFoundError
 	}
-	return result
+	paths := strings.Split(m.RelativePath, string(os.PathSeparator))
+	subDirs := []string{}
+	slices.Reverse(paths)
+	for i, v := range paths {
+		buff := paths[i+1:]
+		subDirectory := filepath.Join(append(buff, v)...)
+		subDirs = append(subDirs, subDirectory)
+	}
+	slices.Reverse(subDirs)
+	for _, v := range subDirs {
+		result = append(result, index.paths[v])
+	}
+	return result, nil
 }
 
 func (index Index) FilesWithPreviewStat() (int, uint32) {
@@ -173,7 +200,7 @@ func (index Index) FilesWithPreviewStat() (int, uint32) {
 func (index *Index) loadFiles() error {
 	wg := new(sync.WaitGroup)
 	sem := semaphore.NewWeighted(int64(index.workers))
-	resultChannel := make(chan *fileProcessorResult, len(index.files))
+	resultChannel := make(chan fileProcessorResult, len(index.files))
 
 	for _, file := range index.files {
 		if err := sem.Acquire(index.context, 1); err != nil {
@@ -214,10 +241,10 @@ func (index *Index) loadFiles() error {
 }
 
 func (index *Index) loadTree() error {
-	index.tree["root"] = make([]string, 0)
+	index.tree["root"] = make([]*IndexMeta, 0)
 	for _, meta := range index.meta {
 		if filepath.Dir(meta.RelativePath) == "." {
-			index.tree["root"] = append(index.tree["root"], meta.ID)
+			index.tree["root"] = append(index.tree["root"], meta)
 		}
 		if !meta.IsDir {
 			continue
@@ -228,10 +255,17 @@ func (index *Index) loadTree() error {
 				continue
 			}
 			if _, ok := index.tree[meta.ID]; !ok {
-				index.tree[meta.ID] = make([]string, 0)
+				index.tree[meta.ID] = make([]*IndexMeta, 0)
 			}
-			index.tree[meta.ID] = append(index.tree[meta.ID], possibleChild.ID)
+			index.tree[meta.ID] = append(index.tree[meta.ID], possibleChild)
 		}
+	}
+	return nil
+}
+
+func (index *Index) loadPaths() error {
+	for _, v := range index.meta {
+		index.paths[v.RelativePath] = v
 	}
 	return nil
 }

@@ -2,9 +2,9 @@
 <html lang="en">
     {{template "head" .}}
     <body>
-        {{ template "navbar" .}}
-        <div class="container-xl wrapper">
-            {{template "dir" .}}
+        {{ template "navbar" .Path }}
+        <div class="container-xl wrapper" id="content">
+            {{template "dir" .Items }}
         </div>
     </body>
 </html>{{end}}
