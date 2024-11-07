@@ -1,6 +1,7 @@
 @use 'bootstrap';
 @use 'variables';
 @use 'dir';
+@use 'zoom';
 
 body {
     background-color: variables.$background-color;
@@ -50,8 +51,6 @@ body {
         flex-direction: column;
 
         > .figure-img{
-            // margin-bottom: 0;
-            // object-fit: contain;
             height: 100%;
             width: fit-content;
             margin: auto;

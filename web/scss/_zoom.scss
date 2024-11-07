@@ -1,0 +1,63 @@
+.zoom-xs{
+    .dir-list-item {
+        width: 100px;
+
+        > svg {
+            width: 40px;
+            height: 60px;
+        }
+
+        > .wrap {
+            width: 100px;
+            height: 60px;
+        }
+    }
+}
+
+.zoom-small{
+    .dir-list-item {
+        width: 120px;
+
+        > svg {
+            width: 60px;
+            height: 80px;
+        }
+
+        > .wrap {
+            width: 120px;
+            height: 80px;
+        }
+    }
+}
+
+.zoom-large{
+    .dir-list-item {
+        width: 160px;
+
+        > svg {
+            width: 80px;
+            height: 120px;
+        }
+
+        > .wrap {
+            width: 160px;
+            height: 120px;
+        }
+    }
+}
+
+.zoom-xl{
+    .dir-list-item {
+        width: 180px;
+
+        > svg {
+            width: 80px;
+            height: 130px;
+        }
+
+        > .wrap {
+            width: 180px;
+            height: 130px;
+        }
+    }
+}

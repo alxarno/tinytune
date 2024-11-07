@@ -24,7 +24,7 @@ type server struct {
 	Source    source
 }
 
-func (s *server) LoadTemplates() {
+func (s *server) loadTemplates() {
 	funcs := template.FuncMap{
 		"last": func(x int, a interface{}) bool {
 			return x == reflect.ValueOf(a).Len()-1
@@ -37,6 +37,7 @@ func (s *server) LoadTemplates() {
 type PageData struct {
 	Items []*index.IndexMeta
 	Path  []*index.IndexMeta
+	Zoom  string
 }
 
 func (s *server) indexHandler() http.Handler {
@@ -51,6 +52,12 @@ func (s *server) indexHandler() http.Handler {
 			Items: metaSortType(items),
 			Path:  []*index.IndexMeta{},
 		}
+		if cookie, err := r.Cookie("zoom"); err == nil {
+			data.Zoom = cookie.Value
+		} else {
+			data.Zoom = "medium"
+		}
+
 		w.WriteHeader(http.StatusOK)
 		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
@@ -58,7 +65,6 @@ func (s *server) indexHandler() http.Handler {
 
 func (s *server) dirServeHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
 		items, err := s.Source.PullChildren(r.PathValue("dirID"))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -71,6 +77,12 @@ func (s *server) dirServeHandler() http.Handler {
 			Items: metaSortType(items),
 			Path:  path,
 		}
+		if cookie, err := r.Cookie("zoom"); err == nil {
+			data.Zoom = cookie.Value
+		} else {
+			data.Zoom = "medium"
+		}
+		w.WriteHeader(http.StatusOK)
 		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
 }
@@ -105,7 +117,7 @@ func WithSource(source source) ServerOption {
 
 func NewServer(ctx context.Context, opts ...ServerOption) *server {
 	server := server{}
-	server.LoadTemplates()
+	server.loadTemplates()
 	for _, opt := range opts {
 		opt(&server)
 	}
