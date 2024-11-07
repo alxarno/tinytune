@@ -166,6 +166,9 @@ func (index Index) PullChildren(id string) ([]*IndexMeta, error) {
 
 func (index Index) PullPaths(id string) ([]*IndexMeta, error) {
 	result := []*IndexMeta{}
+	if id == "" {
+		return result, nil
+	}
 	m, ok := index.meta[id]
 	if !ok || !m.IsDir {
 		return nil, NotFoundError

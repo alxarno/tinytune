@@ -8,10 +8,10 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                     <ol class="breadcrumb" hx-boost="true">
-                        {{ $length := len . }}{{ if eq $length 0 }}<li class="breadcrumb-item active" aria-current="page">Home</li>{{ else }}
+                        {{ $length := len .Path }}{{ if eq $length 0 }}<li class="breadcrumb-item active" aria-current="page">Home</li>{{ else }}
                         <li class="breadcrumb-item"><a href="/">Home</a></li>{{ end }}
-                        {{ range $i, $e := .}}
-                            {{if last $i $}}<li class="breadcrumb-item active" aria-current="page">{{ $e.Name }}</li> {{ else }}<li class="breadcrumb-item"><a href="/d/{{ $e.ID }}">{{ $e.Name }}</a></li> {{ end }}
+                        {{ range $i, $e := .Path }}
+                            {{if eqMinusOne $i $length}}<li class="breadcrumb-item active" aria-current="page">{{ $e.Name }}</li> {{ else }}<li class="breadcrumb-item"><a href="/d/{{ $e.ID }}">{{ $e.Name }}</a></li> {{ end }}
                         {{ end }}
                     </ol>
                 </li>
@@ -38,12 +38,23 @@
                         <path fill-rule="evenodd" d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8"/>
                     </svg>
                 </button>
-                <button type="button" class="btn tiny-control">
+                <button type="button" class="btn tiny-control" data-bs-toggle="dropdown" aria-expanded="false" id="dropdownMenuButton1">
                     <svg class="me-1 sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-down-up" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5m-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5"/>
                     </svg>
                 </button>
+                <ul class="dropdown-menu dropdown-menu-select p-2" aria-labelledby="dropdownMenuButton1">
+                    {{ range $i, $e := .Sorts }}
+                        <li>
+                            <input class="form-check-input" type="radio" name="sort" id="radioSort-{{$i}}" value="{{ $e }}" onchange="onSort(this);" {{ if eq $e $.ActiveSort }}checked="checked"{{end}}>
+                            <label class="form-check-label" for="radioSort-{{$i}}">
+                                {{ $e }}
+                            </label>
+                        </li>
+                    {{ end }}
+                </ul>
             </div>
         </div>
     </div>
+
 </nav>{{end}}

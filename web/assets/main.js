@@ -9,7 +9,6 @@ const imageOnload = (id) => {
     if(imgHeight > wrap.clientHeight) {
         imgWidth = imgWidth * (wrap.clientHeight/imgHeight)
         imgHeight = wrap.clientHeight
-
     }
     img.style.height = imgHeight+"px";
     img.style.width = imgWidth+"px";
@@ -69,3 +68,8 @@ const zoom = {
         }
     },
 };
+
+const onSort = (radio) => {
+    Cookies.set('sort', radio.value);
+    htmx.ajax('GET', window.location.pathname)
+}

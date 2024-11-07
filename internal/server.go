@@ -6,11 +6,13 @@ import (
 	"html/template"
 	"net"
 	"net/http"
-	"reflect"
+	"net/url"
+	"slices"
 
 	"github.com/alxarno/tinytune/pkg/httputil"
 	"github.com/alxarno/tinytune/pkg/index"
 	"github.com/justinas/alice"
+	"golang.org/x/exp/maps"
 )
 
 type source interface {
@@ -24,10 +26,22 @@ type server struct {
 	Source    source
 }
 
+func getSorts() map[string]metaSortFunc {
+	m := map[string]metaSortFunc{
+		"A-Z":            metaSortAlphabet,
+		"Z-A":            metaSortAlphabetReverse,
+		"Last Modified":  metaSortLastModified,
+		"First Modified": metaSortFirstModified,
+		"Type":           metaSortType,
+		"Size":           metaSortSize,
+	}
+	return m
+}
+
 func (s *server) loadTemplates() {
 	funcs := template.FuncMap{
-		"last": func(x int, a interface{}) bool {
-			return x == reflect.ValueOf(a).Len()-1
+		"eqMinusOne": func(x int, y int) bool {
+			return x == y-1
 		},
 	}
 	s.Templates = make(map[string]*template.Template)
@@ -35,53 +49,53 @@ func (s *server) loadTemplates() {
 }
 
 type PageData struct {
-	Items []*index.IndexMeta
-	Path  []*index.IndexMeta
-	Zoom  string
+	Items      []*index.IndexMeta
+	Path       []*index.IndexMeta
+	Zoom       string
+	Sorts      []string
+	ActiveSort string
 }
 
 func (s *server) indexHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "404")
-			return
-		}
-		items, _ := s.Source.PullChildren("")
+		err := error(nil)
 		data := PageData{
-			Items: metaSortType(items),
+			Items: []*index.IndexMeta{},
 			Path:  []*index.IndexMeta{},
+			Sorts: []string{},
 		}
-		if cookie, err := r.Cookie("zoom"); err == nil {
-			data.Zoom = cookie.Value
-		} else {
-			data.Zoom = "medium"
-		}
-
-		w.WriteHeader(http.StatusOK)
-		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
-	})
-}
-
-func (s *server) dirServeHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		items, err := s.Source.PullChildren(r.PathValue("dirID"))
-		if err != nil {
+		if data.Items, err = s.Source.PullChildren(r.PathValue("dirID")); err != nil {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "404")
 			return
 		}
-		path, _ := s.Source.PullPaths(r.PathValue("dirID"))
-
-		data := PageData{
-			Items: metaSortType(items),
-			Path:  path,
+		if data.Path, err = s.Source.PullPaths(r.PathValue("dirID")); err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
 		}
+
+		sorts := maps.Keys(getSorts())
+		slices.Sort(sorts)
+		data.Sorts = sorts
+
 		if cookie, err := r.Cookie("zoom"); err == nil {
 			data.Zoom = cookie.Value
 		} else {
 			data.Zoom = "medium"
 		}
+
+		if cookie, err := r.Cookie("sort"); err == nil {
+			if decodedValue, err := url.QueryUnescape(cookie.Value); err != nil {
+				data.ActiveSort = "Type"
+			} else {
+				data.ActiveSort = decodedValue
+			}
+		} else {
+			data.ActiveSort = "Type"
+		}
+		if s, ok := getSorts()[data.ActiveSort]; ok {
+			data.Items = s(data.Items)
+		}
+
 		w.WriteHeader(http.StatusOK)
 		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
@@ -131,7 +145,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) *server {
 	chain := alice.New(httputil.LoggingHandler)
 	staticHandler := http.StripPrefix("/static", http.FileServer(http.Dir("./web/assets/")))
 	mux.Handle("GET /", chain.Then(server.indexHandler()))
-	mux.Handle("GET /d/{dirID}/", chain.Then(server.dirServeHandler()))
+	mux.Handle("GET /d/{dirID}/", chain.Then(server.indexHandler()))
 	mux.Handle("GET /preview/{fileID}/", chain.Then(server.previewHandler()))
 	mux.Handle("GET /origin/{fileID}/", chain.Then(server.originHandler()))
 	mux.Handle("GET /static/", chain.Then(staticHandler))
