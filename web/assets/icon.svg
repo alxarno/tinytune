@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="200mm"
+   height="200mm"
+   viewBox="0 0 200 200"
+   version="1.1"
+   id="svg1"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient1">
+      <stop
+         style="stop-color:#007c2f;stop-opacity:1;"
+         offset="0"
+         id="stop1" />
+      <stop
+         style="stop-color:#0dd354;stop-opacity:1;"
+         offset="1"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient1"
+       id="linearGradient2"
+       x1="159.46385"
+       y1="233.86707"
+       x2="50.53606"
+       y2="66.132973"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-5,-50)">
+    <rect
+       style="fill:url(#linearGradient2);stroke-width:105.165;stroke-dasharray:none;paint-order:stroke fill markers"
+       id="rect1"
+       width="200"
+       height="200"
+       x="5"
+       y="50" />
+    <g
+       id="text2"
+       style="font-size:466.667px;line-height:1.7;letter-spacing:0.9px;white-space:pre;fill:#000000;fill-opacity:1;stroke-width:1.00157"
+       transform="scale(0.26458333)"
+       aria-label="TT">
+      <path
+         style="font-weight:bold;font-family:Roboto;-inkscape-font-specification:'Roboto Bold';text-align:center;text-anchor:middle;opacity:0.695584;fill:#000000;fill-opacity:1"
+         d="M 427.60651,431.14536 H 325.97883 V 707.54529 H 257.61941 V 431.14536 H 157.35893 v -55.37113 h 270.24758 z"
+         id="path22" />
+      <path
+         style="font-weight:bold;font-size:333.333px;font-family:Roboto;-inkscape-font-specification:'Roboto Bold';opacity:0.695584;fill:#000000;fill-opacity:1"
+         d="M 637.39303,510.1171 H 564.80195 V 707.54529 H 515.97387 V 510.1171 h -71.61451 v -39.55074 h 193.03367 z"
+         id="path23" />
+    </g>
+  </g>
+</svg>
