@@ -96,11 +96,31 @@ const highlightSearchResults = () => {
     const labels =  Array.from(document.getElementsByClassName("figure-caption"))
     labels.forEach((element) => {
         const start = element.textContent.indexOf(searchInput.value)
-        const htmlValue = `${element.textContent.substring(0, start)}<span class="bg-primary text-dark rounded-1">${element.textContent.substring(start, start + searchInput.value.length)}</span>${element.textContent.substring(start + searchInput.value.length)}`
+        const startElement = element.textContent.substring(0, start)
+        const highlightedElement = element.textContent.substring(start, start + searchInput.value.length)
+        const endElement = element.textContent.substring(start + searchInput.value.length)
+        const htmlValue = `${startElement}<span class="bg-primary text-dark rounded-1">${highlightedElement}</span>${endElement}`
         element.innerHTML = htmlValue
     })
 }
 
 window.onload = () => {
     highlightSearchResults()
+    // const lightBoxOptions = {
+    //     keyboard: true,
+    //     size: 'fullscreen'
+    // };
+    // const updateLightBoxHandlers = () => {
+    //     document.querySelectorAll('.image-lightbox').forEach(el => el.addEventListener('click', (e) => {
+    //         e.preventDefault();
+    //         console.log(e, history)
+    //         // history.replaceState({},"", e.target.href)
+    //         const lightbox = new Lightbox(el, lightBoxOptions);
+    //         lightbox.show();
+    //     }));
+    // }
+    // document.addEventListener('htmx:afterSettle', () => {
+    //     updateLightBoxHandlers()
+    // })
+    // updateLightBoxHandlers()
 }

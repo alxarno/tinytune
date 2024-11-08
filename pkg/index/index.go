@@ -13,12 +13,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alxarno/tinytune/pkg/preview"
 	"golang.org/x/sync/semaphore"
 )
 
 var NotFoundError = fmt.Errorf("not found")
 
-type PreviewGenerator func(string) (time.Duration, int, []byte, error)
+type PreviewGenerator func(string) (preview.PreviewData, error)
 type IDGenerator func(m FileMeta) (string, error)
 
 type Index struct {
@@ -48,10 +49,11 @@ type FileMeta interface {
 }
 
 func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
+	defaultPreview := preview.PreviewData{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: nil}
 	index := Index{
 		data:     []byte{},
 		meta:     map[string]*IndexMeta{},
-		preview:  func(string) (time.Duration, int, []byte, error) { return 0, ContentTypeOther, nil, nil },
+		preview:  func(string) (preview.PreviewData, error) { return defaultPreview, nil },
 		id:       func(m FileMeta) (string, error) { return m.Path(), nil },
 		files:    []FileMeta{},
 		tree:     map[string][]*IndexMeta{},
@@ -87,7 +89,7 @@ func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 	return index, nil
 }
 
-func WithPreview(f func(path string) (time.Duration, int, []byte, error)) IndexOption {
+func WithPreview(f func(string) (preview.PreviewData, error)) IndexOption {
 	return func(i *Index) {
 		i.preview = f
 	}
@@ -130,6 +132,14 @@ func WithWorkers(w int) IndexOption {
 }
 func (index Index) OutDated() bool {
 	return index.outDated
+}
+
+func (index Index) Pull(id string) (*IndexMeta, error) {
+	if m, ok := index.meta[id]; !ok {
+		return nil, NotFoundError
+	} else {
+		return m, nil
+	}
 }
 
 func (index Index) PullPreview(id string) ([]byte, error) {

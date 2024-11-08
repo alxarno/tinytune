@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/httputil"
@@ -20,6 +23,7 @@ type source interface {
 	PullChildren(string) ([]*index.IndexMeta, error)
 	PullPreview(string) ([]byte, error)
 	PullPaths(string) ([]*index.IndexMeta, error)
+	Pull(string) (*index.IndexMeta, error)
 	Search(string, string) []*index.IndexMeta
 }
 
@@ -42,6 +46,12 @@ func getSorts() map[string]metaSortFunc {
 
 func (s *server) loadTemplates() {
 	funcs := template.FuncMap{
+		"width": func(res string) string {
+			return strings.Split(res, "x")[0]
+		},
+		"height": func(res string) string {
+			return strings.Split(res, "x")[1]
+		},
 		"eqMinusOne": func(x int, y int) bool {
 			return x == y-1
 		},
@@ -169,8 +179,22 @@ func (s *server) previewHandler() http.Handler {
 
 func (s *server) originHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		meta, err := s.Source.Pull(r.PathValue("fileID"))
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404")
+			return
+		}
+		f, err := os.Open(meta.Path)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 File might be deleted")
+			return
+		}
+		defer f.Close()
+
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Origin %s!", r.PathValue("fileID"))
+		io.Copy(w, f)
 	})
 }
 

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alxarno/tinytune/pkg/preview"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,8 +48,8 @@ func TestIndexEncodeDecode(t *testing.T) {
 	buff := new(bytes.Buffer)
 	wrote, err := indexOriginal.Encode(buff)
 	assert.NoError(t, err)
-	assert.EqualValues(t, 464, wrote)
-	assert.EqualValues(t, 464, buff.Len())
+	assert.EqualValues(t, 480, wrote)
+	assert.EqualValues(t, 480, buff.Len())
 	// Parse
 	indexDerivative, err := NewIndex(bufio.NewReader(buff))
 	require.NoError(t, err)
@@ -97,7 +98,9 @@ func TestIndexFiles(t *testing.T) {
 	index, err := NewIndex(
 		nil,
 		WithFiles(filesMeta),
-		WithPreview(func(path string) (time.Duration, int, []byte, error) { return 0, ContentTypeOther, sampleData, nil }),
+		WithPreview(func(path string) (preview.PreviewData, error) {
+			return preview.PreviewData{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: sampleData}, nil
+		}),
 		WithID(func(p FileMeta) (string, error) {
 			return fmt.Sprintf("%s%s", p.RelativePath(), p.ModTime()), nil
 		}),

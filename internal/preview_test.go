@@ -23,13 +23,13 @@ func TestPreview(t *testing.T) {
 		previewer, err := NewPreviewer(WithImagePreview(), WithVideoPreview())
 		require.NoError(t, err)
 		t.Run(filepath.Ext(tc.path), func(tt *testing.T) {
-			_, _, preview, err := previewer.Pull(tc.path)
+			preview, err := previewer.Pull(tc.path)
 			assert.NoError(tt, err)
-			assert.Equal(tt, preview == nil, tc.resultIsNil)
+			assert.Equal(tt, preview.Data == nil, tc.resultIsNil)
 			if tc.resultIsNil {
 				return
 			}
-			hash, err := SHA256Hash(bytes.NewReader(preview))
+			hash, err := SHA256Hash(bytes.NewReader(preview.Data))
 			assert.NoError(tt, err)
 			assert.Equal(tt, tc.resultHash, hash)
 		})

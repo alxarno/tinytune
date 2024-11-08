@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/index"
+	"github.com/alxarno/tinytune/pkg/preview"
 )
 
 type previewer struct {
@@ -53,18 +54,18 @@ func NewPreviewer(opts ...PreviewerOption) (*previewer, error) {
 	return preview, nil
 }
 
-func (p previewer) Pull(path string) (time.Duration, int, []byte, error) {
+func (p previewer) Pull(path string) (preview.PreviewData, error) {
 	ext := filepath.Ext(path)
 	if len(ext) < 2 {
-		return 0, index.ContentTypeOther, nil, nil
+		return preview.PreviewData{ContentType: index.ContentTypeOther}, nil
 	}
 	if slices.Contains(p.imageFormats, ext[1:]) && p.imagePreview {
-		data, err := ImagePreview(path)
-		return 0, index.ContentTypeImage, data, err
+		resolution, data, _ := ImagePreview(path)
+		return preview.PreviewData{ContentType: index.ContentTypeImage, Data: data, Resolution: resolution}, nil
 	}
 	if slices.Contains(p.videoFormats, ext[1:]) && p.videoPreview {
-		data, duration, err := VideoPreview(path, p.videoParams)
-		return duration, index.ContentTypeVideo, data, err
+		data, duration, _ := VideoPreview(path, p.videoParams)
+		return preview.PreviewData{Duration: duration, ContentType: index.ContentTypeVideo, Data: data}, nil
 	}
-	return 0, index.ContentTypeOther, nil, nil
+	return preview.PreviewData{ContentType: index.ContentTypeOther}, nil
 }

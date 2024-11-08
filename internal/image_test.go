@@ -8,9 +8,10 @@ import (
 )
 
 func TestPreviewImage(t *testing.T) {
-	previewBytes, err := ImagePreview("../test/image.jpg")
+	resolution, previewBytes, err := ImagePreview("../test/image.jpg")
 	assert.NoError(t, err)
 	assert.EqualValues(t, 8620, len(previewBytes))
+	assert.Equal(t, "1527x898", resolution)
 	r := bytes.NewReader(previewBytes)
 	hash, err := SHA256Hash(r)
 	assert.NoError(t, err)

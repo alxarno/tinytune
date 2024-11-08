@@ -1,7 +1,7 @@
-{{define "image-item"}}<a href="#"><figure class="figure dir-list-item">
+{{define "image-item"}}<a href="/origin/{{ .ID }}" class="image-lightbox" hx-boost="false" data-pswp-width="{{ width .Resolution }}" data-pswp-height="{{ height .Resolution }}"><figure class="figure dir-list-item">
             <div class="wrap">
                 <div class="spacer"></div>
-                <img loading="lazy" src="/preview/{{ .ID }}" id="img-{{.ID}}" class="figure-img img-fluid rounded" alt="{{ .Name }}" hx-preserve>
+                <img src="/preview/{{ .ID }}" id="img-{{.ID}}" class="figure-img img-fluid rounded" alt="{{ .Name }}" hx-preserve>
             </div>
             <figcaption class="figure-caption">{{ .Name }}</figcaption>
         </figure></a>{{end}}

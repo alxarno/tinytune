@@ -19,6 +19,7 @@ type IndexMeta struct {
 	IsDir        bool
 	Preview      IndexMetaPreview
 	Duration     time.Duration
+	Resolution   string
 	Type         int
 }
 

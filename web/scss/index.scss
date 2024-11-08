@@ -67,6 +67,7 @@ body {
             margin-bottom: 0;
             object-fit: cover;
             width: 100%;
+            height: 100%;
             object-position: center 0%;
 
             &:hover {
@@ -117,4 +118,8 @@ a:visited > .dir-list-item{
     right: 0;
     bottom: 0;
     margin: 5px;
+}
+
+.carousel-item{
+    transition: none;
 }

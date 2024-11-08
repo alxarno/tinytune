@@ -21,23 +21,24 @@ func init() {
 	})
 }
 
-func ImagePreview(path string) ([]byte, error) {
+func ImagePreview(path string) (string, []byte, error) {
 	image, err := vips.NewImageFromFile(path)
 	if err != nil {
 		panic(err)
 	}
 	defer image.Close()
 	scale := 1.0
+	originalResolution := fmt.Sprintf("%dx%d", image.Width(), image.Height())
 	if image.Width() > MAX_WIDTH_HEIGHT || image.Height() > MAX_WIDTH_HEIGHT {
 		scale = float64(MAX_WIDTH_HEIGHT) / float64(max(image.Width(), image.Height()))
 	}
 	if err = image.Resize(scale, vips.KernelLanczos2); err != nil {
-		return nil, err
+		return "0x0", nil, err
 	}
 	ep := vips.NewWebpExportParams()
 	bytes, _, err := image.ExportWebp(ep)
 	if err != nil {
-		return nil, err
+		return "0x0", nil, err
 	}
-	return bytes, nil
+	return originalResolution, bytes, nil
 }

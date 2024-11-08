@@ -96,14 +96,15 @@ func (fp *fileProcessor) run(f FileMeta) (*fileProcessorResult, error) {
 		IsDir:        f.IsDir(),
 		ID:           id,
 	}
-	duration, t, data, err := fp.preview(meta.Path)
+	preview, err := fp.preview(meta.Path)
 	if err != nil {
 		return nil, err
 	}
-	meta.Duration = duration
-	meta.Type = t
+	meta.Duration = preview.Duration
+	meta.Type = preview.ContentType
+	meta.Resolution = preview.Resolution
 	meta.Preview = IndexMetaPreview{
-		Length: uint32(len(data)),
+		Length: uint32(len(preview.Data)),
 	}
-	return &fileProcessorResult{&meta, data}, nil
+	return &fileProcessorResult{&meta, preview.Data}, nil
 }
