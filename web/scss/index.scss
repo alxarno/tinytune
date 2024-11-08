@@ -43,6 +43,13 @@ body {
         margin-top: 1rem;
         color: white;
         font-size: 1rem;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        display: -webkit-box;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 
     > .wrap {
@@ -89,7 +96,7 @@ body {
             height: 100%;
             width: 100%;
         }
-    } 
+    }
 }
 
 
