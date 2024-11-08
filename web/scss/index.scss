@@ -92,3 +92,10 @@ body {
     } 
 }
 
+
+a:visited > .dir-list-item{
+    > figure > .figure-caption,
+    > .figure-caption {
+        color: #b1c5b1;
+    }
+}
