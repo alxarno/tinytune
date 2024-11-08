@@ -1,7 +1,7 @@
 {{define "image-item"}}<a href="#"><figure class="figure dir-list-item">
             <div class="wrap">
                 <div class="spacer"></div>
-                <img src="/preview/{{ .ID }}" id="img-{{.ID}}" class="figure-img img-fluid rounded" alt="{{ .Name }}" hx-preserve>
+                <img loading="lazy" src="/preview/{{ .ID }}" id="img-{{.ID}}" class="figure-img img-fluid rounded" alt="{{ .Name }}" hx-preserve>
             </div>
             <figcaption class="figure-caption">{{ .Name }}</figcaption>
         </figure></a>{{end}}
