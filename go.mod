@@ -9,6 +9,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/davidbyttow/govips/v2 v2.15.0 // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/justinas/alice v1.2.0 // indirect
 	github.com/lmittmann/tint v1.0.5 // indirect

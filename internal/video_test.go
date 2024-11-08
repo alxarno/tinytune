@@ -3,15 +3,16 @@ package internal
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPreviewVideo(t *testing.T) {
-	data, err := VideoPreview("../test/sample.mp4", 0)
+	data, err := VideoPreview("../test/sample.mp4", videoParams{timeout: time.Minute})
 	assert.NoError(t, err)
-	assert.EqualValues(t, 107974, len(data))
+	assert.EqualValues(t, 93774, len(data))
 	hash, err := SHA256Hash(bytes.NewReader(data))
 	assert.NoError(t, err)
-	assert.Equal(t, "b29ec13ece50f8343604a26f83216153f3ea58f038d00e1fae9e4461c6c36313", hash)
+	assert.Equal(t, "913e1f20eb400f3a13aa043005204ef53e0883c122086b96d94a2b6279ec008e", hash)
 }

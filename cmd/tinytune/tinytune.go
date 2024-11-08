@@ -75,15 +75,21 @@ func start(c config) {
 		indexFileReader = nil
 	}
 	slog.Info("Indexing started")
+	previewer, err := internal.NewPreviewer(
+		internal.WithImagePreview(),
+		internal.WithVideoPreview(),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 	indexProgressBar := internal.Bar(len(files), "Processing ...")
 	indexNewFiles := 0
 	index, err := index.NewIndex(
 		indexFileReader,
 		index.WithID(idGenerator),
 		index.WithFiles(files),
-		index.WithPreview(internal.GeneratePreview),
+		index.WithPreview(previewer.Pull),
 		index.WithWorkers(runtime.NumCPU()),
-		// index.WithWorkers(6),
 		index.WithContext(ctx),
 		index.WithProgress(func() { indexProgressBar.Add(1) }),
 		index.WithNewFiles(func() { indexNewFiles++ }))

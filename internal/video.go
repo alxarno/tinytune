@@ -6,8 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/hashicorp/go-version"
 )
 
 type probeFormat struct {
@@ -21,6 +25,11 @@ type probeStream struct {
 type probeData struct {
 	Format  probeFormat   `json:"format"`
 	Streams []probeStream `json:"streams"`
+}
+
+type videoParams struct {
+	device  string
+	timeout time.Duration
 }
 
 func probeOutputFrames(a string) (float64, error) {
@@ -40,8 +49,8 @@ func probeOutputFrames(a string) (float64, error) {
 	return f, nil
 }
 
-func VideoPreview(path string, timeOut time.Duration) ([]byte, error) {
-	metaJson, err := videoProbe(path, timeOut)
+func VideoPreview(path string, params videoParams) ([]byte, error) {
+	metaJson, err := videoProbe(path, params.timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +64,19 @@ func VideoPreview(path string, timeOut time.Duration) ([]byte, error) {
 		previewSelectString += fmt.Sprintf("+eq(n\\,%d)", v)
 	}
 	ctx := context.Background()
-	if timeOut > 0 {
+	if params.timeout > 0 {
 		var cancel func()
-		ctx, cancel = context.WithTimeout(context.Background(), timeOut)
+		ctx, cancel = context.WithTimeout(context.Background(), params.timeout)
 		defer cancel()
 	}
-	cmd := exec.CommandContext(ctx, "ffmpeg", "-y", "-vsync", "0", "-hwaccel", "cuda", "-i", path, "-frames", "1", "-vf", fmt.Sprintf(`select=%s,scale=w='min(512\, iw*3/2):h=-1',tile=1x5`, previewSelectString), "-f", "image2", "pipe:1")
+	commandArgs := []string{"-y", "-vsync", "0"}
+	if params.device != "" {
+		commandArgs = append(commandArgs, []string{"-hwaccel", params.device}...)
+	}
+	commandArgs = append(commandArgs, []string{"-i", path, "-frames", "1", "-vf", fmt.Sprintf(`select=%s,scale=w='min(512\, iw*3/2):h=-1',tile=1x5`, previewSelectString)}...)
+	commandArgs = append(commandArgs, []string{"-f", "image2", "pipe:1"}...)
+
+	cmd := exec.CommandContext(ctx, "ffmpeg", commandArgs...)
 	buf := bytes.NewBuffer(nil)
 	stdErrBuf := bytes.NewBuffer(nil)
 	cmd.Stdout = buf
@@ -89,4 +105,67 @@ func videoProbe(path string, timeOut time.Duration) (string, error) {
 		return "", fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
 	}
 	return buf.String(), nil
+}
+
+func ProcessorProbe() error {
+	if err := probeFFmpeg("ffmpeg"); err != nil {
+		return err
+	}
+	if err := probeFFmpeg("ffprobe"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func probeFFmpeg(com string) error {
+	ctx := context.Background()
+	cmd := exec.CommandContext(ctx, "bash", "-c", com+" -version | sed -n \"s/"+com+" version \\([-0-9.]*\\).*/\\1/p;\"")
+	buf := bytes.NewBuffer(nil)
+	stdErrBuf := bytes.NewBuffer(nil)
+	cmd.Stdout = buf
+	cmd.Stderr = stdErrBuf
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
+	}
+	if buf.Len() == 0 {
+		return fmt.Errorf("'%s': command not found", com)
+	}
+	clearVersion := strings.TrimSuffix(strings.TrimSuffix(buf.String(), "\n"), "-0")
+	required, _ := version.NewVersion("4.4.2")
+	existed, err := version.NewVersion(clearVersion)
+	if err != nil {
+		return fmt.Errorf("existed version(%s) of %s can't be parsed", buf.String(), com)
+	}
+	if existed.LessThan(required) {
+		return fmt.Errorf("existed version(%s) of %s is less then recommend(%s)", existed.String(), com, required.String())
+	}
+	return nil
+}
+
+func PullVideoParams() (videoParams, error) {
+	result := videoParams{}
+	ctx := context.Background()
+	cmd := exec.CommandContext(ctx, "ffmpeg", "-hwaccels")
+	buf := bytes.NewBuffer(nil)
+	stdErrBuf := bytes.NewBuffer(nil)
+	cmd.Stdout = buf
+	cmd.Stderr = stdErrBuf
+	err := cmd.Run()
+	if err != nil {
+		return result, fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
+	}
+	accelerators := strings.Split(strings.Split(buf.String(), "Hardware acceleration methods:")[1], "\n")
+	if slices.Contains(accelerators, "cuda") {
+		result.device = "cuda"
+	} else if slices.Contains(accelerators, "dxva2") {
+		result.device = "dxva2"
+	} else if slices.Contains(accelerators, "vaapi") {
+		result.device = "vaapi"
+	} else if slices.Contains(accelerators, "vdpau") {
+		result.device = "vdpau"
+	} else if slices.Contains(accelerators, "d3d11va") {
+		result.device = "d3d11va"
+	}
+	return result, nil
 }
