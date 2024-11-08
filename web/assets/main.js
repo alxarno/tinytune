@@ -1,5 +1,6 @@
 const imageOnload = (id) => {
     const img = document.getElementById(`video-${id}`);
+    const duration = document.getElementById(`duration-${id}`)
     if(!img) return;
     const wrap = img.parentElement;
     const oneImageHeightFromThumbnail = img.naturalHeight / 5;
@@ -12,6 +13,7 @@ const imageOnload = (id) => {
     }
     img.style.height = imgHeight+"px";
     img.style.width = imgWidth+"px";
+    duration.style.right = (wrap.clientWidth - imgWidth) / 2 + "px"
 }
 
 const onZoomChanged = () => {

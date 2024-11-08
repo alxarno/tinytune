@@ -56,6 +56,7 @@ body {
         height: 100px;
         display: flex;
         flex-direction: column;
+        position: relative;
 
         > .figure-img{
             height: 100%;
@@ -66,7 +67,6 @@ body {
             margin-bottom: 0;
             object-fit: cover;
             width: 100%;
-            height: 0;
             object-position: center 0%;
 
             &:hover {
@@ -105,4 +105,16 @@ a:visited > .dir-list-item{
     > .figure-caption {
         color: #b1c5b1;
     }
+}
+
+.duration {
+    text-align: right;
+    padding: 0px 5px;
+    color: white;
+    background: rgba(0,0,0,0.8);
+    width: max-content;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 5px;
 }

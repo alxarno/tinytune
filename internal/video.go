@@ -32,31 +32,35 @@ type videoParams struct {
 	timeout time.Duration
 }
 
-func probeOutputFrames(a string) (float64, error) {
+func probeOutputFrames(a string) (float64, time.Duration, error) {
 	pd := probeData{}
 	err := json.Unmarshal([]byte(a), &pd)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	// if no frames count in metadata, then just use some default for 1 min video, 24fps
 	if len(pd.Streams) == 0 || pd.Streams[0].Frames == "" {
-		return 3000, nil
+		return 3000, 0, nil
 	}
 	f, err := strconv.ParseFloat(pd.Streams[0].Frames, 64)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return f, nil
+	seconds, err := strconv.ParseFloat(pd.Format.Duration, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	return f, time.Duration(seconds) * time.Second, nil
 }
 
-func VideoPreview(path string, params videoParams) ([]byte, error) {
+func VideoPreview(path string, params videoParams) ([]byte, time.Duration, error) {
 	metaJson, err := videoProbe(path, params.timeout)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	frames, err := probeOutputFrames(metaJson)
+	frames, duration, err := probeOutputFrames(metaJson)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	previewFrames := []int64{int64(frames * 0.2), int64(frames * 0.4), int64(frames * 0.6), int64(frames * 0.8)}
 	previewSelectString := "eq(n\\,0)"
@@ -83,9 +87,9 @@ func VideoPreview(path string, params videoParams) ([]byte, error) {
 	cmd.Stderr = stdErrBuf
 	err = cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
+		return nil, 0, fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
 	}
-	return buf.Bytes(), nil
+	return buf.Bytes(), duration, nil
 }
 
 func videoProbe(path string, timeOut time.Duration) (string, error) {

@@ -63,8 +63,8 @@ func (p previewer) Pull(path string) (time.Duration, int, []byte, error) {
 		return 0, index.ContentTypeImage, data, err
 	}
 	if slices.Contains(p.videoFormats, ext[1:]) && p.videoPreview {
-		data, err := VideoPreview(path, p.videoParams)
-		return 0, index.ContentTypeVideo, data, err
+		data, duration, err := VideoPreview(path, p.videoParams)
+		return duration, index.ContentTypeVideo, data, err
 	}
 	return 0, index.ContentTypeOther, nil, nil
 }

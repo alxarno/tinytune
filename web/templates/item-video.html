@@ -2,6 +2,7 @@
             <div class="wrap">
                 <div class="spacer"></div>
                 <img loading="lazy" src="/preview/{{ .ID }}" id="video-{{ .ID }}" class="figure-img img-fluid rounded preview" alt="{{ .Name }}" onload="imageOnload({{ .ID }})" hx-preserve>
+                <span class="duration rounded" id="duration-{{ .ID }}">{{ dur .Duration }}</span>
             </div>
             <figcaption class="figure-caption">{{ .Name }}</figcaption>
         </figure></a>{{end}}

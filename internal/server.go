@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"time"
 
 	"github.com/alxarno/tinytune/pkg/httputil"
 	"github.com/alxarno/tinytune/pkg/index"
@@ -43,6 +44,15 @@ func (s *server) loadTemplates() {
 	funcs := template.FuncMap{
 		"eqMinusOne": func(x int, y int) bool {
 			return x == y-1
+		},
+		"dur": func(d time.Duration) string {
+			result := ""
+			if int(d.Hours()) != 0 {
+				result += fmt.Sprintf("%02d:", int(d.Hours()))
+			}
+			result += fmt.Sprintf("%02d:", int(d.Minutes()))
+			result += fmt.Sprintf("%02d", int(d.Seconds()))
+			return result
 		},
 	}
 	s.Templates = make(map[string]*template.Template)
