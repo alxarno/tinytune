@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/alxarno/tinytune/pkg/preview"
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
@@ -21,24 +22,26 @@ func init() {
 	})
 }
 
-func ImagePreview(path string) (string, []byte, error) {
+func ImagePreview(path string) (preview.PreviewData, error) {
+	preview := preview.PreviewData{Resolution: "0x0"}
 	image, err := vips.NewImageFromFile(path)
 	if err != nil {
 		panic(err)
 	}
 	defer image.Close()
 	scale := 1.0
-	originalResolution := fmt.Sprintf("%dx%d", image.Width(), image.Height())
+	preview.Resolution = fmt.Sprintf("%dx%d", image.Width(), image.Height())
 	if image.Width() > MAX_WIDTH_HEIGHT || image.Height() > MAX_WIDTH_HEIGHT {
 		scale = float64(MAX_WIDTH_HEIGHT) / float64(max(image.Width(), image.Height()))
 	}
 	if err = image.Resize(scale, vips.KernelLanczos2); err != nil {
-		return "0x0", nil, err
+		return preview, err
 	}
 	ep := vips.NewWebpExportParams()
 	bytes, _, err := image.ExportWebp(ep)
 	if err != nil {
-		return "0x0", nil, err
+		return preview, err
 	}
-	return originalResolution, bytes, nil
+	preview.Data = bytes
+	return preview, nil
 }

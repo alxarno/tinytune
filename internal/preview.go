@@ -56,16 +56,25 @@ func NewPreviewer(opts ...PreviewerOption) (*previewer, error) {
 
 func (p previewer) Pull(path string) (preview.PreviewData, error) {
 	ext := filepath.Ext(path)
+	defaultPreview := preview.PreviewData{ContentType: index.ContentTypeOther}
 	if len(ext) < 2 {
-		return preview.PreviewData{ContentType: index.ContentTypeOther}, nil
+		return defaultPreview, nil
 	}
 	if slices.Contains(p.imageFormats, ext[1:]) && p.imagePreview {
-		resolution, data, _ := ImagePreview(path)
-		return preview.PreviewData{ContentType: index.ContentTypeImage, Data: data, Resolution: resolution}, nil
+		preview, err := ImagePreview(path)
+		if err != nil {
+			return defaultPreview, err
+		}
+		preview.ContentType = index.ContentTypeImage
+		return preview, nil
 	}
 	if slices.Contains(p.videoFormats, ext[1:]) && p.videoPreview {
-		data, duration, _ := VideoPreview(path, p.videoParams)
-		return preview.PreviewData{Duration: duration, ContentType: index.ContentTypeVideo, Data: data}, nil
+		preview, err := VideoPreview(path, p.videoParams)
+		if err != nil {
+			return defaultPreview, err
+		}
+		preview.ContentType = index.ContentTypeVideo
+		return preview, nil
 	}
-	return preview.PreviewData{ContentType: index.ContentTypeOther}, nil
+	return defaultPreview, nil
 }

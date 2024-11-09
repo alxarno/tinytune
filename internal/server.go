@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"slices"
 	"strings"
 	"time"
@@ -46,6 +47,13 @@ func getSorts() map[string]metaSortFunc {
 
 func (s *server) loadTemplates() {
 	funcs := template.FuncMap{
+		"ext": func(name string) string {
+			extension := path.Ext(name)
+			if extension != "" {
+				return extension[1:]
+			}
+			return ""
+		},
 		"width": func(res string) string {
 			return strings.Split(res, "x")[0]
 		},

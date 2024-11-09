@@ -5,17 +5,58 @@ const lightbox = new PhotoSwipeLightbox({
     children: 'li > .image-lightbox',
     pswpModule: PhotoSwipe
 });
-lightbox.init();
+const videoInit = () => {
+    const videoJSOptions = {
+        controls: true,
+        autoplay: false,
+        preload: 'metadata',
+        enableSmoothSeeking: true,
+        experimentalSvgIcons: true,
+    }
+    if (document.querySelector('.video-js')) {
+        videojs(document.querySelector('.video-js'), videoJSOptions);
+    }
+}
 lightbox.on('change', () => {
-    // triggers when slide is switched, and at initialization
-    const currentUrl = lightbox.pswp.currSlide.data.src;
-    const newUrl = `${window.location.origin}${window.location.pathname}#?item=${currentUrl.split("origin/")[1]}`
-    history.pushState({}, "", currentUrl);
-    history.pushState({}, "", newUrl);
+    videoInit()
 });
-lightbox.on('close', () => {
-    history.pushState({}, "", `${window.location.origin}${window.location.pathname}`);
+
+lightbox.on('bindEvents', () => {
+    videoInit()
 });
+lightbox.addFilter('itemData', (itemData, index) => {
+    if (itemData.element.dataset.pswpType == "video") {
+        itemData.src = itemData.element.getAttribute("href");
+        itemData.width = itemData.element.dataset.pswpWidth;
+        itemData.height = itemData.element.dataset.pswpHeight;
+        itemData.srcType = itemData.element.dataset.pswpSourceType;
+    }
+    return itemData
+});
+lightbox.on('contentLoad', (e) => {
+    const { content } = e;
+    if (content.type === 'video') {
+        e.preventDefault();
+
+        content.element = document.createElement('div');
+        content.element.className = 'pswp__video-container';
+
+        const video = document.createElement('video');
+        video.setAttribute("class", "video-js")
+        video.setAttribute("width", content.data.width)
+        video.setAttribute("height", content.data.height)
+
+        const source = document.createElement("source")
+        source.setAttribute("src", content.data.src)
+        source.setAttribute("type", content.data.srcType)
+        video.appendChild(source)
+
+        content.element.appendChild(video);
+    }
+});
+lightbox.init();
+
+
 
 window.onload = () => {
     document.addEventListener('htmx:afterSettle', () => {
