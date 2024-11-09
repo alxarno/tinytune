@@ -1,8 +1,9 @@
-@use 'bootstrap';
 @use 'variables';
+@use 'bootstrap';
 @use 'dir';
 @use 'zoom';
-
+@import '../node_modules/photoswipe/dist/photoswipe';
+@import '../node_modules/video.js/dist/video-js';
 body {
     background-color: variables.$background-color;
     font-family: variables.$font-family-sans-serif;

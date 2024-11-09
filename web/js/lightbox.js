@@ -1,5 +1,7 @@
-import PhotoSwipeLightbox from '/static/lightbox/photoswipe-lightbox.esm.min.js';
-import PhotoSwipe from '/static/lightbox/photoswipe.esm.min.js';
+import PhotoSwipeLightbox from 'photoswipe/lightbox';
+import PhotoSwipe from "photoswipe"
+import videojs from 'video.js';
+
 const lightbox = new PhotoSwipeLightbox({
     gallery: '#gallery--getting-started',
     children: 'li > .image-lightbox',
@@ -54,12 +56,5 @@ lightbox.on('contentLoad', (e) => {
         content.element.appendChild(video);
     }
 });
-lightbox.init();
 
-
-
-window.onload = () => {
-    document.addEventListener('htmx:afterSettle', () => {
-        lightbox.init();
-    })
-}
+export {lightbox}

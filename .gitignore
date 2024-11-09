@@ -2,12 +2,7 @@
 /tmp.txt
 /test/index.tinytune
 /example.http
-/web/assets/main.css
-/web/assets/main.css.map
-/web/assets/bootstrap
-/web/scss/bootstrap
-/web/assets/htmx.min.js
-/web/assets/js.cookie.min.js
-/web/assets/popper.min.js
-/web/assets/lightbox
-/web/assets/videojs
+/web/node_modules
+/web/assets/index.min.css
+/web/assets/index.min.js
+/web/assets/index.min.js.LICENSE.txt
