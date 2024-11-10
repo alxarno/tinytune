@@ -3,6 +3,7 @@
 /test/index.tinytune
 /example.http
 /web/node_modules
-/web/assets/index.min.css
-/web/assets/index.min.js
-/web/assets/index.min.js.LICENSE.txt
+/web/assets/*.js
+/web/assets/*.css
+/web/assets/*.txt
+/web/assets/*.json

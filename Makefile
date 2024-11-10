@@ -19,12 +19,15 @@ run: ## run
 
 .PHONY: watch
 watch: ## watch
-	reflex -c scripts/reflex.conf
+	reflex -r '\.(html|go)$\' -s make run & make webwatch
 
-.PHONY: sass
-sass: ## sass
-	sass -c -s compressed -q web/scss/index.scss web/assets/main.css 
+.PHONY: web
+web: ## web
+	npm run build --prefix web/
 
+.PHONY: webwatch
+webwatch: ## webwatch
+	npm run watch --prefix web/
 
 .PHONY: clean
 clean: ## clean

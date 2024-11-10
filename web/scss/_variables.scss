@@ -29,6 +29,16 @@ $font-family-sans-serif:
     // Emoji fonts
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 
+$primary: $accent-color;
+$enable-shadows: true;
+$breadcrumb-active-color: gray;
+$breadcrumb-divider-color: gray;
+$breadcrumb-margin-bottom: 0;
+$dark: $dark-color;
+$link-color-dark: $accent-color;
+$figure-caption-color: gray;
+$figure-caption-font-size: 0.8rem;
+$prefix: "tinytune-";
 // $theme-colors: (
 //     "primary": $accent-color,
 //     "danger": #ff4136

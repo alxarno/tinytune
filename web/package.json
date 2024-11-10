@@ -4,7 +4,9 @@
   "description": "Frontend of tiny media server",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --config webpack.config.js --mode='production'"
+    "build-vendor": "webpack --config webpack.vendor.config --mode='production'",
+    "build": "webpack --config webpack.config.js --mode='production'",
+    "watch": "npm run build-vendor && webpack --watch --config webpack.config.js --mode='development'"
   },
   "repository": {
     "type": "git",
