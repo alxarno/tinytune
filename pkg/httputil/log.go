@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/alxarno/tinytune/pkg/bytesutil"
 	"github.com/alxarno/tinytune/pkg/log"
@@ -22,6 +23,7 @@ func LoggingHandler(h http.Handler) http.Handler {
 		ansiBrightRed    = "\033[91m"
 		ansiBrightGreen  = "\033[92m"
 		ansiBrightYellow = "\033[93m"
+		ansiBrightBlue   = "\033[94m"
 	)
 	logger := log.GetLogger(log.WithOption(func(opt *tint.Options) {
 		opt.ReplaceAttr = func(groups []string, a slog.Attr) slog.Attr {
@@ -34,6 +36,9 @@ func LoggingHandler(h http.Handler) http.Handler {
 			}
 			if a.Key == slog.MessageKey && a.Value.String() == "GET 200" {
 				a.Value = slog.StringValue(ansiBrightGreen + a.Value.String() + ansiReset)
+			}
+			if a.Key == slog.MessageKey && a.Value.String() == "GET 206" {
+				a.Value = slog.StringValue(ansiBrightBlue + a.Value.String() + ansiReset)
 			}
 			if a.Key == slog.MessageKey && slices.Contains(errorsCodes, a.Value.String()) {
 				a.Value = slog.StringValue(ansiBrightRed + a.Value.String() + ansiReset)
@@ -50,6 +55,20 @@ func LoggingHandler(h http.Handler) http.Handler {
 	}
 }
 
+func subString(input string, start int, length int) string {
+	asRunes := []rune(input)
+	postfix := ""
+	if start >= len(asRunes) {
+		return ""
+	}
+	if start+length > len(asRunes) {
+		length = len(asRunes) - start
+	} else {
+		postfix = "..."
+	}
+	return string(asRunes[start:start+length]) + postfix
+}
+
 func (h *loggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wrapped := wrapResponseWriter(w)
 	h.handler.ServeHTTP(wrapped, r)
@@ -63,7 +82,8 @@ func (h *loggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	printFunc(
 		fmt.Sprintf("%s %d", r.Method, wrapped.Status()),
 		slog.String("path", r.URL.Path),
+		slog.String("type", strings.Replace(w.Header().Get("Content-Type"), " charset=utf-8", "", 1)),
 		slog.String("response", bytesutil.PrettyByteSize(wrapped.size)),
 		slog.String("ip", r.RemoteAddr),
-		slog.String("user-agent", r.UserAgent()))
+		slog.String("user-agent", subString(r.UserAgent(), 0, 45)))
 }

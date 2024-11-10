@@ -1,4 +1,4 @@
-const onSearch = () => {
+export const onSearch = () => {
     let url = window.location.pathname
     const searchInput = document.getElementById("search-input")
     url = url.replace("/d/", "/s/")
@@ -11,7 +11,7 @@ const onSearch = () => {
     })
 }
 
-const highlightSearchResults = () => {
+export const highlightSearchResults = () => {
     const foundElement = document.getElementById("found")
     const searchInput = document.getElementById("search-input")
     if(!foundElement) return;
@@ -24,8 +24,4 @@ const highlightSearchResults = () => {
         const htmlValue = `${startElement}<span class="bg-primary text-dark rounded-1">${highlightedElement}</span>${endElement}`
         element.innerHTML = htmlValue
     })
-}
-
-window.onload = () => {
-    highlightSearchResults()
 }

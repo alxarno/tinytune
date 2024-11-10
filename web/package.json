@@ -25,9 +25,9 @@
   "homepage": "https://github.com/alxarno/tinytune#readme",
   "dependencies": {
     "bootstrap": "^5.3.3",
+    "fslightbox": "^3.4.2",
     "htmx.org": "^2.0.3",
-    "js-cookie": "^3.0.5",
-    "photoswipe": "^5.4.4"
+    "js-cookie": "^3.0.5"
   },
   "devDependencies": {
     "file-loader": "^6.2.0",

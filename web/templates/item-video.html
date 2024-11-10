@@ -1,4 +1,4 @@
-{{define "video-item"}}<a href="/origin/{{ .ID }}" data-pswp-type="video" data-pswp-source-type="video/{{ ext .Name }}" class="image-lightbox" data-pswp-width="{{ width .Resolution }}" data-pswp-height="{{ height .Resolution }}" hx-boost="false"><figure class="figure dir-list-item">
+{{define "video-item"}}<a href="/origin/{{ .ID }}" class="image-lightbox"  hx-boost="false" data-extension="{{ ext .Name }}" data-width="{{ width  .Resolution}}" data-height="{{ height .Resolution}}"><figure class="figure dir-list-item">
             <div class="wrap" style="--origin-width: {{ width .Resolution }};--origin-height: {{ height .Resolution }};">
                 <div class="spacer"></div>
                 <img

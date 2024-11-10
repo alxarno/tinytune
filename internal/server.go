@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"slices"
 	"strings"
@@ -174,13 +172,16 @@ func (s *server) searchHandler() http.Handler {
 
 func (s *server) previewHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
 		data, err := s.Source.PullPreview(r.PathValue("fileID"))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404")
 			return
 		}
+		// Cache for week
+		w.Header().Add("Cache-Control", "max-age=604800")
+		w.Header().Add("Content-Type", http.DetectContentType(data))
+		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 	})
 }
@@ -193,16 +194,9 @@ func (s *server) originHandler() http.Handler {
 			fmt.Fprint(w, "404")
 			return
 		}
-		f, err := os.Open(meta.Path)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "404 File might be deleted")
-			return
-		}
-		defer f.Close()
-
-		w.WriteHeader(http.StatusOK)
-		io.Copy(w, f)
+		// Cache for hour
+		w.Header().Add("Cache-Control", "max-age=3600")
+		http.ServeFile(w, r, meta.Path)
 	})
 }
 

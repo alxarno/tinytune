@@ -29,6 +29,7 @@ $primary-background-color: #000000;  // #2B333F default
 // Try changing to true
 $center-big-play-button: true; // true default
 
+
 .video-js {
     /* The base font size controls the size of everything, not just text.
     All dimensions use em-based sizes so that the scale along with the font size.
@@ -37,6 +38,9 @@ $center-big-play-button: true; // true default
 
     /* The main font color changes the ICON COLORS as well as the text */
     color: $primary-foreground-color;
+    // z-index: 3 !important;
+    width: 100%;
+    height: 100%;
 }
 
 /* The "Big Play Button" is the play button that shows before the video plays.
@@ -128,4 +132,8 @@ $slider-bg-color: color.adjust($primary-background-color, $lightness: 90%);
 .video-js:hover .vjs-big-play-button {
     background-color: rgba(0,0,0,.95);
     border-color: #647733;
+}
+
+.vjs-control-bar{
+    bottom: -1px !important;
 }
