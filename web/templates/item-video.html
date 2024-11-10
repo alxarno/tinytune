@@ -1,7 +1,14 @@
 {{define "video-item"}}<a href="/origin/{{ .ID }}" data-pswp-type="video" data-pswp-source-type="video/{{ ext .Name }}" class="image-lightbox" data-pswp-width="{{ width .Resolution }}" data-pswp-height="{{ height .Resolution }}" hx-boost="false"><figure class="figure dir-list-item">
-            <div class="wrap">
+            <div class="wrap" style="--origin-width: {{ width .Resolution }};--origin-height: {{ height .Resolution }};">
                 <div class="spacer"></div>
-                <img loading="lazy" src="/preview/{{ .ID }}" id="video-{{ .ID }}" class="figure-img img-fluid rounded preview" alt="{{ .Name }}" onload="imageOnload({{ .ID }})" hx-preserve>
+                <img
+                    id="video-{{ .ID }}"
+                    loading="lazy"
+                    alt="{{ .Name }}"
+                    src="/preview/{{ .ID }}" 
+                    class="figure-img img-fluid rounded preview" 
+                    hx-preserve
+                >
                 <span class="duration rounded" id="duration-{{ .ID }}">{{ dur .Duration }}</span>
             </div>
             <figcaption class="figure-caption">{{ .Name }}</figcaption>

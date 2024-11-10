@@ -52,10 +52,13 @@ body {
     }
 
     > .wrap {
-        height: 100px;
+        width: 100%;
+        height: var(--wrap-height);
         display: flex;
         flex-direction: column;
         position: relative;
+        --preview-height: min(var(--wrap-height), calc(var(--origin-height)* var(--wrap-width) / var(--origin-width)));
+        --preview-width: min(var(--wrap-width), calc(var(--origin-width)* var(--wrap-height) / var(--origin-height)));
 
         > .figure-img{
             height: 100%;
@@ -65,8 +68,8 @@ body {
         > .preview{
             margin-bottom: 0;
             object-fit: cover;
-            width: 100%;
-            height: 100%;
+            height: var(--preview-height);
+            width: var(--preview-width);
             object-position: center 0%;
 
             &:hover {
@@ -117,6 +120,7 @@ a:visited > .dir-list-item{
     right: 0;
     bottom: 0;
     margin: 5px;
+    margin-right: calc(calc(var(--wrap-width) - var(--preview-width)) / 2 + 5px);
 }
 
 .carousel-item{

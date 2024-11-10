@@ -1,11 +1,6 @@
 import Cookies from 'js-cookie'
 
-const onZoomChanged = () => {
-    const items = Array.from(document.getElementsByClassName("preview"))
-    items.forEach(v => imageOnload(v.id.replace("video-", "")))
-}
-
-const zoom = {
+export const zoom = {
     state: Cookies.get('zoom') || 'medium',
     transitions: {
         medium: {
@@ -50,7 +45,6 @@ const zoom = {
             action.call(this);
             Cookies.set('zoom', this.state);
             document.body.classList.replace(`zoom-${oldState}`, `zoom-${this.state}`)
-            onZoomChanged()
         }
     },
 };

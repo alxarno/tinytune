@@ -1,6 +1,9 @@
 .zoom-xs{
     .dir-list-item {
-        width: 120px;
+        --wrap-width: 120px;
+        --wrap-height: 100px;
+        width: var(--wrap-width);
+        // width: 120px;
 
         > svg {
             margin-top: 30px;
@@ -8,16 +11,23 @@
             height: 70px;
         }
 
-        > .wrap {
-            width: 120px;
-            height: 100px;
-        }
+        // > .wrap {
+        //     width: 120px;
+        //     height: 100px;
+
+        //     > .preview {
+        //         --wrap-width: 120;
+        //         --wrap-height: 100;
+        //     }
+        // }
     }
 }
 
 .zoom-small{
     .dir-list-item {
-        width: 140px;
+        --wrap-width: 140px;
+        --wrap-height: 120px;
+        width: var(--wrap-width);
 
         > svg {
             margin-top: 40px;
@@ -25,16 +35,23 @@
             height: 80px;
         }
 
-        > .wrap {
-            width: 140px;
-            height: 120px;
-        }
+        // > .wrap {
+        //     width: 140px;
+        //     height: 120px;
+
+        //     > .preview {
+        //         --wrap-width: 140;
+        //         --wrap-height: 120;
+        //     }
+        // }
     }
 }
 
 .zoom-medium{
     .dir-list-item {
-        width: 160px;
+        --wrap-width: 160px;
+        --wrap-height: 120px;
+        width: var(--wrap-width);
 
         > svg {
             margin-top: 20px;
@@ -42,16 +59,23 @@
             height: 100px;
         }
 
-        > .wrap {
-            width: 160px;
-            height: 120px;
-        }
+        // > .wrap {
+        //     width: 160px;
+        //     height: 120px;
+
+        //     > .preview {
+        //         --wrap-width: 160;
+        //         --wrap-height: 120;
+        //     }
+        // }
     }
 }
 
 .zoom-large{
     .dir-list-item {
-        width: 180px;
+        --wrap-width: 180px;
+        --wrap-height: 130px;
+        width: var(--wrap-width);
 
         > svg {
             margin-top: 30px;
@@ -59,16 +83,17 @@
             height: 100px;
         }
 
-        > .wrap {
-            width: 180px;
-            height: 130px;
-        }
+        // > .wrap {
+            
+        // }
     }
 }
 
 .zoom-xl{
     .dir-list-item {
-        width: 230px;
+        --wrap-width: 230px;
+        --wrap-height: 180px;
+        width: var(--wrap-width);
 
         > svg {
             margin-top: 50px;
@@ -76,9 +101,9 @@
             height: 130px;
         }
 
-        > .wrap {
-            width: 230px;
-            height: 180px;
-        }
+        // > .wrap {
+        //     width: 100%;
+        //     height: var(--wrap-height);
+        // }
     }
 }

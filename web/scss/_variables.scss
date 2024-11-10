@@ -2,7 +2,6 @@ $primary-color: #333;
 $dark-color: #1E1F22;
 $border-color: #27282C;
 $accent-color: #0dd354;
-// $accent-color: #6ee598;
 $background-color: #212529;
 
 $font-color: white;
@@ -28,38 +27,3 @@ $font-family-sans-serif:
     sans-serif,
     // Emoji fonts
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
-
-$primary: $accent-color;
-$enable-shadows: true;
-$breadcrumb-active-color: gray;
-$breadcrumb-divider-color: gray;
-$breadcrumb-margin-bottom: 0;
-$dark: $dark-color;
-$link-color-dark: $accent-color;
-$figure-caption-color: gray;
-$figure-caption-font-size: 0.8rem;
-$prefix: "tinytune-";
-// $theme-colors: (
-//     "primary": $accent-color,
-//     "danger": #ff4136
-// );
-
-// :root {
-//     --bs-breadcrumb-item-active-color: white;
-// }
-
-// a {
-//     color: $accent-color;
-// }
-
-// .breadcrumb-item.active{
-//     --bs-breadcrumb-item-active-color: gray;
-// }
-// .breadcrumb-item+.breadcrumb-item::before {
-//     --bs-breadcrumb-divider-color: gray;
-// }
-
-// .breadcrumb{
-//     --bs-breadcrumb-margin-bottom: 0;
-//     font-size: 1.2rem;
-// }

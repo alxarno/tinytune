@@ -1,3 +1,16 @@
+@use 'variables';
+
+$primary: variables.$accent-color;
+$enable-shadows: true;
+$breadcrumb-active-color: gray;
+$breadcrumb-divider-color: gray;
+$breadcrumb-margin-bottom: 0;
+$dark: variables.$dark-color;
+$link-color-dark: variables.$accent-color;
+$figure-caption-color: gray;
+$figure-caption-font-size: 0.8rem;
+$prefix: "tinytune-";
+
 @import "~bootstrap";
 @import '../node_modules/photoswipe/dist/photoswipe';
 @import '../node_modules/video.js/dist/video-js';

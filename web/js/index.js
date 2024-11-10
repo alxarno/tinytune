@@ -1,8 +1,7 @@
 import * as _ from "bootstrap"
-import "./img-preview";
 import { lightbox  } from "./lightbox";
+import { zoom } from "./zoom"
 import "./search"
-import "./zoom"
 
 const onSort = (radio) => {
     Cookies.set('sort', radio.value);
@@ -10,6 +9,7 @@ const onSort = (radio) => {
 }
 window.onSort = onSort
 window.htmx = require('htmx.org');
+window.zoom = zoom
 
 window.onload = () => {
     document.addEventListener('htmx:afterSettle', () => {
