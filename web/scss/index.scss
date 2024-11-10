@@ -1,6 +1,7 @@
 @use 'variables';
 @use 'dir';
 @use 'zoom';
+@use 'video';
 
 body {
     background-color: variables.$background-color;

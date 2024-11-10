@@ -5,7 +5,7 @@ import videojs from 'video.js';
 const lightbox = new PhotoSwipeLightbox({
     gallery: '#gallery--getting-started',
     children: 'li > .image-lightbox',
-    pswpModule: PhotoSwipe
+    pswpModule: PhotoSwipe,
 });
 const videoInit = () => {
     const videoJSOptions = {
@@ -44,7 +44,7 @@ lightbox.on('contentLoad', (e) => {
         content.element.className = 'pswp__video-container';
 
         const video = document.createElement('video');
-        video.setAttribute("class", "video-js")
+        video.setAttribute("class", "video-js vjs-default-skin")
         video.setAttribute("width", content.data.width)
         video.setAttribute("height", content.data.height)
 
