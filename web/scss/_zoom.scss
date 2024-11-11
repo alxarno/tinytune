@@ -1,7 +1,8 @@
 .zoom-xs{
+    --wrap-width: 120px;
+    --wrap-height: 100px;
+
     .dir-list-item {
-        --wrap-width: 120px;
-        --wrap-height: 100px;
         width: var(--wrap-width);
         // width: 120px;
 
@@ -24,9 +25,10 @@
 }
 
 .zoom-small{
+    --wrap-width: 140px;
+    --wrap-height: 120px;
     .dir-list-item {
-        --wrap-width: 140px;
-        --wrap-height: 120px;
+        
         width: var(--wrap-width);
 
         > svg {
@@ -48,9 +50,9 @@
 }
 
 .zoom-medium{
+    --wrap-width: 160px;
+    --wrap-height: 120px;
     .dir-list-item {
-        --wrap-width: 160px;
-        --wrap-height: 120px;
         width: var(--wrap-width);
 
         > svg {
@@ -72,9 +74,9 @@
 }
 
 .zoom-large{
+    --wrap-width: 180px;
+    --wrap-height: 130px;
     .dir-list-item {
-        --wrap-width: 180px;
-        --wrap-height: 130px;
         width: var(--wrap-width);
 
         > svg {
@@ -90,9 +92,9 @@
 }
 
 .zoom-xl{
+    --wrap-width: 230px;
+    --wrap-height: 180px;
     .dir-list-item {
-        --wrap-width: 230px;
-        --wrap-height: 180px;
         width: var(--wrap-width);
 
         > svg {

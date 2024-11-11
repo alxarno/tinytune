@@ -1,0 +1,37 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
+.dir-list {
+    list-style-type: none;
+    margin-top: 3em;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.navbar{
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.sort-icon{
+    margin-bottom: 2px;
+}
+
+@include media-breakpoint-down(md) {
+    .breadcrumb{
+        margin: 1rem 0;
+    }
+    .additional-actions{
+        margin: 1rem auto;
+        margin-top: 1.5rem;
+        display: flex;
+        max-width: 300px;
+    }
+    .search-form-wrapper{
+        width: 100%;
+    }
+    .dir-list{
+        margin-top: 2rem;
+    }
+}

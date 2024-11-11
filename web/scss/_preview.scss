@@ -1,0 +1,90 @@
+
+.dir-list-item{
+    text-align: center;
+    width: 150px;
+    margin-bottom: 2rem;
+
+    > figcaption{
+        margin-top: 1rem;
+        color: white;
+        font-size: 1rem;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        display: -webkit-box;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    > .wrap {
+        width: 100%;
+        height: var(--wrap-height);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        --preview-height: min(var(--wrap-height), calc(var(--origin-height)* var(--wrap-width) / var(--origin-width)));
+        --preview-width: min(var(--wrap-width), calc(var(--origin-width)* var(--wrap-height) / var(--origin-height)));
+
+        > .figure-img{
+            height: 100%;
+            width: fit-content;
+            margin: auto;
+        }
+        > .preview{
+            margin-bottom: 0;
+            object-fit: cover;
+            height: var(--preview-height);
+            width: var(--preview-width);
+            object-position: center 0%;
+
+            &:hover {
+                animation: slide 5s infinite;
+                animation-timing-function: steps(1);
+                @keyframes slide {
+                    0% {
+                        object-position: center 0%;
+                    }
+                    20% {
+                        object-position: center 25%;
+                    }
+                    40% {
+                        object-position: center 50%;
+                    }
+                    60% {
+                        object-position: center 75%;
+                    }
+                    80% {
+                        object-position: center 100%;
+                    }
+                }
+            }
+        }
+        
+        > .spacer{
+            height: 100%;
+            width: 100%;
+        }
+    }
+}
+
+
+a:visited > .dir-list-item{
+    > figure > .figure-caption,
+    > .figure-caption {
+        color: #b1c5b1;
+    }
+}
+
+.duration {
+    text-align: right;
+    padding: 0px 5px;
+    color: white;
+    background: rgba(0,0,0,0.8);
+    width: max-content;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 5px;
+    margin-right: calc(calc(var(--wrap-width) - var(--preview-width)) / 2 + 5px);
+}

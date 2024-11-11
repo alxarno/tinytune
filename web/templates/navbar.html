@@ -16,7 +16,7 @@
                     </ol>
                 </li>
             </ul>
-            <div class="col-md-2 me-4">
+            <div class="col-md-2 me-4 search-form-wrapper">
                 <form class="input-group input-group-sm" role="search" onsubmit="event.preventDefault();onSearch();">
                     <input class="form-control" type="search" placeholder="Search" aria-label="Search" aria-describedby="button-addon2" id="search-input" value="{{.Search}}">
                     <button class="btn btn-outline-secondary" type="submit" id="button-addon2" style="border-color: #495057;">
@@ -27,7 +27,7 @@
                 </form>
             </div>
 
-            <div class="btn-group btn-group-sm" role="group" aria-label="Button group with nested dropdown">
+            <div class="btn-group btn-group-sm additional-actions" role="group" aria-label="Button group with nested dropdown">
                 <button type="button" class="btn tiny-control" onclick="zoom.dispatch('in')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>

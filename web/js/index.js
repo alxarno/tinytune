@@ -30,13 +30,6 @@ const initLightBox = () => {
     previews.forEach((v, i) => v.onclick = (e) => {e.preventDefault(); originOpen(i)});
     fsLightbox.props.sources = previews.map(v => v.getAttribute("href"))
     fsLightbox.props.loadOnlyCurrentSource = true;
-    observeDOM()(document.body, (m) => {
-        let addedNodes = []
-        m.forEach(record => record.addedNodes.length & addedNodes.push(...record.addedNodes));
-        let videoNodes = addedNodes.filter(v => v.tagName == "VIDEO" && v.classList && v.classList.contains("fslightbox-source"))
-        if(!videoNodes.length) return;
-        videoNodes.forEach((v) => videoInit(v))
-    })
     fsLightbox.props.onOpen = () => {
         const videosItems = Array.from(document.querySelectorAll("video.fslightbox-source"))
         videosItems.forEach(videoInit)
@@ -52,4 +45,11 @@ window.onload = () => {
     })
     initLightBox();
     highlightSearchResults();
+    observeDOM()(document.body, (m) => {
+        let addedNodes = []
+        m.forEach(record => record.addedNodes.length & addedNodes.push(...record.addedNodes));
+        let videoNodes = addedNodes.filter(v => v.tagName == "VIDEO" && v.classList && v.classList.contains("fslightbox-source"))
+        if(!videoNodes.length) return;
+        videoNodes.forEach((v) => videoInit(v))
+    })
 }
