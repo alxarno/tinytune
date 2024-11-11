@@ -1,3 +1,5 @@
+import htmx from "htmx.org"
+
 export const onSearch = () => {
     let url = window.location.pathname
     const searchInput = document.getElementById("search-input")

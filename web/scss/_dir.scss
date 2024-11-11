@@ -13,3 +13,18 @@
     display: block;
     width: fit-content;
 }
+
+.dir-list-item{
+    width: var(--wrap-width);
+    
+    > svg {
+        margin-top: calc(var(--wrap-height) / 3);
+        width: calc(var(--wrap-height) / 3 * 2);
+        height: calc(var(--wrap-height) / 3 * 2);
+    }
+}
+
+#found{
+    padding-left: 2rem;
+    padding-right: 2rem;
+}

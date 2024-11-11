@@ -2,44 +2,27 @@ package index
 
 import (
 	"sync"
-	"sync/atomic"
 
 	"golang.org/x/sync/semaphore"
 )
 
 type fileProcessor struct {
-	preview          PreviewGenerator
-	id               IDGenerator
-	idPass           fileIDPass
-	semaphore        *semaphore.Weighted
-	waitGroup        *sync.WaitGroup
-	ch               chan fileProcessorResult
-	maxNewImageItems int64
-	maxNewVideoItems int64
+	preview   PreviewGenerator
+	semaphore *semaphore.Weighted
+	waitGroup *sync.WaitGroup
+	ch        chan fileProcessorResult
 }
+
 type fileProcessorResult struct {
 	meta *IndexMeta
 	data []byte
 }
 
 type fileProcessorOption func(*fileProcessor)
-type fileIDPass func(string) bool
 
 func withPreview(f PreviewGenerator) fileProcessorOption {
 	return func(fp *fileProcessor) {
 		fp.preview = f
-	}
-}
-
-func withID(f IDGenerator) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.id = f
-	}
-}
-
-func withIDCheck(f fileIDPass) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.idPass = f
 	}
 }
 
@@ -61,18 +44,6 @@ func withChan(ch chan fileProcessorResult) fileProcessorOption {
 	}
 }
 
-func withMaxImageItems(param int64) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.maxNewImageItems = param
-	}
-}
-
-func withMaxVideoItems(param int64) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.maxNewVideoItems = param
-	}
-}
-
 func newFileProcessor(opts ...fileProcessorOption) fileProcessor {
 	processor := fileProcessor{}
 	for _, opt := range opts {
@@ -81,34 +52,7 @@ func newFileProcessor(opts ...fileProcessorOption) fileProcessor {
 	return processor
 }
 
-func ifMaxPass(max *int64) bool {
-	if atomic.LoadInt64(max) == -1 {
-		return true
-	}
-	if atomic.LoadInt64(max) == 0 {
-		return false
-	}
-	atomic.AddInt64(max, -1)
-	return true
-}
-
-func (fp *fileProcessor) run(f FileMeta) (*fileProcessorResult, error) {
-	id, err := fp.id(f)
-	if err != nil {
-		return nil, err
-	}
-	if !fp.idPass(id) {
-		return nil, nil
-	}
-	contentType := fp.preview.ContentType(f.Path())
-	if contentType == ContentTypeVideo && !ifMaxPass(&fp.maxNewVideoItems) {
-		return nil, nil
-	}
-
-	if contentType == ContentTypeImage && !ifMaxPass(&fp.maxNewImageItems) {
-		return nil, nil
-	}
-
+func (fp *fileProcessor) run(f FileMeta, id string) (*fileProcessorResult, error) {
 	meta := IndexMeta{
 		Path:         f.Path(),
 		RelativePath: f.RelativePath(),

@@ -1,153 +1,43 @@
 package index
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
-	"sync"
-	"time"
-
-	"github.com/alxarno/tinytune/pkg/preview"
-	"golang.org/x/sync/semaphore"
 )
 
 var ErrNotFound = fmt.Errorf("not found")
 
-type IDGenerator func(m FileMeta) (string, error)
-type PreviewGenerator interface {
-	Pull(string) (preview.PreviewData, error)
-	ContentType(string) int
-}
-
 type Index struct {
-	meta             map[string]*IndexMeta
-	tree             map[string][]*IndexMeta
-	paths            map[string]*IndexMeta
-	data             []byte
-	outDated         bool
-	preview          PreviewGenerator
-	id               IDGenerator
-	files            []FileMeta
-	context          context.Context
-	progress         func()
-	newFiles         func()
-	workers          int
-	maxNewImageItems int64
-	maxNewVideoItems int64
-}
-
-type IndexOption func(*Index)
-
-type FileMeta interface {
-	Path() string
-	RelativePath() string
-	Name() string
-	ModTime() time.Time
-	IsDir() bool
-	Size() int64
+	meta     map[string]*IndexMeta
+	tree     map[string][]*IndexMeta
+	paths    map[string]*IndexMeta
+	data     []byte
+	outDated bool
 }
 
 func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 	index := Index{
-		data:             []byte{},
-		meta:             map[string]*IndexMeta{},
-		preview:          nil,
-		id:               func(m FileMeta) (string, error) { return m.Path(), nil },
-		files:            []FileMeta{},
-		tree:             map[string][]*IndexMeta{},
-		paths:            map[string]*IndexMeta{},
-		context:          context.Background(),
-		outDated:         false,
-		progress:         func() {},
-		newFiles:         func() {},
-		workers:          4,
-		maxNewImageItems: -1,
-		maxNewVideoItems: -1,
+		data:     make([]byte, 0, 64*1024),
+		meta:     map[string]*IndexMeta{},
+		tree:     map[string][]*IndexMeta{},
+		paths:    map[string]*IndexMeta{},
+		outDated: false,
 	}
+	builder := newBuilder(&index)
 	for _, opt := range opts {
-		opt(&index)
+		opt(&builder)
 	}
-
-	if err := index.Decode(r); err != nil {
-		if errors.Is(err, io.EOF) {
-			slog.Warn("The index file could not be fully read, it may be corrupted or empty")
-		} else {
-			return index, err
-		}
-	}
-	if err := index.loadFiles(); err != nil {
+	if err := builder.run(r); err != nil {
 		return index, err
 	}
 
-	if err := index.loadTree(); err != nil {
-		return index, err
-	}
-
-	if err := index.loadPaths(); err != nil {
-		return index, err
-	}
 	return index, nil
 }
 
-func WithPreview(gen PreviewGenerator) IndexOption {
-	return func(i *Index) {
-		i.preview = gen
-	}
-}
-
-func WithID(f func(m FileMeta) (string, error)) IndexOption {
-	return func(i *Index) {
-		i.id = f
-	}
-}
-
-func WithFiles(files []FileMeta) IndexOption {
-	return func(i *Index) {
-		i.files = files
-	}
-}
-
-func WithContext(ctx context.Context) IndexOption {
-	return func(i *Index) {
-		i.context = ctx
-	}
-}
-
-func WithProgress(f func()) IndexOption {
-	return func(i *Index) {
-		i.progress = f
-	}
-}
-
-func WithNewFiles(f func()) IndexOption {
-	return func(i *Index) {
-		i.newFiles = f
-	}
-}
-
-func WithMaxNewImageItems(param int64) IndexOption {
-	return func(i *Index) {
-		i.maxNewImageItems = param
-	}
-}
-
-func WithMaxNewVideoItems(param int64) IndexOption {
-	return func(i *Index) {
-		i.maxNewVideoItems = param
-	}
-}
-
-func WithWorkers(w int) IndexOption {
-	return func(i *Index) {
-		i.workers = w
-	}
-}
 func (index Index) OutDated() bool {
 	return index.outDated
 }
@@ -251,79 +141,4 @@ func (index Index) FilesWithPreviewStat() (int, uint32) {
 		}
 	}
 	return count, size
-}
-
-func (index *Index) loadFiles() error {
-	wg := new(sync.WaitGroup)
-	sem := semaphore.NewWeighted(int64(index.workers))
-	resultChannel := make(chan fileProcessorResult, len(index.files))
-	processor := newFileProcessor(
-		withID(index.id),
-		withPreview(index.preview),
-		withIDCheck(func(id string) bool { _, ok := index.meta[id]; return !ok }),
-		withChan(resultChannel),
-		withSemaphore(sem),
-		withWaitGroup(wg),
-		withMaxImageItems(index.maxNewImageItems),
-		withMaxVideoItems(index.maxNewVideoItems))
-
-	for _, file := range index.files {
-		if err := sem.Acquire(index.context, 1); err != nil {
-			if errors.Is(err, context.Canceled) {
-				return nil
-			}
-			return err
-		}
-		wg.Add(1)
-		index.progress()
-		go processor.run(file)
-	}
-
-	wg.Wait()
-	close(resultChannel)
-
-	for r := range resultChannel {
-		index.newFiles()
-		if r.meta.Preview.Length != 0 {
-			r.meta.Preview.Offset = uint32(len(index.data))
-			index.data = append(index.data, r.data...)
-		}
-		if r.meta.IsDir {
-			r.meta.Type = ContentTypeDir
-		}
-		index.meta[r.meta.ID] = r.meta
-		index.outDated = true
-	}
-
-	return nil
-}
-
-func (index *Index) loadTree() error {
-	index.tree["root"] = make([]*IndexMeta, 0)
-	for _, meta := range index.meta {
-		if filepath.Dir(meta.RelativePath) == "." {
-			index.tree["root"] = append(index.tree["root"], meta)
-		}
-		if !meta.IsDir {
-			continue
-		}
-
-		for _, possibleChild := range index.meta {
-			if meta.RelativePath != filepath.Dir(possibleChild.RelativePath) {
-				continue
-			}
-			if _, ok := index.tree[meta.ID]; !ok {
-				index.tree[meta.ID] = make([]*IndexMeta, 0)
-			}
-			index.tree[meta.ID] = append(index.tree[meta.ID], possibleChild)
-		}
-	}
-	return nil
-}
-
-func (index *Index) loadPaths() error {
-	for _, v := range index.meta {
-		index.paths[v.RelativePath] = v
-	}
-	return nil
 }

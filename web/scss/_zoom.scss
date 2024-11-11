@@ -1,111 +1,31 @@
 .zoom-xs{
-    --wrap-width: 120px;
-    --wrap-height: 100px;
+    --wrap-width: 140px;
+    --wrap-height: 120px;
 
-    .dir-list-item {
-        width: var(--wrap-width);
-        // width: 120px;
-
-        > svg {
-            margin-top: 30px;
-            width: 70px;
-            height: 70px;
-        }
-
-        // > .wrap {
-        //     width: 120px;
-        //     height: 100px;
-
-        //     > .preview {
-        //         --wrap-width: 120;
-        //         --wrap-height: 100;
-        //     }
-        // }
+    .dir-list-item > .wrap > .duration{
+        margin-right: calc((var(--wrap-width) - var(--preview-width)) / 2 + 2px);
+        font-size: 0.8rem;
+        margin-bottom: 2px;
+        border-radius: 0.25rem !important;
     }
 }
 
 .zoom-small{
-    --wrap-width: 140px;
-    --wrap-height: 120px;
-    .dir-list-item {
-        
-        width: var(--wrap-width);
-
-        > svg {
-            margin-top: 40px;
-            width: 80px;
-            height: 80px;
-        }
-
-        // > .wrap {
-        //     width: 140px;
-        //     height: 120px;
-
-        //     > .preview {
-        //         --wrap-width: 140;
-        //         --wrap-height: 120;
-        //     }
-        // }
-    }
+    --wrap-width: 160px;
+    --wrap-height: 140px;
 }
 
 .zoom-medium{
-    --wrap-width: 160px;
-    --wrap-height: 120px;
-    .dir-list-item {
-        width: var(--wrap-width);
-
-        > svg {
-            margin-top: 20px;
-            width: 100px;
-            height: 100px;
-        }
-
-        // > .wrap {
-        //     width: 160px;
-        //     height: 120px;
-
-        //     > .preview {
-        //         --wrap-width: 160;
-        //         --wrap-height: 120;
-        //     }
-        // }
-    }
+    --wrap-width: 180px;
+    --wrap-height: 160px;
 }
 
 .zoom-large{
-    --wrap-width: 180px;
-    --wrap-height: 130px;
-    .dir-list-item {
-        width: var(--wrap-width);
-
-        > svg {
-            margin-top: 30px;
-            width: 100px;
-            height: 100px;
-        }
-
-        // > .wrap {
-            
-        // }
-    }
+    --wrap-width: 200px;
+    --wrap-height: 180px;
 }
 
 .zoom-xl{
-    --wrap-width: 230px;
-    --wrap-height: 180px;
-    .dir-list-item {
-        width: var(--wrap-width);
-
-        > svg {
-            margin-top: 50px;
-            width: 130px;
-            height: 130px;
-        }
-
-        // > .wrap {
-        //     width: 100%;
-        //     height: var(--wrap-height);
-        // }
-    }
+    --wrap-width: 240px;
+    --wrap-height: 200px;
 }

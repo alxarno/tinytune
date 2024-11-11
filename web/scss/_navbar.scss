@@ -18,7 +18,7 @@
     margin-bottom: 2px;
 }
 
-@include media-breakpoint-down(md) {
+@include media-breakpoint-down(lg) {
     .breadcrumb{
         margin: 1rem 0;
     }

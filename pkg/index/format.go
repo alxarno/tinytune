@@ -65,7 +65,7 @@ func (index *Index) Decode(r io.Reader) error {
 	return nil
 }
 
-func (i Index) Encode(w io.Writer) (uint64, error) {
+func (index *Index) Encode(w io.Writer) (uint64, error) {
 	// write header
 	wc := bytesutil.NewWriterCounter(w)
 	if _, err := wc.Write([]byte(INDEX_HEADER)); err != nil {
@@ -73,14 +73,14 @@ func (i Index) Encode(w io.Writer) (uint64, error) {
 	}
 	// write meta items count
 	bs := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bs, uint32(len(i.meta)))
+	binary.LittleEndian.PutUint32(bs, uint32(len(index.meta)))
 	if _, err := wc.Write(bs); err != nil {
 		return 0, err
 	}
 	// prepare meta items
 	metaBuffer := bytes.NewBuffer(make([]byte, 0))
 	enc := gob.NewEncoder(metaBuffer)
-	for _, v := range i.meta {
+	for _, v := range index.meta {
 		if err := enc.Encode(v); err != nil {
 			return 0, err
 		}
@@ -97,7 +97,7 @@ func (i Index) Encode(w io.Writer) (uint64, error) {
 		return 0, err
 	}
 	// write binary data
-	if _, err := wc.Write(i.data); err != nil {
+	if _, err := wc.Write(index.data); err != nil {
 		return 0, err
 	}
 	return wc.Count(), nil

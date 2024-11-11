@@ -27,8 +27,9 @@ type source interface {
 }
 
 type server struct {
-	Templates map[string]*template.Template
-	Source    source
+	templates map[string]*template.Template
+	source    source
+	port      int
 }
 
 func getSorts() map[string]metaSortFunc {
@@ -43,7 +44,7 @@ func getSorts() map[string]metaSortFunc {
 	return m
 }
 
-func (s *server) loadTemplates() {
+func (s *server) loadtemplates() {
 	funcs := template.FuncMap{
 		"ext": func(name string) string {
 			extension := path.Ext(name)
@@ -71,8 +72,8 @@ func (s *server) loadTemplates() {
 			return result
 		},
 	}
-	s.Templates = make(map[string]*template.Template)
-	s.Templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseGlob("./web/templates/*.html"))
+	s.templates = make(map[string]*template.Template)
+	s.templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseGlob("./web/templates/*.html"))
 }
 
 type PageData struct {
@@ -118,17 +119,17 @@ func (s *server) indexHandler() http.Handler {
 			Path:  []*index.IndexMeta{},
 			Sorts: []string{},
 		}
-		if data.Items, err = s.Source.PullChildren(r.PathValue("dirID")); err != nil {
+		if data.Items, err = s.source.PullChildren(r.PathValue("dirID")); err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		if data.Path, err = s.Source.PullPaths(r.PathValue("dirID")); err != nil {
+		if data.Path, err = s.source.PullPaths(r.PathValue("dirID")); err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		data = applyCookies(r, data)
 		w.WriteHeader(http.StatusOK)
-		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
+		s.templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
 }
 
@@ -154,25 +155,25 @@ func (s *server) searchHandler() http.Handler {
 		dirID := r.PathValue("dirID")
 
 		if dirID != "" {
-			if data.Path, err = s.Source.PullPaths(r.PathValue("dirID")); err != nil {
+			if data.Path, err = s.source.PullPaths(r.PathValue("dirID")); err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}
 		}
 
-		data.Items = s.Source.Search(data.Search, dirID)
+		data.Items = s.source.Search(data.Search, dirID)
 		data.Path = append(data.Path, &index.IndexMeta{
 			Name: "Search",
 		})
 		data = applyCookies(r, data)
 		w.WriteHeader(http.StatusOK)
-		s.Templates["index.html"].ExecuteTemplate(w, "index", data)
+		s.templates["index.html"].ExecuteTemplate(w, "index", data)
 	})
 }
 
 func (s *server) previewHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		data, err := s.Source.PullPreview(r.PathValue("fileID"))
+		data, err := s.source.PullPreview(r.PathValue("fileID"))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404")
@@ -188,7 +189,7 @@ func (s *server) previewHandler() http.Handler {
 
 func (s *server) originHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		meta, err := s.Source.Pull(r.PathValue("fileID"))
+		meta, err := s.source.Pull(r.PathValue("fileID"))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404")
@@ -204,21 +205,26 @@ type ServerOption func(*server)
 
 func WithSource(source source) ServerOption {
 	return func(s *server) {
-		s.Source = source
+		s.source = source
+	}
+}
+
+func WithPort(port int) ServerOption {
+	return func(s *server) {
+		s.port = port
 	}
 }
 
 func NewServer(ctx context.Context, opts ...ServerOption) *server {
 	server := server{}
-	server.loadTemplates()
+	server.loadtemplates()
 	for _, opt := range opts {
 		opt(&server)
 	}
-
 	mux := http.NewServeMux()
 	httpServer := &http.Server{
 		BaseContext: func(net.Listener) context.Context { return ctx },
-		Addr:        ":8080",
+		Addr:        fmt.Sprintf(":%d", server.port),
 		Handler:     mux,
 	}
 	chain := alice.New(httputil.LoggingHandler)

@@ -205,8 +205,9 @@ func start(c config) {
 	_ = internal.NewServer(
 		ctx,
 		internal.WithSource(index),
+		internal.WithPort(c.port),
 	)
-	slog.Info("Server started")
+	slog.Info("Server started", slog.Int("port", c.port))
 	<-ctx.Done()
 	slog.Info("Successful shutdown")
 }
