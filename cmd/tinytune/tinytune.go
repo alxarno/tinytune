@@ -20,16 +20,95 @@ import (
 )
 
 const INDEX_FILE_NAME = "index.tinytune"
+const PROCESSING_CLI_CATEGORY = "Processing:"
+const FFMPEG_CLI_CATEGORY = "Ffmpeg:"
+const SERVER_CLI_CATEGORY = "Server:"
 
 type config struct {
-	dir string
+	dir              string
+	videoProcessing  bool
+	imageProcessing  bool
+	acceleration     bool
+	maxNewImageItems int64
+	maxNewVideoItems int64
+	port             int
 }
 
 func main() {
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "print-version",
+		Aliases: []string{"V"},
+		Usage:   "print only the version",
+	}
 	c := config{dir: os.Getenv("PWD")}
 	app := &cli.App{
-		Name:  "tinytune",
-		Usage: "tiny media server",
+		Name:        "tinytune",
+		Usage:       "tiny media server",
+		Version:     "v0.0.1",
+		Suggest:     true,
+		HideVersion: false,
+		Authors: []*cli.Author{
+			{
+				Name:  "alxarno",
+				Email: "alexarnowork@gmail.com",
+			},
+		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "video",
+				Value:       true,
+				Aliases:     []string{"v"},
+				Usage:       "allows the server to process videos, creating previews and retrieving the necessary meta information",
+				Destination: &c.videoProcessing,
+				Category:    PROCESSING_CLI_CATEGORY,
+			},
+			&cli.BoolFlag{
+				Name:        "image",
+				Value:       true,
+				Aliases:     []string{"i"},
+				Usage:       "allows the server to process images, creating previews and retrieving the necessary meta information",
+				Destination: &c.imageProcessing,
+				Category:    PROCESSING_CLI_CATEGORY,
+			},
+			&cli.Int64Flag{
+				Name:        "max-new-image-items",
+				Value:       -1,
+				Aliases:     []string{"ni"},
+				Usage:       "limits the number of new image files to be processed (use if initial processing of files takes a long time)",
+				Destination: &c.maxNewImageItems,
+				Category:    PROCESSING_CLI_CATEGORY,
+			},
+			&cli.Int64Flag{
+				Name:        "max-new-video-items",
+				Value:       -1,
+				Aliases:     []string{"nv"},
+				Usage:       "limits the number of new video files to be processed (use if initial processing of files takes a long time)",
+				Destination: &c.maxNewVideoItems,
+				Category:    PROCESSING_CLI_CATEGORY,
+			},
+			&cli.BoolFlag{
+				Name:        "acceleration",
+				Value:       true,
+				Aliases:     []string{"a"},
+				Usage:       "allows to utilize GPU computing power for ffmpeg",
+				Destination: &c.acceleration,
+				Category:    FFMPEG_CLI_CATEGORY,
+			},
+			&cli.IntFlag{
+				Name:        "port",
+				Usage:       "http server port",
+				Value:       8080,
+				Destination: &c.port,
+				Aliases:     []string{"p"},
+				Category:    SERVER_CLI_CATEGORY,
+				Action: func(ctx *cli.Context, v int) error {
+					if v >= 65536 {
+						return fmt.Errorf("flag port value %v out of range[0-65535]", v)
+					}
+					return nil
+				},
+			},
+		},
 		Action: func(ctx *cli.Context) error {
 			if ctx.Args().Len() != 0 {
 				c.dir = ctx.Args().First()
@@ -76,8 +155,9 @@ func start(c config) {
 	}
 	slog.Info("Indexing started")
 	previewer, err := internal.NewPreviewer(
-		internal.WithImagePreview(),
-		internal.WithVideoPreview(),
+		internal.WithImagePreview(c.imageProcessing),
+		internal.WithVideoPreview(c.videoProcessing),
+		internal.WithAcceleration(c.acceleration),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -88,11 +168,13 @@ func start(c config) {
 		indexFileReader,
 		index.WithID(idGenerator),
 		index.WithFiles(files),
-		index.WithPreview(previewer.Pull),
+		index.WithPreview(previewer),
 		index.WithWorkers(runtime.NumCPU()),
 		index.WithContext(ctx),
 		index.WithProgress(func() { indexProgressBar.Add(1) }),
-		index.WithNewFiles(func() { indexNewFiles++ }))
+		index.WithNewFiles(func() { indexNewFiles++ }),
+		index.WithMaxNewImageItems(c.maxNewImageItems),
+		index.WithMaxNewVideoItems(c.maxNewVideoItems))
 
 	if err != nil {
 		log.Fatal(err.Error())

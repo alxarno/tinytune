@@ -73,6 +73,18 @@ func (mock mockFile) RelativePath() string {
 	return mock.relativePath
 }
 
+type mockPreviewGenerator struct {
+	sampleData []byte
+}
+
+func (mock mockPreviewGenerator) Pull(path string) (preview.PreviewData, error) {
+	return preview.PreviewData{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: mock.sampleData}, nil
+}
+
+func (mock mockPreviewGenerator) ContentType(path string) int {
+	return ContentTypeOther
+}
+
 func TestIndexFiles(t *testing.T) {
 	testFolderPath, _ := strings.CutSuffix(os.Getenv("PWD"), "pkg/index")
 	testFolderPath = filepath.Join(testFolderPath, "test")
@@ -98,9 +110,7 @@ func TestIndexFiles(t *testing.T) {
 	index, err := NewIndex(
 		nil,
 		WithFiles(filesMeta),
-		WithPreview(func(path string) (preview.PreviewData, error) {
-			return preview.PreviewData{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: sampleData}, nil
-		}),
+		WithPreview(mockPreviewGenerator{sampleData: sampleData}),
 		WithID(func(p FileMeta) (string, error) {
 			return fmt.Sprintf("%s%s", p.RelativePath(), p.ModTime()), nil
 		}),

@@ -10,8 +10,9 @@ import (
 )
 
 type previewer struct {
-	imagePreview bool
-	videoPreview bool
+	image        bool
+	video        bool
+	acceleration bool
 	videoParams  videoParams
 	videoFormats []string
 	imageFormats []string
@@ -19,15 +20,21 @@ type previewer struct {
 
 type PreviewerOption func(*previewer)
 
-func WithImagePreview() PreviewerOption {
+func WithImagePreview(param bool) PreviewerOption {
 	return func(p *previewer) {
-		p.imagePreview = true
+		p.image = param
 	}
 }
 
-func WithVideoPreview() PreviewerOption {
+func WithVideoPreview(param bool) PreviewerOption {
 	return func(p *previewer) {
-		p.videoPreview = true
+		p.video = param
+	}
+}
+
+func WithAcceleration(param bool) PreviewerOption {
+	return func(p *previewer) {
+		p.acceleration = param
 	}
 }
 
@@ -39,7 +46,7 @@ func NewPreviewer(opts ...PreviewerOption) (*previewer, error) {
 	for _, opt := range opts {
 		opt(preview)
 	}
-	if preview.videoPreview {
+	if preview.video {
 		if err := ProcessorProbe(); err != nil {
 			return nil, err
 		}
@@ -51,30 +58,45 @@ func NewPreviewer(opts ...PreviewerOption) (*previewer, error) {
 		preview.videoParams = params
 		preview.videoParams.timeout = time.Minute * 10
 	}
+	if !preview.acceleration {
+		preview.videoParams.device = ""
+	}
 	return preview, nil
 }
 
 func (p previewer) Pull(path string) (preview.PreviewData, error) {
-	ext := filepath.Ext(path)
+	contentType := p.ContentType(path)
 	defaultPreview := preview.PreviewData{ContentType: index.ContentTypeOther}
-	if len(ext) < 2 {
-		return defaultPreview, nil
-	}
-	if slices.Contains(p.imageFormats, ext[1:]) && p.imagePreview {
+
+	if contentType == index.ContentTypeImage && p.image {
 		preview, err := ImagePreview(path)
 		if err != nil {
 			return defaultPreview, err
 		}
-		preview.ContentType = index.ContentTypeImage
+		preview.ContentType = contentType
 		return preview, nil
 	}
-	if slices.Contains(p.videoFormats, ext[1:]) && p.videoPreview {
+	if contentType == index.ContentTypeVideo && p.video {
 		preview, err := VideoPreview(path, p.videoParams)
 		if err != nil {
 			return defaultPreview, err
 		}
-		preview.ContentType = index.ContentTypeVideo
+		preview.ContentType = contentType
 		return preview, nil
 	}
 	return defaultPreview, nil
+}
+
+func (p previewer) ContentType(path string) int {
+	ext := filepath.Ext(path)
+	if len(ext) < 2 {
+		return index.ContentTypeOther
+	}
+	if slices.Contains(p.imageFormats, ext[1:]) {
+		return index.ContentTypeImage
+	}
+	if slices.Contains(p.videoFormats, ext[1:]) {
+		return index.ContentTypeVideo
+	}
+	return index.ContentTypeOther
 }

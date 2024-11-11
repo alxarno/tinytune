@@ -20,7 +20,7 @@ func TestPreview(t *testing.T) {
 		{"../test/sample.txt", "", true},
 	}
 	for _, tc := range testCases {
-		previewer, err := NewPreviewer(WithImagePreview(), WithVideoPreview())
+		previewer, err := NewPreviewer(WithImagePreview(true), WithVideoPreview(true))
 		require.NoError(t, err)
 		t.Run(filepath.Ext(tc.path), func(tt *testing.T) {
 			preview, err := previewer.Pull(tc.path)

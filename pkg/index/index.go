@@ -17,24 +17,29 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-var NotFoundError = fmt.Errorf("not found")
+var ErrNotFound = fmt.Errorf("not found")
 
-type PreviewGenerator func(string) (preview.PreviewData, error)
 type IDGenerator func(m FileMeta) (string, error)
+type PreviewGenerator interface {
+	Pull(string) (preview.PreviewData, error)
+	ContentType(string) int
+}
 
 type Index struct {
-	meta     map[string]*IndexMeta
-	tree     map[string][]*IndexMeta
-	paths    map[string]*IndexMeta
-	data     []byte
-	outDated bool
-	preview  PreviewGenerator
-	id       IDGenerator
-	files    []FileMeta
-	context  context.Context
-	progress func()
-	newFiles func()
-	workers  int
+	meta             map[string]*IndexMeta
+	tree             map[string][]*IndexMeta
+	paths            map[string]*IndexMeta
+	data             []byte
+	outDated         bool
+	preview          PreviewGenerator
+	id               IDGenerator
+	files            []FileMeta
+	context          context.Context
+	progress         func()
+	newFiles         func()
+	workers          int
+	maxNewImageItems int64
+	maxNewVideoItems int64
 }
 
 type IndexOption func(*Index)
@@ -49,20 +54,21 @@ type FileMeta interface {
 }
 
 func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
-	defaultPreview := preview.PreviewData{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: nil}
 	index := Index{
-		data:     []byte{},
-		meta:     map[string]*IndexMeta{},
-		preview:  func(string) (preview.PreviewData, error) { return defaultPreview, nil },
-		id:       func(m FileMeta) (string, error) { return m.Path(), nil },
-		files:    []FileMeta{},
-		tree:     map[string][]*IndexMeta{},
-		paths:    map[string]*IndexMeta{},
-		context:  context.Background(),
-		outDated: false,
-		progress: func() {},
-		newFiles: func() {},
-		workers:  4,
+		data:             []byte{},
+		meta:             map[string]*IndexMeta{},
+		preview:          nil,
+		id:               func(m FileMeta) (string, error) { return m.Path(), nil },
+		files:            []FileMeta{},
+		tree:             map[string][]*IndexMeta{},
+		paths:            map[string]*IndexMeta{},
+		context:          context.Background(),
+		outDated:         false,
+		progress:         func() {},
+		newFiles:         func() {},
+		workers:          4,
+		maxNewImageItems: -1,
+		maxNewVideoItems: -1,
 	}
 	for _, opt := range opts {
 		opt(&index)
@@ -89,9 +95,9 @@ func NewIndex(r io.Reader, opts ...IndexOption) (Index, error) {
 	return index, nil
 }
 
-func WithPreview(f func(string) (preview.PreviewData, error)) IndexOption {
+func WithPreview(gen PreviewGenerator) IndexOption {
 	return func(i *Index) {
-		i.preview = f
+		i.preview = gen
 	}
 }
 
@@ -125,6 +131,18 @@ func WithNewFiles(f func()) IndexOption {
 	}
 }
 
+func WithMaxNewImageItems(param int64) IndexOption {
+	return func(i *Index) {
+		i.maxNewImageItems = param
+	}
+}
+
+func WithMaxNewVideoItems(param int64) IndexOption {
+	return func(i *Index) {
+		i.maxNewVideoItems = param
+	}
+}
+
 func WithWorkers(w int) IndexOption {
 	return func(i *Index) {
 		i.workers = w
@@ -136,7 +154,7 @@ func (index Index) OutDated() bool {
 
 func (index Index) Pull(id string) (*IndexMeta, error) {
 	if m, ok := index.meta[id]; !ok {
-		return nil, NotFoundError
+		return nil, ErrNotFound
 	} else {
 		return m, nil
 	}
@@ -145,7 +163,7 @@ func (index Index) Pull(id string) (*IndexMeta, error) {
 func (index Index) PullPreview(id string) ([]byte, error) {
 	m, ok := index.meta[id]
 	if !ok {
-		return nil, NotFoundError
+		return nil, ErrNotFound
 	}
 	if m.Preview.Length == 0 {
 		return nil, nil
@@ -169,7 +187,7 @@ func (index Index) PullChildren(id string) ([]*IndexMeta, error) {
 	if children, ok := index.tree[id]; ok {
 		result = children
 	} else {
-		return nil, NotFoundError
+		return nil, ErrNotFound
 	}
 	return result, nil
 }
@@ -181,7 +199,7 @@ func (index Index) PullPaths(id string) ([]*IndexMeta, error) {
 	}
 	m, ok := index.meta[id]
 	if !ok || !m.IsDir {
-		return nil, NotFoundError
+		return nil, ErrNotFound
 	}
 	paths := strings.Split(m.RelativePath, string(os.PathSeparator))
 	subDirs := []string{}
@@ -239,6 +257,15 @@ func (index *Index) loadFiles() error {
 	wg := new(sync.WaitGroup)
 	sem := semaphore.NewWeighted(int64(index.workers))
 	resultChannel := make(chan fileProcessorResult, len(index.files))
+	processor := newFileProcessor(
+		withID(index.id),
+		withPreview(index.preview),
+		withIDCheck(func(id string) bool { _, ok := index.meta[id]; return !ok }),
+		withChan(resultChannel),
+		withSemaphore(sem),
+		withWaitGroup(wg),
+		withMaxImageItems(index.maxNewImageItems),
+		withMaxVideoItems(index.maxNewVideoItems))
 
 	for _, file := range index.files {
 		if err := sem.Acquire(index.context, 1); err != nil {
@@ -249,14 +276,7 @@ func (index *Index) loadFiles() error {
 		}
 		wg.Add(1)
 		index.progress()
-		go processFile(
-			file,
-			withID(index.id),
-			withPreview(index.preview),
-			withIDCheck(func(id string) bool { _, ok := index.meta[id]; return !ok }),
-			withChan(resultChannel),
-			withSemaphore(sem),
-			withWaitGroup(wg))
+		go processor.run(file)
 	}
 
 	wg.Wait()
