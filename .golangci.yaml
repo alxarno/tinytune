@@ -34,7 +34,8 @@ linters-settings:
       - w http.ResponseWriter
       - r *http.Request
       - r io.Reader
-
+run:
+  timeout: 5m
 
 output:
   sort-results: true
