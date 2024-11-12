@@ -41,11 +41,11 @@ func NewIndex(ctx context.Context, r io.Reader, opts ...Option) (Index, error) {
 	return index, nil
 }
 
-func (index Index) OutDated() bool {
+func (index *Index) OutDated() bool {
 	return index.outDated
 }
 
-func (index Index) Pull(id string) (*Meta, error) {
+func (index *Index) Pull(id string) (*Meta, error) {
 	m, ok := index.meta[id]
 	if !ok {
 		return nil, ErrNotFound
@@ -54,7 +54,7 @@ func (index Index) Pull(id string) (*Meta, error) {
 	return m, nil
 }
 
-func (index Index) PullPreview(id string) ([]byte, error) {
+func (index *Index) PullPreview(id string) ([]byte, error) {
 	meta, ok := index.meta[id]
 	if !ok {
 		return nil, ErrNotFound
@@ -67,7 +67,7 @@ func (index Index) PullPreview(id string) ([]byte, error) {
 	return index.data[meta.Preview.Offset : meta.Preview.Offset+meta.Preview.Length], nil
 }
 
-func (index Index) PullChildren(id string) ([]*Meta, error) {
+func (index *Index) PullChildren(id string) ([]*Meta, error) {
 	result := make([]*Meta, 0)
 
 	// return root children
@@ -88,7 +88,7 @@ func (index Index) PullChildren(id string) ([]*Meta, error) {
 	return nil, ErrNotFound
 }
 
-func (index Index) PullPaths(id string) ([]*Meta, error) {
+func (index *Index) PullPaths(id string) ([]*Meta, error) {
 	result := []*Meta{}
 	if id == "" {
 		return result, nil
@@ -119,7 +119,7 @@ func (index Index) PullPaths(id string) ([]*Meta, error) {
 	return result, nil
 }
 
-func (index Index) Search(query string, dir string) []*Meta {
+func (index *Index) Search(query string, dir string) []*Meta {
 	result := []*Meta{}
 	query = strings.ToLower(query)
 	filter := func(v *Meta) {
@@ -148,7 +148,7 @@ func (index Index) Search(query string, dir string) []*Meta {
 	return result
 }
 
-func (index Index) FilesWithPreviewStat() (int, uint32) {
+func (index *Index) FilesWithPreviewStat() (int, uint32) {
 	count := 0
 	size := uint32(0)
 

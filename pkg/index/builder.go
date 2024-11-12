@@ -90,16 +90,16 @@ func (ib *indexBuilder) run(ctx context.Context, r io.Reader) error {
 	return nil
 }
 
-func ifMaxPass(max *int64) bool {
-	if atomic.LoadInt64(max) == -1 {
+func ifMaxPass(maxNewItems *int64) bool {
+	if atomic.LoadInt64(maxNewItems) == -1 {
 		return true
 	}
 
-	if atomic.LoadInt64(max) == 0 {
+	if atomic.LoadInt64(maxNewItems) == 0 {
 		return false
 	}
 
-	atomic.AddInt64(max, -1)
+	atomic.AddInt64(maxNewItems, -1)
 
 	return true
 }

@@ -235,7 +235,7 @@ func start(config Config) {
 
 	_ = internal.NewServer(
 		ctx,
-		internal.WithSource(index),
+		internal.WithSource(&index),
 		internal.WithPort(config.port),
 		internal.WithDebug(Mode == DebugMode),
 	)

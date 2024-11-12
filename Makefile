@@ -50,6 +50,7 @@ test: ## test -coverprofile=coverage.out
 .PHONY: ubuntu
 ubuntu: ## Install deps for ubuntu (libvips, ffmpeg)
 	apt install build-essential libvips pkg-config libvips-dev ffmpeg -y
+	npm i --prefix ./web
 
 .PHONY: coverage
 coverage: ## coverage

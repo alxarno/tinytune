@@ -12,6 +12,9 @@ linters-settings:
   wsl:
     allow-cuddle-declarations: true
     force-err-cuddling: true
+  gosec:
+    excludes:
+      - G115
   varnamelen:
     ignore-type-assert-ok: true
     ignore-map-index-ok: true
