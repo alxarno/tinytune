@@ -22,7 +22,7 @@ jobs:
       - run: npm -v
       - name: Install dev environment
         run: |
-          apt-get update
+          sudo apt-get update
           make ubuntu
       - name: Install golangci-lint
         run: |
