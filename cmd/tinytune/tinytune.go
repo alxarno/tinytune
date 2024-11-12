@@ -19,10 +19,24 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const INDEX_FILE_NAME = "index.tinytune"
-const PROCESSING_CLI_CATEGORY = "Processing:"
-const FFMPEG_CLI_CATEGORY = "Ffmpeg:"
-const SERVER_CLI_CATEGORY = "Server:"
+const (
+	DEBUG_MODE      = "Debug"
+	PRODUCTION_MODE = "Production"
+)
+
+var (
+	Version        = "n/a"
+	CommitHash     = "n/a"
+	BuildTimestamp = "n/a"
+	Mode           = DEBUG_MODE
+)
+
+const (
+	INDEX_FILE_NAME         = "index.tinytune"
+	PROCESSING_CLI_CATEGORY = "Processing:"
+	FFMPEG_CLI_CATEGORY     = "FFmpeg:"
+	SERVER_CLI_CATEGORY     = "Server:"
+)
 
 type config struct {
 	dir              string
@@ -35,18 +49,28 @@ type config struct {
 }
 
 func main() {
+	cli.VersionPrinter = func(cCtx *cli.Context) {
+		fmt.Printf(
+			"Version=%s\nCommit-Hash=%s\nBuild-Time=%s\n",
+			cCtx.App.Version,
+			CommitHash,
+			BuildTimestamp,
+		)
+	}
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "print-version",
-		Aliases: []string{"V"},
+		Aliases: []string{"v"},
 		Usage:   "print only the version",
 	}
 	c := config{dir: os.Getenv("PWD")}
 	app := &cli.App{
-		Name:        "tinytune",
-		Usage:       "tiny media server",
-		Version:     "v0.0.1",
+		Name:        "TinyTune",
+		Usage:       "the tiny media server",
+		Version:     Version,
+		Copyright:   "(c) github.com/alxarno/tinytune",
 		Suggest:     true,
 		HideVersion: false,
+		UsageText:   "tinytune [data folder path] [global options]",
 		Authors: []*cli.Author{
 			{
 				Name:  "alxarno",
@@ -57,7 +81,7 @@ func main() {
 			&cli.BoolFlag{
 				Name:        "video",
 				Value:       true,
-				Aliases:     []string{"v"},
+				Aliases:     []string{"av"},
 				Usage:       "allows the server to process videos, creating previews and retrieving the necessary meta information",
 				Destination: &c.videoProcessing,
 				Category:    PROCESSING_CLI_CATEGORY,
@@ -65,7 +89,7 @@ func main() {
 			&cli.BoolFlag{
 				Name:        "image",
 				Value:       true,
-				Aliases:     []string{"i"},
+				Aliases:     []string{"ai"},
 				Usage:       "allows the server to process images, creating previews and retrieving the necessary meta information",
 				Destination: &c.imageProcessing,
 				Category:    PROCESSING_CLI_CATEGORY,
@@ -206,6 +230,7 @@ func start(c config) {
 		ctx,
 		internal.WithSource(index),
 		internal.WithPort(c.port),
+		internal.WithDebug(Mode == DEBUG_MODE),
 	)
 	slog.Info("Server started", slog.Int("port", c.port))
 	<-ctx.Done()

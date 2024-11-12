@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"slices"
 	"strings"
@@ -14,6 +16,8 @@ import (
 
 	"github.com/alxarno/tinytune/pkg/httputil"
 	"github.com/alxarno/tinytune/pkg/index"
+	"github.com/alxarno/tinytune/web/assets"
+	"github.com/alxarno/tinytune/web/templates"
 	"github.com/justinas/alice"
 	"golang.org/x/exp/maps"
 )
@@ -30,6 +34,7 @@ type server struct {
 	templates map[string]*template.Template
 	source    source
 	port      int
+	debugMode bool
 }
 
 func getSorts() map[string]metaSortFunc {
@@ -44,7 +49,21 @@ func getSorts() map[string]metaSortFunc {
 	return m
 }
 
-func (s *server) loadtemplates() {
+func (s *server) getTemplates() fs.FS {
+	if s.debugMode {
+		return os.DirFS("./web/templates/")
+	}
+	return templates.Templates
+}
+
+func (s *server) getAssets() fs.FS {
+	if s.debugMode {
+		return os.DirFS("./web/assets/")
+	}
+	return assets.Assets
+}
+
+func (s *server) loadTemplates() {
 	funcs := template.FuncMap{
 		"ext": func(name string) string {
 			extension := path.Ext(name)
@@ -73,7 +92,7 @@ func (s *server) loadtemplates() {
 		},
 	}
 	s.templates = make(map[string]*template.Template)
-	s.templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseGlob("./web/templates/*.html"))
+	s.templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseFS(s.getTemplates(), "*.html"))
 }
 
 type PageData struct {
@@ -215,9 +234,15 @@ func WithPort(port int) ServerOption {
 	}
 }
 
+func WithDebug(debug bool) ServerOption {
+	return func(s *server) {
+		s.debugMode = debug
+	}
+}
+
 func NewServer(ctx context.Context, opts ...ServerOption) *server {
 	server := server{}
-	server.loadtemplates()
+	server.loadTemplates()
 	for _, opt := range opts {
 		opt(&server)
 	}
@@ -228,7 +253,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) *server {
 		Handler:     mux,
 	}
 	chain := alice.New(httputil.LoggingHandler)
-	staticHandler := http.StripPrefix("/static", http.FileServer(http.Dir("./web/assets/")))
+	staticHandler := http.StripPrefix("/static", http.FileServer(http.FS(server.getAssets())))
 	mux.Handle("GET /", chain.Then(server.indexHandler()))
 	mux.Handle("GET /d/{dirID}/", chain.Then(server.indexHandler()))
 	mux.Handle("GET /s", chain.Then(server.searchHandler()))

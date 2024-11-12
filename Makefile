@@ -5,12 +5,20 @@ help:  # prints this help
 	@bash -c "$$AUTOGEN_HELP_BASH" < $(ME)
 
 BINARY_NAME=tinytune-linux
+VERSION=$(shell git describe --tags --always --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*' 2> /dev/null | sed 's/^.//')
+COMMIT_HASH=$(shell git rev-parse --short HEAD)
+BUILD_TIMESTAMP=$(shell date '+%Y-%m-%dT%H:%M:%S')
+LDFLAGS=-ldflags "-X 'main.Version=${VERSION}' -X 'main.CommitHash=${COMMIT_HASH}' -X 'main.BuildTimestamp=${BUILD_TIMESTAMP}' -X 'main.Mode=Production'"
 
 .PHONY: build
 build: ## build
+	echo "Building frontend assets"
+	make web
 	mkdir -p out/
-	GOARCH=amd64 GOOS=linux go build -o out/${BINARY_NAME} cmd/tinytune/tinytune.go
+	echo "Building executable"
+	GOARCH=amd64 GOOS=linux go build ${LDFLAGS} -o out/${BINARY_NAME} cmd/tinytune/tinytune.go
 	chmod +x out/${BINARY_NAME}
+	echo "Done"
 
 .PHONY: run
 run: ## run
