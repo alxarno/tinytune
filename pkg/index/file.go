@@ -1,10 +1,15 @@
 package index
 
 import (
+	"errors"
+	"fmt"
+	"log/slog"
 	"sync"
 
 	"golang.org/x/sync/semaphore"
 )
+
+var ErrPreviewPull = errors.New("failed to pull preview")
 
 type fileProcessor struct {
 	preview   PreviewGenerator
@@ -65,6 +70,8 @@ func (fp *fileProcessor) run(file FileMeta, id string) {
 
 	preview, err := fp.preview.Pull(meta.Path)
 	if err != nil {
+		slog.Error(fmt.Errorf("%w:%w", ErrPreviewPull, err).Error())
+
 		return
 	}
 
