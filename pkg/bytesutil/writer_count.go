@@ -1,19 +1,24 @@
 package bytesutil
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"sync/atomic"
 )
 
-// WriterCounter is counter for io.Writer
+var ErrWrite = errors.New("failed to write")
+
+// WriterCounter is counter for io.Writer.
 type WriterCounter struct {
 	count uint64
 	io.Writer
 }
 
-// NewWriterCounter function create new WriterCounter
+// NewWriterCounter function create new WriterCounter.
 func NewWriterCounter(w io.Writer) *WriterCounter {
 	return &WriterCounter{
+		count:  0,
 		Writer: w,
 	}
 }
@@ -32,10 +37,14 @@ func (counter *WriterCounter) Write(buf []byte) (int, error) {
 		atomic.AddUint64(&counter.count, uint64(n))
 	}
 
-	return n, err
+	if err != nil {
+		return n, fmt.Errorf("%w:%w", ErrWrite, err)
+	}
+
+	return n, nil
 }
 
-// Count function return counted bytes
+// Count function return counted bytes.
 func (counter *WriterCounter) Count() uint64 {
 	return atomic.LoadUint64(&counter.count)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -23,22 +24,28 @@ import (
 )
 
 type source interface {
-	PullChildren(string) ([]*index.IndexMeta, error)
-	PullPreview(string) ([]byte, error)
-	PullPaths(string) ([]*index.IndexMeta, error)
-	Pull(string) (*index.IndexMeta, error)
-	Search(string, string) []*index.IndexMeta
+	PullChildren(ID string) ([]*index.Meta, error)
+	PullPreview(ID string) ([]byte, error)
+	PullPaths(ID string) ([]*index.Meta, error)
+	Pull(ID string) (*index.Meta, error)
+	Search(query string, dir string) []*index.Meta
 }
 
-type server struct {
+type Server struct {
 	templates map[string]*template.Template
 	source    source
 	port      int
 	debugMode bool
 }
 
+func logWriteErr(_ int, err error) {
+	if err != nil {
+		slog.Error(fmt.Sprintf("Write failed: %v", err))
+	}
+}
+
 func getSorts() map[string]metaSortFunc {
-	m := map[string]metaSortFunc{
+	return map[string]metaSortFunc{
 		"A-Z":            metaSortAlphabet,
 		"Z-A":            metaSortAlphabetReverse,
 		"Last Modified":  metaSortLastModified,
@@ -46,30 +53,32 @@ func getSorts() map[string]metaSortFunc {
 		"Type":           metaSortType,
 		"Size":           metaSortSize,
 	}
-	return m
 }
 
-func (s *server) getTemplates() fs.FS {
+func (s *Server) getTemplates() fs.FS {
 	if s.debugMode {
 		return os.DirFS("./web/templates/")
 	}
+
 	return templates.Templates
 }
 
-func (s *server) getAssets() fs.FS {
+func (s *Server) getAssets() fs.FS {
 	if s.debugMode {
 		return os.DirFS("./web/assets/")
 	}
+
 	return assets.Assets
 }
 
-func (s *server) loadTemplates() {
+func (s *Server) loadTemplates() {
 	funcs := template.FuncMap{
 		"ext": func(name string) string {
 			extension := path.Ext(name)
 			if extension != "" {
 				return extension[1:]
 			}
+
 			return ""
 		},
 		"width": func(res string) string {
@@ -81,13 +90,14 @@ func (s *server) loadTemplates() {
 		"eqMinusOne": func(x int, y int) bool {
 			return x == y-1
 		},
-		"dur": func(d time.Duration) string {
+		"dur": func(duration time.Duration) string {
 			result := ""
-			if int(d.Hours()) != 0 {
-				result += fmt.Sprintf("%02d:", int(d.Hours()))
+			if int(duration.Hours()) != 0 {
+				result += fmt.Sprintf("%02d:", int(duration.Hours()))
 			}
-			result += fmt.Sprintf("%02d:", int(d.Minutes()))
-			result += fmt.Sprintf("%02d", int(d.Seconds()))
+			result += fmt.Sprintf("%02d:", int(duration.Minutes()))
+			result += fmt.Sprintf("%02d", int(duration.Seconds()))
+
 			return result
 		},
 	}
@@ -96,8 +106,8 @@ func (s *server) loadTemplates() {
 }
 
 type PageData struct {
-	Items      []*index.IndexMeta
-	Path       []*index.IndexMeta
+	Items      []*index.Meta
+	Path       []*index.Meta
 	Zoom       string
 	Sorts      []string
 	ActiveSort string
@@ -124,94 +134,117 @@ func applyCookies(r *http.Request, data PageData) PageData {
 	} else {
 		data.ActiveSort = "Type"
 	}
+
 	if s, ok := getSorts()[data.ActiveSort]; ok {
 		data.Items = s(data.Items)
 	}
+
 	return data
 }
 
-func (s *server) indexHandler() http.Handler {
+func (s *Server) indexHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := error(nil)
+		err := error(nil) //nolint:wastedassign
 		data := PageData{
-			Items: []*index.IndexMeta{},
-			Path:  []*index.IndexMeta{},
+			Items: []*index.Meta{},
+			Path:  []*index.Meta{},
 			Sorts: []string{},
 		}
+
 		if data.Items, err = s.source.PullChildren(r.PathValue("dirID")); err != nil {
 			w.WriteHeader(http.StatusNotFound)
+
 			return
 		}
+
 		if data.Path, err = s.source.PullPaths(r.PathValue("dirID")); err != nil {
 			w.WriteHeader(http.StatusNotFound)
+
 			return
 		}
+
 		data = applyCookies(r, data)
+
 		w.WriteHeader(http.StatusOK)
-		s.templates["index.html"].ExecuteTemplate(w, "index", data)
+
+		if err := s.templates["index.html"].ExecuteTemplate(w, "index", data); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	})
 }
 
-func (s *server) searchHandler() http.Handler {
+func (s *Server) searchHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Expose-Headers", "Hx-Push-Url")
 		w.Header().Set("HX-Push-Url", r.RequestURI)
-		err := error(nil)
+
+		err := error(nil) //nolint:wastedassign
 		data := PageData{
-			Items: []*index.IndexMeta{},
-			Path:  []*index.IndexMeta{},
+			Items: []*index.Meta{},
+			Path:  []*index.Meta{},
 			Sorts: []string{},
 		}
 		params, _ := url.ParseQuery(r.URL.RawQuery)
 		data.Search = params.Get("query")
+
 		if data.Search == "" {
 			http.Redirect(w, r, "/", http.StatusNotFound)
 		}
+
 		if data.Search, err = url.QueryUnescape(data.Search); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+
 			return
 		}
+
 		dirID := r.PathValue("dirID")
 
 		if dirID != "" {
 			if data.Path, err = s.source.PullPaths(r.PathValue("dirID")); err != nil {
 				w.WriteHeader(http.StatusNotFound)
+
 				return
 			}
 		}
 
 		data.Items = s.source.Search(data.Search, dirID)
-		data.Path = append(data.Path, &index.IndexMeta{
+		data.Path = append(data.Path, &index.Meta{
 			Name: "Search",
 		})
 		data = applyCookies(r, data)
+
 		w.WriteHeader(http.StatusOK)
-		s.templates["index.html"].ExecuteTemplate(w, "index", data)
+
+		if err := s.templates["index.html"].ExecuteTemplate(w, "index", data); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	})
 }
 
-func (s *server) previewHandler() http.Handler {
+func (s *Server) previewHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, err := s.source.PullPreview(r.PathValue("fileID"))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404")
+
 			return
 		}
 		// Cache for week
 		w.Header().Add("Cache-Control", "max-age=604800")
 		w.Header().Add("Content-Type", http.DetectContentType(data))
 		w.WriteHeader(http.StatusOK)
-		w.Write(data)
+		logWriteErr(w.Write(data))
 	})
 }
 
-func (s *server) originHandler() http.Handler {
+func (s *Server) originHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		meta, err := s.source.Pull(r.PathValue("fileID"))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404")
+
 			return
 		}
 		// Cache for hour
@@ -220,37 +253,41 @@ func (s *server) originHandler() http.Handler {
 	})
 }
 
-type ServerOption func(*server)
+type ServerOption func(*Server)
 
 func WithSource(source source) ServerOption {
-	return func(s *server) {
+	return func(s *Server) {
 		s.source = source
 	}
 }
 
 func WithPort(port int) ServerOption {
-	return func(s *server) {
+	return func(s *Server) {
 		s.port = port
 	}
 }
 
 func WithDebug(debug bool) ServerOption {
-	return func(s *server) {
+	return func(s *Server) {
 		s.debugMode = debug
 	}
 }
 
-func NewServer(ctx context.Context, opts ...ServerOption) *server {
-	server := server{}
+func NewServer(ctx context.Context, opts ...ServerOption) *Server {
+	server := &Server{}
 	server.loadTemplates()
+
 	for _, opt := range opts {
-		opt(&server)
+		opt(server)
 	}
+
 	mux := http.NewServeMux()
+	serverTimeoutSeconds := 30
 	httpServer := &http.Server{
-		BaseContext: func(net.Listener) context.Context { return ctx },
-		Addr:        fmt.Sprintf(":%d", server.port),
-		Handler:     mux,
+		BaseContext:       func(net.Listener) context.Context { return ctx },
+		Addr:              fmt.Sprintf(":%d", server.port),
+		Handler:           mux,
+		ReadHeaderTimeout: time.Second * time.Duration(serverTimeoutSeconds),
 	}
 	chain := alice.New(httputil.LoggingHandler)
 	staticHandler := http.StripPrefix("/static", http.FileServer(http.FS(server.getAssets())))
@@ -262,6 +299,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) *server {
 	mux.Handle("GET /origin/{fileID}/", chain.Then(server.originHandler()))
 	mux.Handle("GET /static/", chain.Then(staticHandler))
 
-	go httpServer.ListenAndServe()
-	return nil
+	go PanicError(httpServer.ListenAndServe())
+
+	return server
 }

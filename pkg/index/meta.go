@@ -10,32 +10,32 @@ const (
 	ContentTypeDir
 )
 
-type IndexMeta struct {
+type Meta struct {
 	ID           string
 	Path         string
 	RelativePath string
 	Name         string
 	ModTime      time.Time
 	IsDir        bool
-	Preview      IndexMetaPreview
+	Preview      Preview
 	Duration     time.Duration
 	Resolution   string
 	Type         int
 }
 
-func (m IndexMeta) IsImage() bool {
+func (m Meta) IsImage() bool {
 	return m.Type == ContentTypeImage
 }
 
-func (m IndexMeta) IsVideo() bool {
+func (m Meta) IsVideo() bool {
 	return m.Type == ContentTypeVideo
 }
 
-func (m IndexMeta) IsOtherFile() bool {
+func (m Meta) IsOtherFile() bool {
 	return m.Type == ContentTypeOther
 }
 
-type IndexMetaPreview struct {
+type Preview struct {
 	Length uint32
 	Offset uint32
 }

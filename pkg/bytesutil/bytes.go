@@ -6,12 +6,16 @@ import (
 )
 
 func PrettyByteSize[V int64 | uint64 | uint32 | int](b V) string {
-	bf := float64(b)
+	byteSize := float64(b)
+	kilo := 1024.0
+
 	for _, unit := range []string{"", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"} {
-		if math.Abs(bf) < 1024.0 {
-			return fmt.Sprintf("%3.1f%sB", bf, unit)
+		if math.Abs(byteSize) < kilo {
+			return fmt.Sprintf("%3.1f%sB", byteSize, unit)
 		}
-		bf /= 1024.0
+
+		byteSize /= kilo
 	}
-	return fmt.Sprintf("%.1fYiB", bf)
+
+	return fmt.Sprintf("%.1fYiB", byteSize)
 }

@@ -1,6 +1,12 @@
 package httputil
 
-import "net/http"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
+
+var ErrWrite = errors.New("failed to write")
 
 type responseWriter struct {
 	http.ResponseWriter
@@ -30,5 +36,6 @@ func (rw *responseWriter) WriteHeader(code int) {
 func (rw *responseWriter) Write(b []byte) (int, error) {
 	n, err := rw.ResponseWriter.Write(b)
 	rw.size += n
-	return n, err
+
+	return n, fmt.Errorf("%w:%w", ErrWrite, err)
 }

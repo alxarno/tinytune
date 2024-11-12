@@ -2,13 +2,21 @@ package internal
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/index"
+)
+
+var (
+	ErrDirNotFound              = errors.New("directory not found")
+	ErrDirStatFailed            = errors.New("failed os.Stat")
+	ErrDirWalkHandlerFailed     = errors.New("failed filepath.Walk handler")
+	ErrFileRelativePathNotFound = errors.New("file relative path not found")
+	ErrDirWalkFailed            = errors.New("failed filepath.Walk")
 )
 
 type RawFile interface {
@@ -43,32 +51,41 @@ func NewCrawlerOS(path string) CrawlerOS {
 func (c CrawlerOS) Scan(exclude ...string) ([]index.FileMeta, error) {
 	fileInfo, err := os.Stat(c.path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrDirStatFailed, err)
 	}
+
 	if !fileInfo.IsDir() {
-		return nil, errors.New("path is not dir")
+		return nil, ErrDirNotFound
 	}
+
 	files := []index.FileMeta{}
 	err = filepath.Walk(c.path,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				return err
+				return fmt.Errorf("%w: %w", ErrDirWalkHandlerFailed, err)
 			}
+
 			if path == c.path {
 				return nil
 			}
+
 			if slices.Contains(exclude, path) {
 				return nil
 			}
+
 			relativePath, err := filepath.Rel(c.path, path)
 			if err != nil {
-				return err
+				return fmt.Errorf("%w: %w", ErrFileRelativePathNotFound, err)
 			}
+
 			files = append(files, &CrawlerOSFile{info, path, relativePath})
+
 			return nil
 		})
+
 	if err != nil {
-		log.Println(err)
+		return nil, fmt.Errorf("%w: %w", ErrDirWalkFailed, err)
 	}
+
 	return files, nil
 }

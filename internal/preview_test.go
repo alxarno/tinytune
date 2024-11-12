@@ -1,7 +1,8 @@
 package internal
 
 import (
-	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"path/filepath"
 	"testing"
 
@@ -10,28 +11,35 @@ import (
 )
 
 func TestPreview(t *testing.T) {
+	t.Parallel()
+
+	previewer, err := NewPreviewer(WithImagePreview(true), WithVideoPreview(true))
+	require.NoError(t, err)
+
 	testCases := []struct {
 		path        string
-		resultHash  string
+		hash        string
 		resultIsNil bool
 	}{
 		{"../test/image.jpg", "64de9c944a91c93e750d097577c8fc5992100a7bb186d376534e78705aefbbbd", false},
 		{"../test/sample.mp4", "913e1f20eb400f3a13aa043005204ef53e0883c122086b96d94a2b6279ec008e", false},
 		{"../test/sample.txt", "", true},
 	}
-	for _, tc := range testCases {
-		previewer, err := NewPreviewer(WithImagePreview(true), WithVideoPreview(true))
-		require.NoError(t, err)
-		t.Run(filepath.Ext(tc.path), func(tt *testing.T) {
-			preview, err := previewer.Pull(tc.path)
-			assert.NoError(tt, err)
-			assert.Equal(tt, preview.Data == nil, tc.resultIsNil)
-			if tc.resultIsNil {
+
+	for _, tCase := range testCases {
+		t.Run(filepath.Ext(tCase.path), func(t *testing.T) {
+			t.Parallel()
+
+			preview, err := previewer.Pull(tCase.path)
+			require.NoError(t, err)
+			assert.Equal(t, preview.Data == nil, tCase.resultIsNil)
+
+			if tCase.resultIsNil {
 				return
 			}
-			hash, err := SHA256Hash(bytes.NewReader(preview.Data))
-			assert.NoError(tt, err)
-			assert.Equal(tt, tc.resultHash, hash)
+
+			hash := sha256.Sum256(preview.Data)
+			assert.Equal(t, tCase.hash, hex.EncodeToString(hash[:]))
 		})
 	}
 }

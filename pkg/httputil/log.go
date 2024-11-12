@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"slices"
 	"strings"
 
 	"github.com/alxarno/tinytune/pkg/bytesutil"
-	"github.com/alxarno/tinytune/pkg/log"
+	"github.com/alxarno/tinytune/pkg/logging"
 	"github.com/lmittmann/tint"
 )
 
@@ -17,7 +16,7 @@ type loggingHandler struct {
 	logger  *slog.Logger
 }
 
-func LoggingHandler(h http.Handler) http.Handler {
+func LoggingHandler(handler http.Handler) http.Handler {
 	const (
 		ansiReset        = "\033[0m"
 		ansiBrightRed    = "\033[91m"
@@ -25,32 +24,34 @@ func LoggingHandler(h http.Handler) http.Handler {
 		ansiBrightYellow = "\033[93m"
 		ansiBrightBlue   = "\033[94m"
 	)
-	logger := log.GetLogger(log.WithOption(func(opt *tint.Options) {
-		opt.ReplaceAttr = func(groups []string, a slog.Attr) slog.Attr {
-			errorsCodes := []string{"GET 404", "GET 500"}
+	valueToColor := map[string]string{
+		"GET 404": ansiBrightRed,
+		"GET 500": ansiBrightRed,
+		"GET 200": ansiBrightGreen,
+		"GET 206": ansiBrightBlue,
+		"GET 302": ansiBrightYellow,
+	}
+	logger := logging.Get(logging.WithOption(func(opt *tint.Options) {
+		opt.ReplaceAttr = func(_ []string, attribute slog.Attr) slog.Attr {
 			if opt.NoColor {
-				return a
+				return attribute
 			}
-			if a.Key == slog.LevelKey {
-				a = slog.Attr{}
+
+			if attribute.Key == slog.LevelKey {
+				attribute = slog.Attr{}
 			}
-			if a.Key == slog.MessageKey && a.Value.String() == "GET 200" {
-				a.Value = slog.StringValue(ansiBrightGreen + a.Value.String() + ansiReset)
+
+			code, ok := valueToColor[attribute.Value.String()]
+			if ok {
+				attribute.Value = slog.StringValue(code + attribute.Value.String() + ansiReset)
 			}
-			if a.Key == slog.MessageKey && a.Value.String() == "GET 206" {
-				a.Value = slog.StringValue(ansiBrightBlue + a.Value.String() + ansiReset)
-			}
-			if a.Key == slog.MessageKey && slices.Contains(errorsCodes, a.Value.String()) {
-				a.Value = slog.StringValue(ansiBrightRed + a.Value.String() + ansiReset)
-			}
-			if a.Key == slog.MessageKey && a.Value.String() == "GET 302" {
-				a.Value = slog.StringValue(ansiBrightYellow + a.Value.String() + ansiReset)
-			}
-			return a
+
+			return attribute
 		}
 	}))
+
 	return &loggingHandler{
-		handler: h,
+		handler: handler,
 		logger:  logger,
 	}
 }
@@ -58,14 +59,17 @@ func LoggingHandler(h http.Handler) http.Handler {
 func subString(input string, start int, length int) string {
 	asRunes := []rune(input)
 	postfix := ""
+
 	if start >= len(asRunes) {
 		return ""
 	}
+
 	if start+length > len(asRunes) {
 		length = len(asRunes) - start
 	} else {
 		postfix = "..."
 	}
+
 	return string(asRunes[start:start+length]) + postfix
 }
 
@@ -73,6 +77,8 @@ func (h *loggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wrapped := wrapResponseWriter(w)
 	h.handler.ServeHTTP(wrapped, r)
 	printFunc := h.logger.Info
+	maxUserAgentLength := 45
+
 	if wrapped.status == http.StatusNotFound {
 		printFunc = h.logger.Error
 	} else if wrapped.status != http.StatusOK {
@@ -85,5 +91,5 @@ func (h *loggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		slog.String("type", strings.Replace(w.Header().Get("Content-Type"), " charset=utf-8", "", 1)),
 		slog.String("response", bytesutil.PrettyByteSize(wrapped.size)),
 		slog.String("ip", r.RemoteAddr),
-		slog.String("user-agent", subString(r.UserAgent(), 0, 45)))
+		slog.String("user-agent", subString(r.UserAgent(), 0, maxUserAgentLength)))
 }

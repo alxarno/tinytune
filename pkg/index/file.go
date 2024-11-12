@@ -14,7 +14,7 @@ type fileProcessor struct {
 }
 
 type fileProcessorResult struct {
-	meta *IndexMeta
+	meta *Meta
 	data []byte
 }
 
@@ -49,26 +49,29 @@ func newFileProcessor(opts ...fileProcessorOption) fileProcessor {
 	for _, opt := range opts {
 		opt(&processor)
 	}
+
 	return processor
 }
 
-func (fp *fileProcessor) run(f FileMeta, id string) (*fileProcessorResult, error) {
-	meta := IndexMeta{
-		Path:         f.Path(),
-		RelativePath: f.RelativePath(),
-		Name:         f.Name(),
-		ModTime:      f.ModTime(),
-		IsDir:        f.IsDir(),
+func (fp *fileProcessor) run(file FileMeta, id string) {
+	meta := Meta{
+		Path:         file.Path(),
+		RelativePath: file.RelativePath(),
+		Name:         file.Name(),
+		ModTime:      file.ModTime(),
+		IsDir:        file.IsDir(),
 		ID:           id,
 	}
+
 	preview, err := fp.preview.Pull(meta.Path)
 	if err != nil {
-		return nil, err
+		return
 	}
+
 	meta.Duration = preview.Duration
 	meta.Type = preview.ContentType
 	meta.Resolution = preview.Resolution
-	meta.Preview = IndexMetaPreview{
+	meta.Preview = Preview{
 		Length: uint32(len(preview.Data)),
 	}
 	result := &fileProcessorResult{&meta, preview.Data}
@@ -76,12 +79,12 @@ func (fp *fileProcessor) run(f FileMeta, id string) (*fileProcessorResult, error
 	if fp.ch != nil {
 		fp.ch <- *result
 	}
+
 	if fp.semaphore != nil {
 		fp.semaphore.Release(1)
 	}
+
 	if fp.waitGroup != nil {
 		fp.waitGroup.Done()
 	}
-
-	return result, nil
 }

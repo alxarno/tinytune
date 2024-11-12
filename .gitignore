@@ -1,5 +1,4 @@
 /coverage.out
-/tmp.txt
 /test/index.tinytune
 /example.http
 /web/node_modules
@@ -8,3 +7,5 @@
 /web/assets/*.txt
 /web/assets/*.json
 /out
+/*.txt
+/.vscode

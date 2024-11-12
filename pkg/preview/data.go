@@ -2,7 +2,7 @@ package preview
 
 import "time"
 
-type PreviewData struct {
+type Data struct {
 	Duration    time.Duration
 	ContentType int
 	Resolution  string

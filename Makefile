@@ -58,12 +58,12 @@ coverage: ## coverage
 
 .PHONY: lint
 lint: ## lint
-	golangci-lint run --enable-all
+	golangci-lint run --fix
 
 .PHONY: quality
 quality: ## check-quality
-	make lint
 	make fmt
+	make lint
 
 .PHONY: fmt
 fmt: ## fmt

@@ -3,6 +3,7 @@ package index
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"fmt"
 	"os"
@@ -17,9 +18,12 @@ import (
 )
 
 func TestIndexEncodeDecode(t *testing.T) {
-	indexOriginal, err := NewIndex(nil)
+	t.Parallel()
+
+	indexOriginal, err := NewIndex(context.Background(), nil)
 	require.NoError(t, err)
-	indexOriginal.meta = map[string]*IndexMeta{
+
+	indexOriginal.meta = map[string]*Meta{
 		"5762029e772": {
 			Path:         "/home/test/",
 			Name:         "test",
@@ -37,25 +41,27 @@ func TestIndexEncodeDecode(t *testing.T) {
 			ModTime:      time.Date(2024, 11, 5, 5, 5, 5, 0, time.UTC),
 			Type:         ContentTypeImage,
 			IsDir:        false,
-			Preview: IndexMetaPreview{
+			Preview: Preview{
 				Length: 100,
 				Offset: 0,
 			},
 		},
 	}
 	indexOriginal.data = make([]byte, 100)
-	rand.Read(indexOriginal.data)
+	_, err = rand.Read(indexOriginal.data)
+	require.NoError(t, err)
+
 	buff := new(bytes.Buffer)
 	wrote, err := indexOriginal.Encode(buff)
-	assert.NoError(t, err)
-	assert.EqualValues(t, 480, wrote)
-	assert.EqualValues(t, 480, buff.Len())
-	// Parse
-	indexDerivative, err := NewIndex(bufio.NewReader(buff))
 	require.NoError(t, err)
-	assert.Equal(t, len(indexOriginal.meta), len(indexDerivative.meta))
+	assert.EqualValues(t, 466, wrote)
+	assert.EqualValues(t, 466, buff.Len())
+	// Parse
+	indexDerivative, err := NewIndex(context.Background(), bufio.NewReader(buff))
+	require.NoError(t, err)
+	assert.Len(t, indexDerivative.meta, len(indexOriginal.meta))
 	assert.Equal(t, indexOriginal.meta, indexDerivative.meta)
-	assert.Equal(t, len(indexOriginal.data), len(indexDerivative.data))
+	assert.Len(t, indexDerivative.data, len(indexOriginal.data))
 	assert.Equal(t, indexOriginal.data, indexDerivative.data)
 }
 
@@ -77,15 +83,17 @@ type mockPreviewGenerator struct {
 	sampleData []byte
 }
 
-func (mock mockPreviewGenerator) Pull(path string) (preview.PreviewData, error) {
-	return preview.PreviewData{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: mock.sampleData}, nil
+func (mock mockPreviewGenerator) Pull(_ string) (preview.Data, error) {
+	return preview.Data{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: mock.sampleData}, nil
 }
 
-func (mock mockPreviewGenerator) ContentType(path string) int {
+func (mock mockPreviewGenerator) ContentType(_ string) int {
 	return ContentTypeOther
 }
 
 func TestIndexFiles(t *testing.T) {
+	t.Parallel()
+
 	testFolderPath, _ := strings.CutSuffix(os.Getenv("PWD"), "pkg/index")
 	testFolderPath = filepath.Join(testFolderPath, "test")
 	filesNames := []string{
@@ -97,17 +105,22 @@ func TestIndexFiles(t *testing.T) {
 		filepath.Join(testFolderPath, "img"),
 		filepath.Join(testFolderPath, "img/image.jpg"),
 	}
+
 	filesMeta := []FileMeta{}
+
 	for _, path := range filesNames {
 		stat, err := os.Stat(path)
 		require.NoError(t, err)
 		relativePath, err := filepath.Rel(testFolderPath, path)
 		require.NoError(t, err)
-		filesMeta = append(filesMeta, &mockFile{stat, path, relativePath})
+
+		file := &mockFile{stat, path, relativePath}
+		filesMeta = append(filesMeta, file)
 	}
 
 	sampleData := make([]byte, 1000)
 	index, err := NewIndex(
+		context.Background(),
 		nil,
 		WithFiles(filesMeta),
 		WithPreview(mockPreviewGenerator{sampleData: sampleData}),
@@ -116,6 +129,6 @@ func TestIndexFiles(t *testing.T) {
 		}),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, 7, len(index.meta))
-	assert.EqualValues(t, len(filesNames)*len(sampleData), len(index.data))
+	assert.Len(t, index.meta, 7)
+	assert.Len(t, index.data, len(filesNames)*len(sampleData))
 }
