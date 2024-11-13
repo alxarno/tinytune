@@ -2,8 +2,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 1.x
-  
+      - main
 permissions:
   contents: write
   pull-requests: write
