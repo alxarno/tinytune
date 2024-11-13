@@ -1,4 +1,5 @@
 on:
+  workflow_dispatch:
   push:
     branches:
       - 1.x
@@ -7,21 +8,22 @@ permissions:
   contents: write
   pull-requests: write
   
-name: release-please
+name: Release
   
 jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           release-type: simple
           target-branch: ${{ github.ref_name }}
-      - uses: alxarno/tinytune/.github/workflows/_env.yml@main
+      - uses: alxarno/tinytune/.github/actions/env
         if: ${{ steps.release.outputs.release_created }}
         with:
-          go-version: '1.22.x'
+          go-version: "1.22.x"
       - name: Build
         if: ${{ steps.release.outputs.release_created }}
         run: |

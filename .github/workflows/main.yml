@@ -1,21 +1,18 @@
 name: Main
 on: [push]
 jobs:
-  build:
-    
+  build-and-test:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         go-version: [ '1.22.x' ]
-    
     steps:
-      - uses: alxarno/tinytune/.github/workflows/_env.yml@main
+      - uses: actions/checkout@v4
+      - uses: alxarno/tinytune/.github/actions/env
         with:
           go-version: ${{ matrix.go-version }}
       - name: Lint
-        run: |
-          make quality
+        run: make quality
       - name: Build
         run: |
           npm i ./web
