@@ -17,10 +17,13 @@ It allows you to watch **videos**, **images** and also has a **search** feature.
 
 ## ⚡️ Install
 
-The latest version of the TinyTune can be found on the GitHub [releases page](repo_release_url).
+The latest version of the TinyTune can be found on the GitHub [releases page](https://github.com/alxarno/tinytune/releases).
 
 ### Linux
 ```
+# check that you have ffmpeg installed
+ffmpeg -v
+
 wget https://github.com/alxarno/tinytune/releases/download/v1.0.0/tinytune_linux_amd64
 
 mv tinytune_linux_amd64 /usr/local/bin/tinytune
@@ -98,4 +101,3 @@ Usage is provided under the [GPLv3 License](./LICENSE). See LICENSE for the full
 [repo_logo_img]: ./docs/icon.jpg
 [repo_license_url]: https://github.com/alxarno/tinytune/blob/main/LICENSE
 [repo_license_img]: https://img.shields.io/github/license/alxarno/tinytune?style=for-the-badge&logo=none
-[repo_release_url]: https://github.com/alxarno/tinytune/releases
