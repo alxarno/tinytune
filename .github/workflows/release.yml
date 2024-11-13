@@ -20,7 +20,7 @@ jobs:
         with:
           release-type: simple
           target-branch: ${{ github.ref_name }}
-      - uses: actions/env@main
+      - uses: ./.github/actions/env
         if: ${{ steps.release.outputs.release_created }}
         with:
           go-version: "1.22.x"
