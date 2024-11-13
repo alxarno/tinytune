@@ -1,0 +1,32 @@
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "Golang version"
+        required: true
+        type: string
+
+jobs:
+  prepare-dev-env:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go ${{ inputs.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+      - name: Display Go version
+        run: go version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm -v
+      - name: Install dev environment
+        run: |
+          sudo apt-get update
+          make ubuntu
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.62.0
+          golangci-lint --version

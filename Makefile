@@ -16,8 +16,8 @@ build: ## build
 	make web
 	mkdir -p out/
 	echo "Building executable"
-	GOARCH=amd64 GOOS=linux go build ${LDFLAGS} -o out/${BINARY_NAME} cmd/tinytune/tinytune.go
-	chmod +x out/${BINARY_NAME}
+	GOARCH=amd64 GOOS=linux go build ${LDFLAGS} -o out/${BINARY_NAME}_linux_amd64 cmd/tinytune/tinytune.go
+	chmod +x out/${BINARY_NAME}_linux_amd64
 	echo "Done"
 
 .PHONY: run

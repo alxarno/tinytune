@@ -94,7 +94,7 @@ func (p Previewer) Pull(path string) (preview.Data, error) {
 	}
 
 	if contentType == index.ContentTypeVideo {
-		//default resolution for video player
+		// default resolution for video player
 		defaultPreview.Resolution = "1280x720"
 	}
 
