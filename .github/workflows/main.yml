@@ -8,7 +8,7 @@ jobs:
         go-version: [ '1.22.x' ]
     steps:
       - uses: actions/checkout@v4
-      - uses: alxarno/tinytune/.github/actions/env
+      - uses: .github/actions/env
         with:
           go-version: ${{ matrix.go-version }}
       - name: Lint
