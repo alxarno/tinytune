@@ -10,9 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/httputil"
@@ -73,33 +71,13 @@ func (s *Server) getAssets() fs.FS {
 
 func (s *Server) loadTemplates() {
 	funcs := template.FuncMap{
-		"ext": func(name string) string {
-			extension := path.Ext(name)
-			if extension != "" {
-				return extension[1:]
-			}
-
-			return ""
-		},
-		"width": func(res string) string {
-			return strings.Split(res, "x")[0]
-		},
-		"height": func(res string) string {
-			return strings.Split(res, "x")[1]
-		},
+		"ext":    extension,
+		"width":  width,
+		"height": height,
 		"eqMinusOne": func(x int, y int) bool {
 			return x == y-1
 		},
-		"dur": func(duration time.Duration) string {
-			result := ""
-			if int(duration.Hours()) != 0 {
-				result += fmt.Sprintf("%02d:", int(duration.Hours()))
-			}
-			result += fmt.Sprintf("%02d:", int(duration.Minutes()))
-			result += fmt.Sprintf("%02d", int(duration.Seconds()))
-
-			return result
-		},
+		"dur": durationPrint,
 	}
 	s.templates = make(map[string]*template.Template)
 	s.templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseFS(s.getTemplates(), "*.html"))
