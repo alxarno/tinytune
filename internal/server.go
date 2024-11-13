@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"slices"
 	"time"
 
@@ -32,6 +33,7 @@ type source interface {
 type Server struct {
 	templates map[string]*template.Template
 	source    source
+	pwd       string
 	port      int
 	debugMode bool
 }
@@ -226,9 +228,10 @@ func (s *Server) originHandler() http.Handler {
 
 			return
 		}
+
 		// Cache for hour
 		w.Header().Add("Cache-Control", "max-age=3600")
-		http.ServeFile(w, r, meta.Path)
+		http.ServeFile(w, r, filepath.Join(s.pwd, meta.RelativePath))
 	})
 }
 
@@ -249,6 +252,12 @@ func WithPort(port int) ServerOption {
 func WithDebug(debug bool) ServerOption {
 	return func(s *Server) {
 		s.debugMode = debug
+	}
+}
+
+func WithPWD(dir string) ServerOption {
+	return func(s *Server) {
+		s.pwd = dir
 	}
 }
 

@@ -260,6 +260,7 @@ func start(config Config) {
 		ctx,
 		internal.WithSource(&index),
 		internal.WithPort(config.port),
+		internal.WithPWD(config.dir),
 		internal.WithDebug(Mode == DebugMode),
 	)
 
