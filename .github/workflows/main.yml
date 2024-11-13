@@ -8,7 +8,7 @@ jobs:
         go-version: [ '1.22.x' ]
     steps:
       - uses: actions/checkout@v4
-      - uses: .github/actions/env
+      - uses: actions/env@main
         with:
           go-version: ${{ matrix.go-version }}
       - name: Lint
