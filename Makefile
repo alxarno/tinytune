@@ -31,7 +31,7 @@ watch: ## watch
 
 .PHONY: web
 web: ## web
-	npm run build --prefix web/
+	npm run build-all --prefix web/
 
 .PHONY: webwatch
 webwatch: ## webwatch
