@@ -27,6 +27,10 @@ ffmpeg -v
 wget https://github.com/alxarno/tinytune/releases/download/v1.0.0/tinytune_linux_amd64
 
 mv tinytune_linux_amd64 /usr/local/bin/tinytune
+
+chmod +x /usr/local/bin/tinytune
+
+tinytune /YOUR_MEDIA_FOLDER
 ```
 
 ## ⚙️ Commands & Options
