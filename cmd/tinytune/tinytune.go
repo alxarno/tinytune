@@ -50,6 +50,7 @@ type Config struct {
 	acceleration     bool
 	maxNewImageItems int64
 	maxNewVideoItems int64
+	parallel         int
 	port             int
 }
 
@@ -115,6 +116,14 @@ func main() {
 				Aliases:     []string{"nv"},
 				Usage:       "limits the number of new video files to be processed",
 				Destination: &config.maxNewVideoItems,
+				Category:    ProcessingCLICategory,
+			},
+			&cli.IntFlag{
+				Name:        "parallel",
+				Value:       runtime.NumCPU(),
+				Aliases:     []string{"pl"},
+				Usage:       "simultaneous file processing (!large values increase RAM consumption!)",
+				Destination: &config.parallel,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.BoolFlag{
@@ -217,7 +226,7 @@ func start(config Config) {
 		index.WithID(idGenerator),
 		index.WithFiles(files),
 		index.WithPreview(previewer),
-		index.WithWorkers(runtime.NumCPU()),
+		index.WithWorkers(config.parallel),
 		index.WithProgress(progressBarAdd),
 		index.WithNewFiles(func() { indexNewFiles++ }),
 		index.WithMaxNewImageItems(config.maxNewImageItems),

@@ -41,6 +41,9 @@ $center-big-play-button: true; // true default
     // z-index: 3 !important;
     width: 100%;
     height: 100%;
+    max-width: 100vw;
+    max-height: calc(100vh - 3rem);
+    // margin-top: 3rem;
 }
 
 /* The "Big Play Button" is the play button that shows before the video plays.

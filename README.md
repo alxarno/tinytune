@@ -7,11 +7,24 @@
 [![Go version][go_version_img]][go_dev_url]
 [![License][repo_license_img]][repo_license_url]
 
+<img alt="demo" src="./docs/demo.gif">
+
 **TinyTune** is tiny **media server** with **web** interface.
+
+It allows you to watch **videos**, **images** and also has a **search** feature.
 
 </div>
 
 ## ⚡️ Install
+
+The latest version of the TinyTune can be found on the GitHub [releases page](repo_release_url).
+
+### Linux
+```
+wget https://github.com/alxarno/tinytune/releases/download/v1.0.0/tinytune_linux_amd64
+
+mv tinytune_linux_amd64 /usr/local/bin/tinytune
+```
 
 ## ⚙️ Commands & Options
 
@@ -44,6 +57,7 @@ GLOBAL OPTIONS:
    --image, --ai                            allows the server to process images (default: true)
    --max-new-image-items value, --ni value  limits the number of new image files to be processed (default: -1)
    --max-new-video-items value, --nv value  limits the number of new video files to be processed (default: -1)
+   --parallel value, --pl value             simultaneous file processing (!large values increase RAM consumption!) (default: 16)
    --video, --av                            allows the server to process videos (default: true)
 
    Server:
@@ -53,11 +67,24 @@ GLOBAL OPTIONS:
 
 COPYRIGHT:
    (c) github.com/alxarno/tinytune
-
 ```
 ## 🖥️ Development
 
+```
+#!/usr/bin/env bash
+
+git clone https://github.com/alxarno/tinytune
+cd tinytune
+
+# Install dependencies
+make ubuntu
+# Start hot-reload way
+make watch
+```
+
 ## 🧾 License
+
+Usage is provided under the [GPLv3 License](./LICENSE). See LICENSE for the full details.
 
 <!-- Go -->
 
@@ -68,6 +95,7 @@ COPYRIGHT:
 <!-- Repository -->
 
 [repo_url]: https://github.com/alxarno/tinytune
-[repo_logo_img]: ./web/assets/icon.jpg
+[repo_logo_img]: ./docs/icon.jpg
 [repo_license_url]: https://github.com/alxarno/tinytune/blob/main/LICENSE
 [repo_license_img]: https://img.shields.io/github/license/alxarno/tinytune?style=for-the-badge&logo=none
+[repo_release_url]: https://github.com/alxarno/tinytune/releases
