@@ -1,8 +1,8 @@
 <div align="center">
 
-[![TinyTune][repo_logo_img]][repo_url]
 
-# TinyTune
+
+# [![TinyTune][repo_logo_img]][repo_url] TinyTune
 
 [![Go version][go_version_img]][go_dev_url]
 [![License][repo_license_img]][repo_license_url]
