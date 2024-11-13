@@ -30,6 +30,7 @@ func LoggingHandler(handler http.Handler) http.Handler {
 		"GET 200": ansiBrightGreen,
 		"GET 206": ansiBrightBlue,
 		"GET 302": ansiBrightYellow,
+		"GET 303": ansiBrightYellow,
 	}
 	logger := logging.Get(logging.WithOption(func(opt *tint.Options) {
 		opt.ReplaceAttr = func(_ []string, attribute slog.Attr) slog.Attr {

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"runtime"
 
+	"github.com/alxarno/tinytune/pkg/index"
 	"github.com/alxarno/tinytune/pkg/preview"
 	"github.com/davidbyttow/govips/v2/vips"
 )
@@ -37,7 +38,7 @@ func init() {
 }
 
 func ImagePreview(path string) (preview.Data, error) {
-	preview := preview.Data{Resolution: "0x0"}
+	preview := preview.Data{Resolution: "0x0", ContentType: index.ContentTypeImage}
 
 	image, err := vips.NewImageFromFile(path)
 	if err != nil {

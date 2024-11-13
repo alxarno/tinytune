@@ -37,5 +37,9 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	n, err := rw.ResponseWriter.Write(b)
 	rw.size += n
 
-	return n, fmt.Errorf("%w:%w", ErrWrite, err)
+	if err != nil {
+		return n, fmt.Errorf("%w:%w", ErrWrite, err)
+	}
+
+	return n, nil
 }

@@ -1,7 +1,11 @@
-{{define "image-item"}}<a href="/origin/{{ .ID }}" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery" data-pswp-width="{{ width .Resolution }}" data-pswp-height="{{ height .Resolution }}"><figure class="figure dir-list-item">
+{{define "image-item"}}<a href="/origin/{{ .ID }}" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery"><figure class="figure dir-list-item">
+            {{ if eq .Resolution "0x0" }}
+            {{ template "icon-image" .}}
+            {{ else }}
             <div class="wrap">
                 <div class="spacer"></div>
                 <img src="/preview/{{ .ID }}" id="img-{{.ID}}" class="figure-img img-fluid rounded" alt="{{ .Name }}" hx-preserve>
             </div>
+            {{ end }}
             <figcaption class="figure-caption">{{ .Name }}</figcaption>
         </figure></a>{{end}}

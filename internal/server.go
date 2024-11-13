@@ -169,6 +169,8 @@ func (s *Server) indexHandler() http.Handler {
 
 		if err := s.templates["index.html"].ExecuteTemplate(w, "index", data); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+
+			return
 		}
 	})
 }
@@ -224,16 +226,15 @@ func (s *Server) searchHandler() http.Handler {
 func (s *Server) previewHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, err := s.source.PullPreview(r.PathValue("fileID"))
-		if err != nil {
+		if err != nil || len(data) == 0 {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "404")
 
 			return
 		}
 		// Cache for week
+		w.WriteHeader(http.StatusOK)
 		w.Header().Add("Cache-Control", "max-age=604800")
 		w.Header().Add("Content-Type", http.DetectContentType(data))
-		w.WriteHeader(http.StatusOK)
 		logWriteErr(w.Write(data))
 	})
 }
@@ -275,11 +276,12 @@ func WithDebug(debug bool) ServerOption {
 
 func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 	server := &Server{}
-	server.loadTemplates()
 
 	for _, opt := range opts {
 		opt(server)
 	}
+
+	server.loadTemplates()
 
 	mux := http.NewServeMux()
 	serverTimeoutSeconds := 30
@@ -299,7 +301,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 	mux.Handle("GET /origin/{fileID}/", chain.Then(server.originHandler()))
 	mux.Handle("GET /static/", chain.Then(staticHandler))
 
-	go PanicError(httpServer.ListenAndServe())
+	go func() { PanicError(httpServer.ListenAndServe()) }()
 
 	return server
 }

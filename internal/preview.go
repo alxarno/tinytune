@@ -73,15 +73,13 @@ func NewPreviewer(opts ...PreviewerOption) (*Previewer, error) {
 
 func (p Previewer) Pull(path string) (preview.Data, error) {
 	contentType := p.ContentType(path)
-	defaultPreview := preview.Data{ContentType: index.ContentTypeOther}
+	defaultPreview := preview.Data{ContentType: contentType, Resolution: "0x0"}
 
 	if contentType == index.ContentTypeImage && p.image {
 		preview, err := ImagePreview(path)
 		if err != nil {
 			return defaultPreview, err
 		}
-
-		preview.ContentType = contentType
 
 		return preview, nil
 	}
@@ -92,9 +90,12 @@ func (p Previewer) Pull(path string) (preview.Data, error) {
 			return defaultPreview, err
 		}
 
-		preview.ContentType = contentType
-
 		return preview, nil
+	}
+
+	if contentType == index.ContentTypeVideo {
+		//default resolution for video player
+		defaultPreview.Resolution = "1280x720"
 	}
 
 	return defaultPreview, nil
@@ -102,6 +103,12 @@ func (p Previewer) Pull(path string) (preview.Data, error) {
 
 func (p Previewer) ContentType(path string) int {
 	ext := filepath.Ext(path)
+	minExtensionLength := 2
+
+	if len(ext) < minExtensionLength {
+		return index.ContentTypeOther
+	}
+
 	if slices.Contains(p.imageFormats, ext[1:]) {
 		return index.ContentTypeImage
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/fs"
@@ -142,7 +143,7 @@ func main() {
 		},
 		Action: func(ctx *cli.Context) error {
 			if ctx.Args().Len() != 0 {
-				config.dir = ctx.Args().First()
+				config.dir = ctx.Args().Get(ctx.Args().Len() - 1)
 			}
 			start(config)
 
@@ -157,12 +158,25 @@ func start(config Config) {
 	slog.SetDefault(logging.Get())
 
 	ctx := gracefulShutdownCtx()
+
+	slog.Info(
+		"TinyTune",
+		slog.String("version", Version),
+		slog.Bool("image-processing", config.imageProcessing),
+		slog.Bool("video-processing", config.videoProcessing),
+		slog.Bool("acceleration", config.acceleration),
+		slog.Int64("max-new-images", config.maxNewImageItems),
+		slog.Int64("max-new-videos", config.maxNewVideoItems),
+	)
+
 	indexFilePath := filepath.Join(config.dir, IndexFileName)
 
 	files, err := internal.NewCrawlerOS(config.dir).Scan(indexFilePath)
 	internal.PanicError(err)
 
-	indexFile, err := os.OpenFile(indexFilePath, os.O_RDWR|os.O_CREATE, fs.ModeAppend)
+	indexFileRights := 0755
+
+	indexFile, err := os.OpenFile(indexFilePath, os.O_RDWR|os.O_CREATE, fs.FileMode(indexFileRights))
 	internal.PanicError(err)
 	defer indexFile.Close()
 
@@ -249,7 +263,7 @@ func idGenerator(p index.FileMeta) (string, error) {
 	idSource := []byte(fmt.Sprintf("%s%s", p.RelativePath(), p.ModTime()))
 	fileID := sha256.Sum256(idSource)
 
-	return string(fileID[:10]), nil
+	return hex.EncodeToString(fileID[:5]), nil
 }
 
 func gracefulShutdownCtx() context.Context {
