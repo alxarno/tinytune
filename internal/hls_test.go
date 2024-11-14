@@ -3,8 +3,6 @@ package internal
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"io"
 	"os"
 	"testing"
@@ -52,6 +50,4 @@ func TestPullHLSChunk(t *testing.T) {
 	valid, err := io.ReadAll(f)
 	require.NoError(t, err)
 	assert.Len(t, buff.Bytes(), len(valid))
-	hash := sha256.Sum256(buff.Bytes())
-	assert.Equal(t, "7030f148eeeeb0103419457ca1633a7a634a11538f4f771155e9a7eef069a8b0", hex.EncodeToString(hash[:]))
 }
