@@ -8,11 +8,18 @@
         margin-bottom: 2px;
         border-radius: 0.25rem !important;
     }
+
+    .dir-list-item>figcaption {
+        font-size: 0.8rem;
+    }
 }
 
 .zoom-small{
     --wrap-width: 160px;
     --wrap-height: 140px;
+    .dir-list-item>figcaption {
+        font-size: 0.9rem;
+    }
 }
 
 .zoom-medium{

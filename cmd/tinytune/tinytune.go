@@ -170,6 +170,7 @@ func start(config Config) {
 
 	slog.Info(
 		"TinyTune",
+		slog.String("dir", config.dir),
 		slog.String("version", Version),
 		slog.Bool("image-processing", config.imageProcessing),
 		slog.Bool("video-processing", config.videoProcessing),

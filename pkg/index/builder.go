@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -32,6 +33,18 @@ type FileMeta interface {
 	ModTime() time.Time
 	IsDir() bool
 	Size() int64
+}
+
+func compareFileMetaSize(a, b FileMeta) int {
+	if a.Size() == b.Size() {
+		return 0
+	}
+
+	if a.Size() < b.Size() {
+		return 1
+	}
+
+	return -1
 }
 
 type indexBuilderParams struct {
@@ -135,6 +148,9 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 		withChan(resultChannel),
 		withSemaphore(sem),
 		withWaitGroup(waitGroup))
+
+	// pass biggest files first
+	slices.SortStableFunc(ib.params.files, compareFileMetaSize)
 
 	for _, file := range ib.params.files {
 		id, err := ib.filePass(file)

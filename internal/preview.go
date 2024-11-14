@@ -86,7 +86,7 @@ func (p Previewer) Pull(path string) (preview.Data, error) {
 
 	if contentType == index.ContentTypeVideo && p.video {
 		preview, err := VideoPreview(path, p.videoParams)
-		if err != nil {
+		if err != nil || preview.Duration == 0 {
 			return defaultPreview, err
 		}
 
