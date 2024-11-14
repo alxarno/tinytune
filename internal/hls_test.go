@@ -54,5 +54,4 @@ func TestPullHLSChunk(t *testing.T) {
 	// assert.Len(t, buff.Bytes(), len(valid))
 	// hash := sha256.Sum256(buff.Bytes())
 	// assert.Equal(t, "7030f148eeeeb0103419457ca1633a7a634a11538f4f771155e9a7eef069a8b0", hex.EncodeToString(hash[:]))
-	return
-}
+} //nolint:wsl
