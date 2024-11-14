@@ -29,10 +29,12 @@ const initLightBox = () => {
     previews.forEach((v, i) => v.setAttribute("index", i))
     previews.forEach((v, i) => v.onclick = (e) => {e.preventDefault(); originOpen(i)});
     fsLightbox.props.sources = previews.map(v => v.getAttribute("href"))
+    fsLightbox.props.types = previews.map(v => "video");
     fsLightbox.props.loadOnlyCurrentSource = true;
     fsLightbox.props.onOpen = () => {
         const videosItems = Array.from(document.querySelectorAll("video.fslightbox-source"))
         videosItems.forEach(videoInit)
+        return
     }
     fsLightbox.props.onClose = () => {
         videoClear();

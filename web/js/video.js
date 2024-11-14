@@ -5,7 +5,7 @@ export const videoClear = () => {
     initializedVideos = []
 }
 export const videoInit = (element) => {
-    const src = element.getAttribute("src");
+    let src = element.getAttribute("src");
     if(initializedVideos.includes(src)) return;
     initializedVideos.push(src);
     const origin = document.querySelector(`a[href="${src}"]`)
@@ -15,7 +15,11 @@ export const videoInit = (element) => {
     element.remove()
     const videoElement = document.createElement("video")
     videoElement.classList.add("video-js");
-    videoElement.innerHTML = `<source src="${src}" type="video/${origin.getAttribute("data-extension")}">`
+
+    if (src[0] == "#") {
+        src = src.substring(1)
+    }
+    videoElement.innerHTML = `<source src="${src}" type="${origin.getAttribute("data-extension")}">`
     wrapper.appendChild(videoElement)
 
     const videoJSOptions = {

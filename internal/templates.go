@@ -3,6 +3,8 @@ package internal
 import (
 	"fmt"
 	"path"
+	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -39,4 +41,20 @@ func durationPrint(duration time.Duration) string {
 	result += fmt.Sprintf("%02d", seconds)
 
 	return result
+}
+
+func streaming(path string) bool {
+	streamingFormats := []string{"avi", "f4v", "flv"}
+	ext := filepath.Ext(path)
+	minExtensionLength := 2
+
+	if len(ext) < minExtensionLength {
+		return false
+	}
+
+	if slices.Contains(streamingFormats, ext[1:]) {
+		return true
+	}
+
+	return false
 }

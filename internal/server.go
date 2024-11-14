@@ -79,7 +79,8 @@ func (s *Server) loadTemplates() {
 		"eqMinusOne": func(x int, y int) bool {
 			return x == y-1
 		},
-		"dur": durationPrint,
+		"dur":       durationPrint,
+		"streaming": streaming,
 	}
 	s.templates = make(map[string]*template.Template)
 	s.templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseFS(s.getTemplates(), "*.html"))
@@ -235,6 +236,47 @@ func (s *Server) originHandler() http.Handler {
 	})
 }
 
+func (s *Server) hlsIndexHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		meta, err := s.source.Pull(r.PathValue("fileID"))
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404")
+
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+
+		if err = pullHLSIndex(meta, w); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "503")
+		}
+	})
+}
+
+func (s *Server) hlsChunkHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		meta, err := s.source.Pull(r.PathValue("fileID"))
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404")
+
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+
+		timeout := 5
+
+		err = pullHLSChunk(r.Context(), meta, r.PathValue("chunkID"), time.Second*time.Duration(timeout), w)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "503")
+		}
+	})
+}
+
 type ServerOption func(*Server)
 
 func WithSource(source source) ServerOption {
@@ -282,11 +324,17 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 	staticHandler := http.StripPrefix("/static", http.FileServer(http.FS(server.getAssets())))
 	mux.Handle("GET /", chain.Then(server.indexHandler()))
 	mux.Handle("GET /d/{dirID}/", chain.Then(server.indexHandler()))
+
 	mux.Handle("GET /s", chain.Then(server.searchHandler()))
 	mux.Handle("GET /s/{dirID}/", chain.Then(server.searchHandler()))
+
 	mux.Handle("GET /preview/{fileID}/", chain.Then(server.previewHandler()))
 	mux.Handle("GET /origin/{fileID}/", chain.Then(server.originHandler()))
+
 	mux.Handle("GET /static/", chain.Then(staticHandler))
+
+	mux.Handle("GET /rts/{fileID}", chain.Then(server.hlsIndexHandler()))
+	mux.Handle("GET /rts/{fileID}/{chunkID}", chain.Then(server.hlsChunkHandler()))
 
 	go func() { PanicError(httpServer.ListenAndServe()) }()
 
