@@ -169,7 +169,7 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 				return nil
 			}
 
-			return fmt.Errorf("%w:%w", ErrSemaphoreAcquire, err)
+			return fmt.Errorf("%w: %w", ErrSemaphoreAcquire, err)
 		}
 
 		waitGroup.Add(1)

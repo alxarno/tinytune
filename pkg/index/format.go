@@ -45,7 +45,7 @@ func (index *Index) Decode(r io.Reader) error {
 
 	n, err := r.Read(header)
 	if err != nil {
-		return fmt.Errorf("%w:%w", ErrReadHeader, err)
+		return fmt.Errorf("%w: %w", ErrReadHeader, err)
 	}
 
 	if n == 0 {
@@ -58,14 +58,14 @@ func (index *Index) Decode(r io.Reader) error {
 	// read meta items count
 	buffer := make([]byte, metaItemsCountSize)
 	if _, err := r.Read(buffer); err != nil {
-		return fmt.Errorf("%w:%w", ErrReadMetaItemsCount, err)
+		return fmt.Errorf("%w: %w", ErrReadMetaItemsCount, err)
 	}
 
 	metaItemsCount := binary.LittleEndian.Uint32(buffer)
 
 	// read meta part size
 	if _, err := r.Read(buffer); err != nil {
-		return fmt.Errorf("%w:%w", ErrReadMetaPartSize, err)
+		return fmt.Errorf("%w: %w", ErrReadMetaPartSize, err)
 	}
 
 	metaItemsSize := binary.LittleEndian.Uint32(buffer)
@@ -73,7 +73,7 @@ func (index *Index) Decode(r io.Reader) error {
 	// read meta
 	metaPartBuffer := make([]byte, metaItemsSize)
 	if _, err = r.Read(metaPartBuffer); err != nil {
-		return fmt.Errorf("%w:%w", ErrReadMetaPart, err)
+		return fmt.Errorf("%w: %w", ErrReadMetaPart, err)
 	}
 
 	decoder := gob.NewDecoder(bytes.NewReader(metaPartBuffer))
@@ -81,7 +81,7 @@ func (index *Index) Decode(r io.Reader) error {
 	for range metaItemsCount {
 		m := Meta{}
 		if err := decoder.Decode(&m); err != nil {
-			return fmt.Errorf("%w:%w", ErrMetaItemDecode, err)
+			return fmt.Errorf("%w: %w", ErrMetaItemDecode, err)
 		}
 
 		index.meta[m.ID] = &m
@@ -89,7 +89,7 @@ func (index *Index) Decode(r io.Reader) error {
 
 	// read binary data
 	if index.data, err = io.ReadAll(r); err != nil {
-		return fmt.Errorf("%w:%w", ErrReadBinaryData, err)
+		return fmt.Errorf("%w: %w", ErrReadBinaryData, err)
 	}
 
 	return nil
@@ -99,14 +99,14 @@ func (index *Index) Encode(w io.Writer) (uint64, error) {
 	// write header
 	writer := bytesutil.NewWriterCounter(w)
 	if _, err := writer.Write([]byte(indexHeader)); err != nil {
-		return 0, fmt.Errorf("%w:%w", ErrWriteHeader, err)
+		return 0, fmt.Errorf("%w: %w", ErrWriteHeader, err)
 	}
 	// write meta items count
 	buffer := make([]byte, metaItemsCountSize)
 	binary.LittleEndian.PutUint32(buffer, uint32(len(index.meta)))
 
 	if _, err := writer.Write(buffer); err != nil {
-		return 0, fmt.Errorf("%w:%w", ErrWriteMetaItemsCount, err)
+		return 0, fmt.Errorf("%w: %w", ErrWriteMetaItemsCount, err)
 	}
 	// prepare meta items
 	metaBuffer := bytes.NewBuffer(make([]byte, 0))
@@ -114,7 +114,7 @@ func (index *Index) Encode(w io.Writer) (uint64, error) {
 
 	for _, v := range index.meta {
 		if err := enc.Encode(v); err != nil {
-			return 0, fmt.Errorf("%w:%w", ErrEncodeMetaItem, err)
+			return 0, fmt.Errorf("%w: %w", ErrEncodeMetaItem, err)
 		}
 	}
 
@@ -122,16 +122,16 @@ func (index *Index) Encode(w io.Writer) (uint64, error) {
 	binary.LittleEndian.PutUint32(buffer, uint32(metaBuffer.Len()))
 
 	if _, err := writer.Write(buffer); err != nil {
-		return 0, fmt.Errorf("%w:%w", ErrWriteMetaPartSize, err)
+		return 0, fmt.Errorf("%w: %w", ErrWriteMetaPartSize, err)
 	}
 
 	// write meta part
 	if _, err := writer.Write(metaBuffer.Bytes()); err != nil {
-		return 0, fmt.Errorf("%w:%w", ErrWriteMetaPart, err)
+		return 0, fmt.Errorf("%w: %w", ErrWriteMetaPart, err)
 	}
 	// write binary data
 	if _, err := writer.Write(index.data); err != nil {
-		return 0, fmt.Errorf("%w:%w", ErrWriteBinaryData, err)
+		return 0, fmt.Errorf("%w: %w", ErrWriteBinaryData, err)
 	}
 
 	return writer.Count(), nil

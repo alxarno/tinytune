@@ -70,7 +70,7 @@ func (fp *fileProcessor) run(file FileMeta, id string) {
 
 	preview, err := fp.preview.Pull(meta.Path)
 	if err != nil {
-		slog.Error(fmt.Errorf("%w:%w", ErrPreviewPull, err).Error())
+		slog.Error(fmt.Errorf("%w: %w", ErrPreviewPull, err).Error())
 
 		return
 	}

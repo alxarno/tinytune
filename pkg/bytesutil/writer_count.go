@@ -38,7 +38,7 @@ func (counter *WriterCounter) Write(buf []byte) (int, error) {
 	}
 
 	if err != nil {
-		return n, fmt.Errorf("%w:%w", ErrWrite, err)
+		return n, fmt.Errorf("%w: %w", ErrWrite, err)
 	}
 
 	return n, nil

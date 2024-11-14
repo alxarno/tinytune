@@ -24,6 +24,8 @@ require (
 	github.com/u2takey/go-utils v0.3.1 // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
+	github.com/yutopp/go-amf0 v0.1.0 // indirect
+	github.com/yutopp/go-flv v0.3.1 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/image v0.21.0 // indirect
 	golang.org/x/net v0.30.0 // indirect

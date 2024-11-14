@@ -24,6 +24,8 @@ var (
 	ErrMetaInfoUnmarshal        = errors.New("failed to decode file's meta information")
 	ErrMetaInfoFramesCountParse = errors.New("failed to parse frames count from meta information")
 	ErrMetaInfoDurationParse    = errors.New("failed to parse duration from meta information")
+	ErrVideoStreamNotFound      = errors.New("video stream not found")
+	ErrParseFrameRate           = errors.New("failed to parse frame rate")
 )
 
 type probeFormat struct {
@@ -31,9 +33,11 @@ type probeFormat struct {
 }
 
 type probeStream struct {
-	Frames string `json:"nb_frames"` //nolint:tagliatelle
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
+	Frames       string `json:"nb_frames"` //nolint:tagliatelle
+	Width        int    `json:"width"`
+	Height       int    `json:"height"`
+	AvgFrameRate string `json:"avg_frame_rate"` //nolint:tagliatelle
+	CodecType    string `json:"codec_type"`     //nolint:tagliatelle
 }
 
 type probeData struct {
@@ -46,31 +50,62 @@ type VideoParams struct {
 	timeout time.Duration
 }
 
+func getVideoStream(streams []probeStream) *probeStream {
+	for _, v := range streams {
+		if v.CodecType == "video" {
+			return &v
+		}
+	}
+
+	return nil
+}
+
 func probeOutputFrames(a string) (string, float64, time.Duration, error) {
 	data := probeData{}
 	resolution := "0x0"
-	oneMinuteFrames := 3000.0
+	frames := 3000.0
 
 	if err := json.Unmarshal([]byte(a), &data); err != nil {
-		return resolution, 0, 0, fmt.Errorf("%w:%w", ErrMetaInfoUnmarshal, err)
-	}
-
-	// if no frames count in metadata, then just use some default for 1 min video, 24fps
-	if len(data.Streams) == 0 || data.Streams[0].Frames == "" {
-		return resolution, oneMinuteFrames, 0, nil
-	}
-
-	resolution = fmt.Sprintf("%dx%d", data.Streams[0].Width, data.Streams[0].Height)
-
-	frames, err := strconv.ParseFloat(data.Streams[0].Frames, 64)
-	if err != nil {
-		return resolution, 0, 0, fmt.Errorf("%w:%w", ErrMetaInfoFramesCountParse, err)
+		return resolution, 0, 0, fmt.Errorf("%w: %w", ErrMetaInfoUnmarshal, err)
 	}
 
 	seconds, err := strconv.ParseFloat(data.Format.Duration, 64)
 	if err != nil {
-		return resolution, 0, 0, fmt.Errorf("%w:%w", ErrMetaInfoDurationParse, err)
+		return resolution, 0, 0, fmt.Errorf("%w: %w", ErrMetaInfoDurationParse, err)
 	}
+
+	videoStream := getVideoStream(data.Streams)
+	if videoStream == nil {
+		return resolution, 0, 0, ErrVideoStreamNotFound
+	}
+
+	resolution = fmt.Sprintf("%dx%d", videoStream.Width, videoStream.Height)
+
+	// if no frames count in metadata, then just use some default for 1 min video, 24fps
+	if videoStream.Frames != "" {
+		frames, err = strconv.ParseFloat(data.Streams[0].Frames, 64)
+		if err != nil {
+			return resolution, 0, 0, fmt.Errorf("%w: %w", ErrMetaInfoFramesCountParse, err)
+		}
+
+		return resolution, frames, time.Duration(seconds) * time.Second, nil
+	}
+
+	if !strings.Contains(videoStream.AvgFrameRate, "/") {
+		return resolution, frames, 0, nil
+	}
+
+	first, err := strconv.Atoi(strings.Split(videoStream.AvgFrameRate, "/")[0])
+	if err != nil {
+		return resolution, frames, 0, ErrParseFrameRate
+	}
+
+	second, err := strconv.Atoi(strings.Split(videoStream.AvgFrameRate, "/")[1])
+	if err != nil {
+		return resolution, frames, 0, ErrParseFrameRate
+	}
+
+	frames = seconds * float64(first/second)
 
 	return resolution, frames, time.Duration(seconds) * time.Second, nil
 }
@@ -90,6 +125,14 @@ func VideoPreview(path string, params VideoParams) (preview.Data, error) {
 
 	preview.Resolution = resolution
 	preview.Duration = duration
+
+	if path[len(path)-3:] == "flv" {
+		if preview.Data, err = FLVPreviewImage(path, duration, params); err != nil {
+			return preview, err
+		}
+
+		return preview, nil
+	}
 
 	//nolint:gomnd,mnd
 	previewFrames := []int64{

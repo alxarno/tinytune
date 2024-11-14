@@ -46,25 +46,30 @@ func ImagePreview(path string) (preview.Data, error) {
 	}
 	defer image.Close()
 
-	scale := 1.0
 	preview.Resolution = fmt.Sprintf("%dx%d", image.Width(), image.Height())
+
+	preview.Data, err = downScale(image)
+
+	return preview, err
+}
+
+func downScale(image *vips.ImageRef) ([]byte, error) {
+	scale := 1.0
 
 	if image.Width() > maxWidthHeight || image.Height() > maxWidthHeight {
 		scale = float64(maxWidthHeight) / float64(max(image.Width(), image.Height()))
 	}
 
-	if err = image.Resize(scale, vips.KernelLanczos2); err != nil {
-		return preview, fmt.Errorf("%w:%w", ErrImageResize, err)
+	if err := image.Resize(scale, vips.KernelLanczos2); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrImageResize, err)
 	}
 
 	ep := vips.NewWebpExportParams()
 
 	bytes, _, err := image.ExportWebp(ep)
 	if err != nil {
-		return preview, fmt.Errorf("%w:%w", ErrImageExport, err)
+		return nil, fmt.Errorf("%w: %w", ErrImageExport, err)
 	}
 
-	preview.Data = bytes
-
-	return preview, nil
+	return bytes, nil
 }
