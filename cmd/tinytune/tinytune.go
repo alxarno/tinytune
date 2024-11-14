@@ -52,6 +52,8 @@ type Config struct {
 	maxNewVideoItems int64
 	parallel         int
 	port             int
+	includes         string
+	excludes         string
 }
 
 func main() {
@@ -124,6 +126,22 @@ func main() {
 				Aliases:     []string{"pl"},
 				Usage:       "simultaneous file processing (!large values increase RAM consumption!)",
 				Destination: &config.parallel,
+				Category:    ProcessingCLICategory,
+			},
+			&cli.StringFlag{
+				Name:        "includes",
+				Value:       "",
+				Aliases:     []string{"i"},
+				Usage:       "excludes from selected by --excludes files by regexp",
+				Destination: &config.includes,
+				Category:    ProcessingCLICategory,
+			},
+			&cli.StringFlag{
+				Name:        "excludes",
+				Value:       "",
+				Aliases:     []string{"e"},
+				Usage:       "excludes from media processing by regexp",
+				Destination: &config.excludes,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.BoolFlag{

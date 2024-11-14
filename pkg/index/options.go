@@ -61,3 +61,15 @@ func WithWorkers(w int) Option {
 		i.params.workers = w
 	}
 }
+
+func WithInclude(p string) Option {
+	return func(i *indexBuilder) {
+		i.params.includePatterns = p
+	}
+}
+
+func WithExclude(p string) Option {
+	return func(i *indexBuilder) {
+		i.params.excludePatterns = p
+	}
+}

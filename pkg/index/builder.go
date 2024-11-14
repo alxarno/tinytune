@@ -19,6 +19,7 @@ import (
 var (
 	ErrSemaphoreAcquire = errors.New("failed to acquire the semaphore")
 	ErrFileLoad         = errors.New("failed to load file")
+	ErrGetExcludedFiles = errors.New("failed to get excluded files")
 )
 
 type (
@@ -61,6 +62,8 @@ type indexBuilderParams struct {
 	maxNewVideoItems int64
 	imageProcessing  bool
 	videoProcessing  bool
+	includePatterns  string
+	excludePatterns  string
 }
 
 type indexBuilder struct {
@@ -191,11 +194,23 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 	waitGroup := new(sync.WaitGroup)
 	sem := semaphore.NewWeighted(int64(ib.params.workers))
 	resultChannel := make(chan fileProcessorResult, len(ib.params.files))
+
+	excludedFromProcessing, err := getExcludedFiles(ib.params.files, ib.params.includePatterns, ib.params.excludePatterns)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrGetExcludedFiles, err)
+	}
+
+	if len(excludedFromProcessing) != 0 {
+		slog.Info(fmt.Sprintf("Selected %d excluded files from media processing", len(excludedFromProcessing)))
+	}
+
 	processor := newFileProcessor(
 		withPreview(ib.params.preview),
 		withChan(resultChannel),
 		withSemaphore(sem),
-		withWaitGroup(waitGroup))
+		withWaitGroup(waitGroup),
+		withExcludedFromProcessing(excludedFromProcessing),
+	)
 
 	// pass biggest files first
 	slices.SortStableFunc(ib.params.files, compareFileMetaSize)

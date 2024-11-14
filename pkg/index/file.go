@@ -12,10 +12,11 @@ import (
 var ErrPreviewPull = errors.New("failed to pull preview")
 
 type fileProcessor struct {
-	preview   PreviewGenerator
-	semaphore *semaphore.Weighted
-	waitGroup *sync.WaitGroup
-	ch        chan fileProcessorResult
+	preview                PreviewGenerator
+	semaphore              *semaphore.Weighted
+	waitGroup              *sync.WaitGroup
+	ch                     chan fileProcessorResult
+	excludedFromProcessing map[string]struct{}
 }
 
 type fileProcessorResult struct {
@@ -28,6 +29,12 @@ type fileProcessorOption func(*fileProcessor)
 func withPreview(f PreviewGenerator) fileProcessorOption {
 	return func(fp *fileProcessor) {
 		fp.preview = f
+	}
+}
+
+func withExcludedFromProcessing(filesRelativePaths map[string]struct{}) fileProcessorOption {
+	return func(fp *fileProcessor) {
+		fp.excludedFromProcessing = filesRelativePaths
 	}
 }
 
@@ -50,7 +57,9 @@ func withChan(ch chan fileProcessorResult) fileProcessorOption {
 }
 
 func newFileProcessor(opts ...fileProcessorOption) fileProcessor {
-	processor := fileProcessor{}
+	processor := fileProcessor{
+		excludedFromProcessing: map[string]struct{}{},
+	}
 	for _, opt := range opts {
 		opt(&processor)
 	}
@@ -79,7 +88,8 @@ func (fp *fileProcessor) run(file FileMeta, id string) {
 		ID:           id,
 	}
 
-	if fp.preview == nil && fp.ch != nil {
+	_, ok := fp.excludedFromProcessing[meta.RelativePath]
+	if fp.preview == nil || ok && fp.ch != nil {
 		fp.ch <- fileProcessorResult{&meta, nil}
 
 		return
