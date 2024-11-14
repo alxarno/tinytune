@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -67,8 +68,13 @@ func TestIndexEncodeDecode(t *testing.T) {
 
 type mockFile struct {
 	os.FileInfo
+	dir          bool
 	path         string
 	relativePath string
+	modTime      time.Time
+	mode         fs.FileMode
+	name         string
+	size         int64
 }
 
 func (mock mockFile) Path() string {
@@ -77,6 +83,23 @@ func (mock mockFile) Path() string {
 
 func (mock mockFile) RelativePath() string {
 	return mock.relativePath
+}
+
+func (mock mockFile) IsDir() bool {
+	return mock.dir
+}
+
+func (mock mockFile) ModTime() time.Time {
+	return mock.modTime
+}
+func (mock mockFile) Mode() fs.FileMode {
+	return mock.mode
+}
+func (mock mockFile) Name() string {
+	return mock.name
+}
+func (mock mockFile) Size() int64 {
+	return mock.size
 }
 
 type mockPreviewGenerator struct {
@@ -114,7 +137,13 @@ func TestIndexFiles(t *testing.T) {
 		relativePath, err := filepath.Rel(testFolderPath, path)
 		require.NoError(t, err)
 
-		file := &mockFile{stat, path, relativePath}
+		file := &mockFile{
+			FileInfo:     stat,
+			path:         path,
+			relativePath: relativePath,
+			dir:          stat.IsDir(),
+			modTime:      stat.ModTime(),
+		}
 		filesMeta = append(filesMeta, file)
 	}
 
@@ -131,4 +160,47 @@ func TestIndexFiles(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, index.meta, 7)
 	assert.Len(t, index.data, len(filesNames)*len(sampleData))
+}
+
+func TestIndexUpdatedFile(t *testing.T) {
+	t.Parallel()
+
+	indexOriginal, err := NewIndex(context.Background(), nil)
+	require.NoError(t, err)
+
+	indexOriginal.meta = map[string]*Meta{
+		"2cf24dba5fb": {
+			Path:         "/home/test/abc.jpg",
+			Name:         "abc.jpg",
+			ID:           "2cf24dba5fb",
+			RelativePath: "test/abc.jpg",
+			ModTime:      time.Date(2024, 11, 5, 5, 5, 5, 0, time.UTC),
+			Type:         ContentTypeImage,
+			IsDir:        false,
+			Preview: Preview{
+				Length: 100,
+				Offset: 0,
+			},
+		},
+	}
+	buff := new(bytes.Buffer)
+	_, err = indexOriginal.Encode(buff)
+	require.NoError(t, err)
+	// Parse
+	originalMeta, _ := indexOriginal.meta["2cf24dba5fb"] //nolint:gosimple
+	indexDerivative, err := NewIndex(
+		context.Background(),
+		bufio.NewReader(buff),
+		WithID(func(_ FileMeta) (string, error) { return "2cf24123123", nil }),
+		WithFiles([]FileMeta{&mockFile{
+			relativePath: originalMeta.RelativePath,
+			dir:          originalMeta.IsDir,
+			path:         originalMeta.Path,
+			modTime:      originalMeta.ModTime.Add(time.Hour * 48),
+			name:         originalMeta.Name,
+			size:         100,
+		}}),
+	)
+	require.NoError(t, err)
+	assert.Len(t, indexDerivative.meta, len(indexOriginal.meta))
 }

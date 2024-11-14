@@ -16,7 +16,10 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-var ErrSemaphoreAcquire = errors.New("failed to acquire the semaphore")
+var (
+	ErrSemaphoreAcquire = errors.New("failed to acquire the semaphore")
+	ErrFileLoad         = errors.New("failed to load file")
+)
 
 type (
 	IDGenerator      func(m FileMeta) (string, error)
@@ -127,6 +130,10 @@ func (ib *indexBuilder) filePass(file FileMeta) (string, error) {
 		return "", nil
 	}
 
+	if ib.params.preview == nil {
+		return id, nil
+	}
+
 	contentType := ib.params.preview.ContentType(file.Path())
 	if contentType == ContentTypeVideo && ib.params.videoProcessing && !ifMaxPass(&ib.params.maxNewVideoItems) {
 		return "", nil
@@ -137,6 +144,47 @@ func (ib *indexBuilder) filePass(file FileMeta) (string, error) {
 	}
 
 	return id, nil
+}
+
+func (ib *indexBuilder) getFileLoader(
+	ctx context.Context,
+	waitGroup *sync.WaitGroup,
+	sem *semaphore.Weighted,
+	processor fileProcessor,
+	rPathToMeta map[string]*Meta,
+) func(FileMeta) error {
+	return func(file FileMeta) error {
+		// remove old item
+		if oldMeta, ok := rPathToMeta[file.RelativePath()]; ok {
+			delete(ib.index.meta, oldMeta.ID)
+		}
+
+		id, err := ib.filePass(file)
+		if err != nil {
+			return err
+		}
+
+		if id == "" {
+			ib.params.progress()
+
+			return nil
+		}
+
+		if err := sem.Acquire(ctx, 1); err != nil {
+			if errors.Is(err, context.Canceled) {
+				return nil
+			}
+
+			return fmt.Errorf("%w: %w", ErrSemaphoreAcquire, err)
+		}
+
+		waitGroup.Add(1)
+		ib.params.progress()
+
+		go processor.run(file, id)
+
+		return nil
+	}
 }
 
 func (ib *indexBuilder) loadFiles(ctx context.Context) error {
@@ -152,30 +200,17 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 	// pass biggest files first
 	slices.SortStableFunc(ib.params.files, compareFileMetaSize)
 
+	// needs for check if file/folder was modified, and remove old version
+	rPathToMeta := map[string]*Meta{}
+	for _, v := range ib.index.meta {
+		rPathToMeta[v.RelativePath] = v
+	}
+
+	fileLoader := ib.getFileLoader(ctx, waitGroup, sem, processor, rPathToMeta)
 	for _, file := range ib.params.files {
-		id, err := ib.filePass(file)
-		if err != nil {
-			return err
+		if err := fileLoader(file); err != nil {
+			return fmt.Errorf("%w: %w", ErrFileLoad, err)
 		}
-
-		if id == "" {
-			ib.params.progress()
-
-			continue
-		}
-
-		if err := sem.Acquire(ctx, 1); err != nil {
-			if errors.Is(err, context.Canceled) {
-				return nil
-			}
-
-			return fmt.Errorf("%w: %w", ErrSemaphoreAcquire, err)
-		}
-
-		waitGroup.Add(1)
-		ib.params.progress()
-
-		go processor.run(file, id)
 	}
 
 	waitGroup.Wait()

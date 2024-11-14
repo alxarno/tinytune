@@ -59,6 +59,17 @@ func newFileProcessor(opts ...fileProcessorOption) fileProcessor {
 }
 
 func (fp *fileProcessor) run(file FileMeta, id string) {
+	end := func() {
+		if fp.semaphore != nil {
+			fp.semaphore.Release(1)
+		}
+
+		if fp.waitGroup != nil {
+			fp.waitGroup.Done()
+		}
+	}
+	defer end()
+
 	meta := Meta{
 		Path:         file.Path(),
 		RelativePath: file.RelativePath(),
@@ -66,6 +77,12 @@ func (fp *fileProcessor) run(file FileMeta, id string) {
 		ModTime:      file.ModTime(),
 		IsDir:        file.IsDir(),
 		ID:           id,
+	}
+
+	if fp.preview == nil && fp.ch != nil {
+		fp.ch <- fileProcessorResult{&meta, nil}
+
+		return
 	}
 
 	preview, err := fp.preview.Pull(meta.Path)
@@ -85,13 +102,5 @@ func (fp *fileProcessor) run(file FileMeta, id string) {
 
 	if fp.ch != nil {
 		fp.ch <- *result
-	}
-
-	if fp.semaphore != nil {
-		fp.semaphore.Release(1)
-	}
-
-	if fp.waitGroup != nil {
-		fp.waitGroup.Done()
 	}
 }
