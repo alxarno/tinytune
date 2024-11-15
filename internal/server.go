@@ -33,7 +33,7 @@ type Server struct {
 	debugMode bool
 }
 
-func (s *Server) getTemplates() fs.FS {
+func (s Server) getTemplates() fs.FS {
 	if s.debugMode {
 		return os.DirFS("./web/templates/")
 	}
@@ -41,7 +41,7 @@ func (s *Server) getTemplates() fs.FS {
 	return templates.Templates
 }
 
-func (s *Server) getAssets() fs.FS {
+func (s Server) getAssets() fs.FS {
 	if s.debugMode {
 		return os.DirFS("./web/assets/")
 	}

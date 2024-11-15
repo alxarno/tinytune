@@ -65,7 +65,7 @@ func applyCookies(r *http.Request, data PageData) PageData {
 	return data
 }
 
-func (s *Server) handleBasicTemplate(data PageData, w http.ResponseWriter, r *http.Request) {
+func (s Server) handleBasicTemplate(data PageData, w http.ResponseWriter, r *http.Request) {
 	data = applyCookies(r, data)
 
 	w.WriteHeader(http.StatusOK)
@@ -75,7 +75,7 @@ func (s *Server) handleBasicTemplate(data PageData, w http.ResponseWriter, r *ht
 	}
 }
 
-func (s *Server) indexHandler() httputil.MetaHTTPHandler {
+func (s Server) indexHandler() httputil.MetaHTTPHandler {
 	return func(dir, _ *index.Meta, w http.ResponseWriter, r *http.Request) {
 		err := error(nil) //nolint:wastedassign
 		data := s.newPageData()
@@ -96,7 +96,7 @@ func (s *Server) indexHandler() httputil.MetaHTTPHandler {
 	}
 }
 
-func (s *Server) searchHandler() httputil.MetaHTTPHandler {
+func (s Server) searchHandler() httputil.MetaHTTPHandler {
 	return func(dir, _ *index.Meta, w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Expose-Headers", "Hx-Push-Url")
 		w.Header().Set("HX-Push-Url", r.RequestURI)
@@ -129,7 +129,7 @@ func (s *Server) searchHandler() httputil.MetaHTTPHandler {
 	}
 }
 
-func (s *Server) previewHandler() httputil.MetaHTTPHandler {
+func (s Server) previewHandler() httputil.MetaHTTPHandler {
 	return func(_, file *index.Meta, w http.ResponseWriter, _ *http.Request) {
 		data, err := s.source.PullPreview(file.ID)
 		if err != nil || len(data) == 0 {
@@ -145,14 +145,14 @@ func (s *Server) previewHandler() httputil.MetaHTTPHandler {
 	}
 }
 
-func (s *Server) originHandler() httputil.MetaHTTPHandler {
+func (s Server) originHandler() httputil.MetaHTTPHandler {
 	return func(_, file *index.Meta, w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Cache-Control", "max-age=3600")
 		http.ServeFile(w, r, filepath.Join(s.pwd, string(file.RelativePath)))
 	}
 }
 
-func (s *Server) hlsIndexHandler() httputil.MetaHTTPHandler {
+func (s Server) hlsIndexHandler() httputil.MetaHTTPHandler {
 	return func(_, file *index.Meta, w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
@@ -162,7 +162,7 @@ func (s *Server) hlsIndexHandler() httputil.MetaHTTPHandler {
 	}
 }
 
-func (s *Server) hlsChunkHandler() httputil.MetaHTTPHandler {
+func (s Server) hlsChunkHandler() httputil.MetaHTTPHandler {
 	return func(_, file *index.Meta, w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 

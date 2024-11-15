@@ -66,8 +66,7 @@ func NewPreviewer(opts ...PreviewerOption) (*Previewer, error) {
 	return preview, nil
 }
 
-//nolint:ireturn
-func (p Previewer) Pull(src Source) (Data, error) {
+func (p Previewer) Pull(src Source) (Data, error) { //nolint:ireturn
 	defaultPreview := data{resolution: "0x0"}
 
 	if src.IsImage() && p.image {

@@ -39,19 +39,19 @@ type PreviewLocation struct {
 	Offset uint32
 }
 
-func (m Meta) IsImage() bool {
+func (m *Meta) IsImage() bool {
 	return m.Type == ContentTypeImage
 }
 
-func (m Meta) IsVideo() bool {
+func (m *Meta) IsVideo() bool {
 	return m.Type == ContentTypeVideo
 }
 
-func (m Meta) IsOtherFile() bool {
+func (m *Meta) IsOtherFile() bool {
 	return m.Type == ContentTypeOther
 }
 
-func (m Meta) Path() string {
+func (m *Meta) Path() string {
 	return string(m.AbsolutePath)
 }
 
