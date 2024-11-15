@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
-	"sync/atomic"
-	"time"
 
 	"github.com/alxarno/tinytune/pkg/preview"
 	"golang.org/x/sync/semaphore"
@@ -23,47 +21,21 @@ var (
 )
 
 type (
-	IDGenerator      func(m FileMeta) (string, error)
-	PreviewGenerator interface {
-		Pull(path string) (preview.Data, error)
-		ContentType(path string) int
-	}
+	PreviewGenerator func(item preview.Source) (preview.Data, error)
 )
 
-type FileMeta interface {
-	Path() string
-	RelativePath() string
-	Name() string
-	ModTime() time.Time
-	IsDir() bool
-	Size() int64
-}
-
-func compareFileMetaSize(a, b FileMeta) int {
-	if a.Size() == b.Size() {
-		return 0
-	}
-
-	if a.Size() < b.Size() {
-		return 1
-	}
-
-	return -1
-}
-
 type indexBuilderParams struct {
-	preview          PreviewGenerator
-	id               IDGenerator
-	files            []FileMeta
-	progress         func()
-	newFiles         func()
-	workers          int
-	maxNewImageItems int64
-	maxNewVideoItems int64
-	imageProcessing  bool
-	videoProcessing  bool
-	includePatterns  string
-	excludePatterns  string
+	preview              PreviewGenerator
+	files                []FileMeta
+	progress             func()
+	newFiles             func()
+	workers              int
+	maxImageProcessCount int64
+	maxVideoProcessCount int64
+	imageProcessing      bool
+	videoProcessing      bool
+	includePatterns      string
+	excludePatterns      string
 }
 
 type indexBuilder struct {
@@ -73,25 +45,28 @@ type indexBuilder struct {
 
 func newBuilder(index *Index) indexBuilder {
 	return indexBuilder{index: index, params: indexBuilderParams{
-		files:            []FileMeta{},
-		progress:         func() {},
-		newFiles:         func() {},
-		workers:          1,
-		maxNewImageItems: -1,
-		maxNewVideoItems: -1,
-		imageProcessing:  true,
-		videoProcessing:  true,
-		id:               func(m FileMeta) (string, error) { return m.Path(), nil },
+		files:                []FileMeta{},
+		progress:             func() {},
+		newFiles:             func() {},
+		workers:              1,
+		maxImageProcessCount: -1,
+		maxVideoProcessCount: -1,
+		imageProcessing:      true,
+		videoProcessing:      true,
 	}}
 }
 
 func (ib *indexBuilder) run(ctx context.Context, r io.Reader) error {
 	if err := ib.index.Decode(r); err != nil {
-		if errors.Is(err, io.EOF) {
-			slog.Warn("The index file could not be fully read, it may be corrupted or empty")
-		} else {
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
+
+		slog.Warn("The index file could not be fully read, it may be corrupted or empty")
+	}
+
+	if err := ib.loadPaths(); err != nil {
+		return err
 	}
 
 	if err := ib.loadFiles(ctx); err != nil {
@@ -102,6 +77,7 @@ func (ib *indexBuilder) run(ctx context.Context, r io.Reader) error {
 		return err
 	}
 
+	// load second time for new meta items
 	if err := ib.loadPaths(); err != nil {
 		return err
 	}
@@ -109,82 +85,42 @@ func (ib *indexBuilder) run(ctx context.Context, r io.Reader) error {
 	return nil
 }
 
-func ifMaxPass(maxNewItems *int64) bool {
-	if atomic.LoadInt64(maxNewItems) == -1 {
-		return true
-	}
-
-	if atomic.LoadInt64(maxNewItems) == 0 {
-		return false
-	}
-
-	atomic.AddInt64(maxNewItems, -1)
-
-	return true
-}
-
-func (ib *indexBuilder) filePass(file FileMeta) (string, error) {
-	id, err := ib.params.id(file)
-	if err != nil {
-		return "", err
-	}
-
-	if _, ok := ib.index.meta[id]; ok {
-		return "", nil
-	}
-
-	if ib.params.preview == nil {
-		return id, nil
-	}
-
-	contentType := ib.params.preview.ContentType(file.Path())
-	if contentType == ContentTypeVideo && ib.params.videoProcessing && !ifMaxPass(&ib.params.maxNewVideoItems) {
-		return "", nil
-	}
-
-	if contentType == ContentTypeImage && ib.params.imageProcessing && !ifMaxPass(&ib.params.maxNewImageItems) {
-		return "", nil
-	}
-
-	return id, nil
-}
-
 func (ib *indexBuilder) getFileLoader(
 	ctx context.Context,
 	waitGroup *sync.WaitGroup,
 	sem *semaphore.Weighted,
 	processor fileProcessor,
-	rPathToMeta map[string]*Meta,
 ) func(FileMeta) error {
-	return func(file FileMeta) error {
-		// remove old item
-		if oldMeta, ok := rPathToMeta[file.RelativePath()]; ok {
-			delete(ib.index.meta, oldMeta.ID)
-		}
-
-		id, err := ib.filePass(file)
-		if err != nil {
-			return err
-		}
-
-		if id == "" {
-			ib.params.progress()
-
+	acquire := func() error {
+		err := sem.Acquire(ctx, 1)
+		if err == nil || errors.Is(err, context.Canceled) {
 			return nil
 		}
 
-		if err := sem.Acquire(ctx, 1); err != nil {
-			if errors.Is(err, context.Canceled) {
-				return nil
-			}
+		return fmt.Errorf("%w: %w", ErrSemaphoreAcquire, err)
+	}
 
-			return fmt.Errorf("%w: %w", ErrSemaphoreAcquire, err)
+	return func(file FileMeta) error {
+		metaItem := metaByFile(file)
+
+		// if item already in map, but without preview -> create preview
+		if saved, ok := ib.index.meta[metaItem.ID]; ok && saved.Preview.Length != 0 {
+			return nil
+		}
+
+		// needs for check if file/folder was modified, and remove old version
+		if oldMeta, ok := ib.index.paths[metaItem.RelativePath]; ok {
+			delete(ib.index.meta, oldMeta.ID)
+		}
+
+		if err := acquire(); err != nil {
+			return err
 		}
 
 		waitGroup.Add(1)
 		ib.params.progress()
 
-		go processor.run(file, id)
+		go processor.run(metaItem)
 
 		return nil
 	}
@@ -195,33 +131,31 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 	sem := semaphore.NewWeighted(int64(ib.params.workers))
 	resultChannel := make(chan fileProcessorResult, len(ib.params.files))
 
-	excludedFromProcessing, err := getExcludedFiles(ib.params.files, ib.params.includePatterns, ib.params.excludePatterns)
+	excludedFromPreview, err := ib.getExcludedFiles()
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrGetExcludedFiles, err)
 	}
 
-	if len(excludedFromProcessing) != 0 {
-		slog.Info(fmt.Sprintf("Selected %d excluded files from media processing", len(excludedFromProcessing)))
+	if len(excludedFromPreview) != 0 {
+		slog.Info(fmt.Sprintf("Excluded %d files from media processing", len(excludedFromPreview)))
 	}
-
-	processor := newFileProcessor(
-		withPreview(ib.params.preview),
-		withChan(resultChannel),
-		withSemaphore(sem),
-		withWaitGroup(waitGroup),
-		withExcludedFromProcessing(excludedFromProcessing),
-	)
 
 	// pass biggest files first
 	slices.SortStableFunc(ib.params.files, compareFileMetaSize)
 
-	// needs for check if file/folder was modified, and remove old version
-	rPathToMeta := map[string]*Meta{}
-	for _, v := range ib.index.meta {
-		rPathToMeta[v.RelativePath] = v
+	processor := fileProcessor{
+		ch:        resultChannel,
+		waitGroup: waitGroup,
+		semaphore: sem,
+		image:     ib.params.imageProcessing,
+		video:     ib.params.videoProcessing,
+		maxImage:  ib.params.maxImageProcessCount,
+		maxVideo:  ib.params.maxVideoProcessCount,
+		preview:   ib.params.preview,
+		excluded:  excludedFromPreview,
 	}
 
-	fileLoader := ib.getFileLoader(ctx, waitGroup, sem, processor, rPathToMeta)
+	fileLoader := ib.getFileLoader(ctx, waitGroup, sem, processor)
 	for _, file := range ib.params.files {
 		if err := fileLoader(file); err != nil {
 			return fmt.Errorf("%w: %w", ErrFileLoad, err)
@@ -239,10 +173,6 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 			ib.index.data = append(ib.index.data, result.data...)
 		}
 
-		if result.meta.IsDir {
-			result.meta.Type = ContentTypeDir
-		}
-
 		ib.index.meta[result.meta.ID] = result.meta
 		ib.index.outDated = true
 	}
@@ -251,33 +181,40 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 }
 
 func (ib *indexBuilder) loadTree() error {
-	ib.index.tree["root"] = make([]*Meta, 0)
-	for _, meta := range ib.index.meta {
-		if filepath.Dir(meta.RelativePath) == "." {
-			ib.index.tree["root"] = append(ib.index.tree["root"], meta)
+	upperDir := func(path RelativePath) RelativePath {
+		return RelativePath(filepath.Dir(string(path)))
+	}
+	rootChildren := make([]*Meta, 0)
+
+	for _, subRoot := range ib.index.meta {
+		if upperDir(subRoot.RelativePath) == "." {
+			rootChildren = append(rootChildren, subRoot)
 		}
 
-		if !meta.IsDir {
+		if !subRoot.IsDir {
 			continue
 		}
 
+		subRootChildren := make([]*Meta, 0)
+
 		for _, possibleChild := range ib.index.meta {
-			if meta.RelativePath != filepath.Dir(possibleChild.RelativePath) {
-				continue
+			if subRoot.RelativePath == upperDir(possibleChild.RelativePath) {
+				subRootChildren = append(subRootChildren, possibleChild)
 			}
+		}
 
-			if _, ok := ib.index.tree[meta.ID]; !ok {
-				ib.index.tree[meta.ID] = make([]*Meta, 0)
-			}
-
-			ib.index.tree[meta.ID] = append(ib.index.tree[meta.ID], possibleChild)
+		if len(subRootChildren) != 0 {
+			ib.index.tree[subRoot.ID] = subRootChildren
 		}
 	}
+
+	ib.index.tree["root"] = rootChildren
 
 	return nil
 }
 
 func (ib *indexBuilder) loadPaths() error {
+	ib.index.paths = map[RelativePath]*Meta{}
 	for _, v := range ib.index.meta {
 		ib.index.paths[v.RelativePath] = v
 	}

@@ -1,13 +1,32 @@
 package internal
 
 import (
-	"fmt"
+	"html/template"
+	"io/fs"
 	"path"
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
+
+	"github.com/alxarno/tinytune/pkg/timeutil"
 )
+
+func loadTemplates(src fs.FS) map[string]*template.Template {
+	templates := make(map[string]*template.Template)
+	funcs := template.FuncMap{
+		"ext":    extension,
+		"width":  width,
+		"height": height,
+		"eqMinusOne": func(x int, y int) bool {
+			return x == y-1
+		},
+		"dur":       timeutil.String,
+		"streaming": streaming,
+	}
+	templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseFS(src, "*.html"))
+
+	return templates
+}
 
 func extension(name string) string {
 	extension := path.Ext(name)
@@ -24,23 +43,6 @@ func width(res string) string {
 
 func height(res string) string {
 	return strings.Split(res, "x")[1]
-}
-
-func durationPrint(duration time.Duration) string {
-	result := ""
-	timeBound := 60
-	hours := int(duration.Hours())
-	minutes := int(duration.Minutes()) - hours*timeBound
-	seconds := int(duration.Seconds()) - minutes*timeBound - hours*timeBound*timeBound
-
-	if hours > 0 {
-		result += fmt.Sprintf("%02d:", hours)
-	}
-
-	result += fmt.Sprintf("%02d:", minutes)
-	result += fmt.Sprintf("%02d", seconds)
-
-	return result
 }
 
 func streaming(path string) bool {

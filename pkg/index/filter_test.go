@@ -8,6 +8,7 @@ import (
 
 func TestIncludesFilter(t *testing.T) {
 	t.Parallel()
+	require := require.New(t)
 
 	paths := []FileMeta{
 		mockFile{relativePath: "test/abc", dir: true},
@@ -19,16 +20,17 @@ func TestIncludesFilter(t *testing.T) {
 	}
 	pattern := "\\.(mp4)$"
 	passFiles, err := filter(paths, filterHandler(pattern))
-	require.NoError(t, err)
-	require.Len(t, passFiles, 1)
-	_, ok := passFiles[paths[3].RelativePath()]
-	require.True(t, ok)
+	require.NoError(err)
+	require.Len(passFiles, 1)
+	_, ok := passFiles[RelativePath(paths[3].RelativePath())]
+	require.True(ok)
 }
 
 func TestGetExcludedFiles(t *testing.T) {
 	t.Parallel()
+	require := require.New(t)
 
-	paths := []FileMeta{
+	files := []FileMeta{
 		mockFile{relativePath: "test/abc", dir: true},
 		mockFile{relativePath: "test/abc/aloha.jpg"},
 		mockFile{relativePath: "test/video", dir: true},
@@ -38,13 +40,16 @@ func TestGetExcludedFiles(t *testing.T) {
 		mockFile{relativePath: "test/video/abc", dir: true},
 		mockFile{relativePath: "test/video/abc/salute.png"},
 	}
-	includePattern := "good[.]mp4$"
-	excludePattern := "\\.(mp4)$"
-	excludedFiles, err := getExcludedFiles(paths, includePattern, excludePattern)
-	require.NoError(t, err)
-	require.Len(t, excludedFiles, 2)
-	_, ok := excludedFiles[paths[3].RelativePath()]
-	require.True(t, ok)
-	_, ok = excludedFiles[paths[4].RelativePath()]
-	require.True(t, ok)
+	indexBuilder := indexBuilder{params: indexBuilderParams{
+		includePatterns: "good[.]mp4$",
+		excludePatterns: "\\.(mp4)$",
+		files:           files,
+	}}
+	excludedFiles, err := indexBuilder.getExcludedFiles()
+	require.NoError(err)
+	require.Len(excludedFiles, 2)
+	_, ok := excludedFiles[RelativePath(files[3].RelativePath())]
+	require.True(ok)
+	_, ok = excludedFiles[RelativePath(files[4].RelativePath())]
+	require.True(ok)
 }

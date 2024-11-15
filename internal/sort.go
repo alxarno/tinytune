@@ -59,3 +59,14 @@ func metaSortFirstModified(a []*index.Meta) []*index.Meta {
 
 	return a
 }
+
+func getSorts() map[string]metaSortFunc {
+	return map[string]metaSortFunc{
+		"A-Z":            metaSortAlphabet,
+		"Z-A":            metaSortAlphabetReverse,
+		"Last Modified":  metaSortLastModified,
+		"First Modified": metaSortFirstModified,
+		"Type":           metaSortType,
+		"Size":           metaSortSize,
+	}
+}

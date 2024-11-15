@@ -13,9 +13,9 @@ import (
 var ErrNotFound = errors.New("not found")
 
 type Index struct {
-	meta     map[string]*Meta
-	tree     map[string][]*Meta
-	paths    map[string]*Meta
+	meta     map[ID]*Meta
+	tree     map[ID][]*Meta
+	paths    map[RelativePath]*Meta
 	data     []byte
 	outDated bool
 }
@@ -23,9 +23,9 @@ type Index struct {
 func NewIndex(ctx context.Context, r io.Reader, opts ...Option) (Index, error) {
 	index := Index{
 		data:     []byte{},
-		meta:     map[string]*Meta{},
-		tree:     map[string][]*Meta{},
-		paths:    map[string]*Meta{},
+		meta:     map[ID]*Meta{},
+		tree:     map[ID][]*Meta{},
+		paths:    map[RelativePath]*Meta{},
 		outDated: false,
 	}
 	builder := newBuilder(&index)
@@ -45,7 +45,7 @@ func (index *Index) OutDated() bool {
 	return index.outDated
 }
 
-func (index *Index) Pull(id string) (*Meta, error) {
+func (index *Index) Pull(id ID) (*Meta, error) {
 	m, ok := index.meta[id]
 	if !ok {
 		return nil, ErrNotFound
@@ -54,7 +54,7 @@ func (index *Index) Pull(id string) (*Meta, error) {
 	return m, nil
 }
 
-func (index *Index) PullPreview(id string) ([]byte, error) {
+func (index *Index) PullPreview(id ID) ([]byte, error) {
 	meta, ok := index.meta[id]
 	if !ok {
 		return nil, ErrNotFound
@@ -67,13 +67,13 @@ func (index *Index) PullPreview(id string) ([]byte, error) {
 	return index.data[meta.Preview.Offset : meta.Preview.Offset+meta.Preview.Length], nil
 }
 
-func (index *Index) PullChildren(id string) ([]*Meta, error) {
+func (index *Index) PullChildren(id ID) ([]*Meta, error) {
 	result := make([]*Meta, 0)
 
 	// return root children
 	if id == "" {
 		for _, m := range index.meta {
-			if !strings.Contains(m.RelativePath, "/") {
+			if !strings.Contains(string(m.RelativePath), "/") {
 				result = append(result, m)
 			}
 		}
@@ -88,7 +88,7 @@ func (index *Index) PullChildren(id string) ([]*Meta, error) {
 	return nil, ErrNotFound
 }
 
-func (index *Index) PullPaths(id string) ([]*Meta, error) {
+func (index *Index) PullPaths(id ID) ([]*Meta, error) {
 	result := []*Meta{}
 	if id == "" {
 		return result, nil
@@ -99,7 +99,7 @@ func (index *Index) PullPaths(id string) ([]*Meta, error) {
 		return nil, ErrNotFound
 	}
 
-	paths := strings.Split(m.RelativePath, string(os.PathSeparator))
+	paths := strings.Split(string(m.RelativePath), string(os.PathSeparator))
 	subDirs := []string{}
 
 	slices.Reverse(paths)
@@ -113,13 +113,13 @@ func (index *Index) PullPaths(id string) ([]*Meta, error) {
 	slices.Reverse(subDirs)
 
 	for _, v := range subDirs {
-		result = append(result, index.paths[v])
+		result = append(result, index.paths[RelativePath(v)])
 	}
 
 	return result, nil
 }
 
-func (index *Index) Search(query string, dir string) []*Meta {
+func (index *Index) Search(query string, dirID ID) []*Meta {
 	result := []*Meta{}
 	query = strings.ToLower(query)
 	filter := func(v *Meta) {
@@ -128,7 +128,7 @@ func (index *Index) Search(query string, dir string) []*Meta {
 		}
 	}
 
-	if dir == "" {
+	if dirID == "" {
 		for _, v := range index.meta {
 			filter(v)
 		}
@@ -136,7 +136,7 @@ func (index *Index) Search(query string, dir string) []*Meta {
 		return result
 	}
 
-	children, ok := index.tree[dir]
+	children, ok := index.tree[dirID]
 	if !ok {
 		return result
 	}

@@ -1,4 +1,4 @@
-package internal
+package preview
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alxarno/tinytune/pkg/timeutil"
 	"github.com/davidbyttow/govips/v2/vips"
 	"golang.org/x/image/bmp"
 )
@@ -37,7 +38,7 @@ func getFlvSnapshoter(wg *sync.WaitGroup, errCh chan error, params VideoParams) 
 			defer cancel()
 		}
 
-		ffmpegTimestamp := durationPrint(timestamp)
+		ffmpegTimestamp := timeutil.String(timestamp)
 
 		seekOptions := []string{"-accurate_seek", "-ss", ffmpegTimestamp}
 		inputOptions := []string{"-i", path}

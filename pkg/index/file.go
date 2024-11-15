@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 
 	"golang.org/x/sync/semaphore"
 )
@@ -12,11 +13,15 @@ import (
 var ErrPreviewPull = errors.New("failed to pull preview")
 
 type fileProcessor struct {
-	preview                PreviewGenerator
-	semaphore              *semaphore.Weighted
-	waitGroup              *sync.WaitGroup
-	ch                     chan fileProcessorResult
-	excludedFromProcessing map[string]struct{}
+	preview   PreviewGenerator
+	semaphore *semaphore.Weighted
+	waitGroup *sync.WaitGroup
+	ch        chan fileProcessorResult
+	excluded  map[RelativePath]struct{}
+	image     bool
+	video     bool
+	maxImage  int64
+	maxVideo  int64
 }
 
 type fileProcessorResult struct {
@@ -24,93 +29,57 @@ type fileProcessorResult struct {
 	data []byte
 }
 
-type fileProcessorOption func(*fileProcessor)
-
-func withPreview(f PreviewGenerator) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.preview = f
+func ifMaxPass(maxNewItems *int64) bool {
+	if atomic.LoadInt64(maxNewItems) == -1 {
+		return true
 	}
+
+	if atomic.LoadInt64(maxNewItems) == 0 {
+		return false
+	}
+
+	atomic.AddInt64(maxNewItems, -1)
+
+	return true
 }
 
-func withExcludedFromProcessing(filesRelativePaths map[string]struct{}) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.excludedFromProcessing = filesRelativePaths
-	}
+func (fp *fileProcessor) imageProcess() bool {
+	return fp.image && ifMaxPass(&fp.maxImage)
 }
 
-func withSemaphore(sem *semaphore.Weighted) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.semaphore = sem
-	}
+func (fp *fileProcessor) videoProcess() bool {
+	return fp.video && ifMaxPass(&fp.maxVideo)
 }
 
-func withWaitGroup(wg *sync.WaitGroup) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.waitGroup = wg
-	}
-}
+func (fp *fileProcessor) run(meta *Meta) {
+	defer fp.semaphore.Release(1)
+	defer fp.waitGroup.Done()
 
-func withChan(ch chan fileProcessorResult) fileProcessorOption {
-	return func(fp *fileProcessor) {
-		fp.ch = ch
-	}
-}
+	_, shouldExclude := fp.excluded[meta.RelativePath]
+	skipPreview := fp.preview == nil ||
+		shouldExclude ||
+		meta.IsDir ||
+		meta.IsImage() && !fp.imageProcess() ||
+		meta.IsVideo() && !fp.videoProcess()
 
-func newFileProcessor(opts ...fileProcessorOption) fileProcessor {
-	processor := fileProcessor{
-		excludedFromProcessing: map[string]struct{}{},
-	}
-	for _, opt := range opts {
-		opt(&processor)
-	}
-
-	return processor
-}
-
-func (fp *fileProcessor) run(file FileMeta, id string) {
-	end := func() {
-		if fp.semaphore != nil {
-			fp.semaphore.Release(1)
-		}
-
-		if fp.waitGroup != nil {
-			fp.waitGroup.Done()
-		}
-	}
-	defer end()
-
-	meta := Meta{
-		Path:         file.Path(),
-		RelativePath: file.RelativePath(),
-		Name:         file.Name(),
-		ModTime:      file.ModTime(),
-		IsDir:        file.IsDir(),
-		ID:           id,
-	}
-
-	_, ok := fp.excludedFromProcessing[meta.RelativePath]
-	if fp.preview == nil || ok && fp.ch != nil {
-		fp.ch <- fileProcessorResult{&meta, nil}
+	if skipPreview {
+		fp.ch <- fileProcessorResult{meta, nil}
 
 		return
 	}
 
-	preview, err := fp.preview.Pull(meta.Path)
+	preview, err := fp.preview(meta)
 	if err != nil {
 		slog.Error(fmt.Errorf("%w: %w", ErrPreviewPull, err).Error())
 
 		return
 	}
 
-	meta.Duration = preview.Duration
-	meta.Type = preview.ContentType
-	meta.Resolution = preview.Resolution
-	meta.Preview = Preview{
-		Length: uint32(len(preview.Data)),
+	meta.Duration = preview.Duration()
+	meta.Resolution = preview.Resolution()
+	meta.Preview = PreviewLocation{
+		Length: uint32(len(preview.Data())),
 	}
-	result := &fileProcessorResult{&meta, preview.Data}
 
-	if fp.ch != nil {
-		fp.ch <- *result
-	}
+	fp.ch <- fileProcessorResult{meta, preview.Data()}
 }

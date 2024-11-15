@@ -15,33 +15,35 @@ import (
 
 func TestHLSIndex(t *testing.T) {
 	t.Parallel()
+	require := require.New(t)
 
 	meta := &index.Meta{
 		Duration: time.Second * 75,
 	}
 	buff := bytes.Buffer{}
 	err := pullHLSIndex(meta, &buff)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	f, err := os.OpenFile("../test/test.m3u8", os.O_RDONLY, 0755)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	defer f.Close()
 	valid, err := io.ReadAll(f)
-	require.NoError(t, err)
+	require.NoError(err)
 	assert.Equal(t, valid, buff.Bytes())
 }
 
 func TestPullHLSChunk(t *testing.T) {
 	t.Parallel()
+	require := require.New(t)
 
 	meta := &index.Meta{
-		Path:     "../test/video/sample_960x400_ocean_with_audio.flv",
-		Duration: time.Second * 46,
+		AbsolutePath: "../test/video/sample_960x400_ocean_with_audio.flv",
+		Duration:     time.Second * 46,
 	}
 	buff := bytes.Buffer{}
 	err := pullHLSChunk(context.Background(), meta, "2.ts", 0, &buff)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	// different machines produces little different result, so i decided comment it
 	//

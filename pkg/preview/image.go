@@ -1,4 +1,4 @@
-package internal
+package preview
 
 import (
 	"errors"
@@ -6,8 +6,6 @@ import (
 	"log/slog"
 	"runtime"
 
-	"github.com/alxarno/tinytune/pkg/index"
-	"github.com/alxarno/tinytune/pkg/preview"
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
@@ -37,8 +35,9 @@ func init() {
 	})
 }
 
-func ImagePreview(path string) (preview.Data, error) {
-	preview := preview.Data{Resolution: "0x0", ContentType: index.ContentTypeImage}
+func imagePreview(path string) (data, error) {
+	// preview := Data{Resolution: "0x0", ContentType: index.ContentTypeImage}
+	preview := data{resolution: "0x0"}
 
 	image, err := vips.NewImageFromFile(path)
 	if err != nil {
@@ -46,9 +45,9 @@ func ImagePreview(path string) (preview.Data, error) {
 	}
 	defer image.Close()
 
-	preview.Resolution = fmt.Sprintf("%dx%d", image.Width(), image.Height())
+	preview.resolution = fmt.Sprintf("%dx%d", image.Width(), image.Height())
 
-	preview.Data, err = downScale(image)
+	preview.data, err = downScale(image)
 
 	return preview, err
 }

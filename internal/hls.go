@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/index"
+	"github.com/alxarno/tinytune/pkg/timeutil"
 )
 
 var (
@@ -74,8 +75,8 @@ func pullHLSChunk(ctx context.Context, meta *index.Meta, name string, timeout ti
 		defer cancel()
 	}
 
-	seekOptions := []string{"-accurate_seek", "-ss", durationPrint(start), "-to", durationPrint(end)}
-	inputOptions := []string{"-i", meta.Path}
+	seekOptions := []string{"-accurate_seek", "-ss", timeutil.String(start), "-to", timeutil.String(end)}
+	inputOptions := []string{"-i", string(meta.AbsolutePath)}
 	outputOptions := []string{
 		"-preset", "ultrafast",
 		"-crf", "30",

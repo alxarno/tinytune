@@ -1,4 +1,4 @@
-package internal
+package preview
 
 import (
 	"bytes"
@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alxarno/tinytune/pkg/index"
-	"github.com/alxarno/tinytune/pkg/preview"
 	"github.com/hashicorp/go-version"
 )
 
@@ -110,8 +108,8 @@ func probeOutputFrames(a string) (string, float64, time.Duration, error) {
 	return resolution, frames, time.Duration(seconds) * time.Second, nil
 }
 
-func VideoPreview(path string, params VideoParams) (preview.Data, error) {
-	preview := preview.Data{Resolution: "0x0", ContentType: index.ContentTypeVideo}
+func videoPreview(path string, params VideoParams) (data, error) {
+	preview := data{resolution: "0x0"}
 
 	metaJSON, err := videoProbe(path, params.timeout)
 	if err != nil {
@@ -123,11 +121,11 @@ func VideoPreview(path string, params VideoParams) (preview.Data, error) {
 		return preview, err
 	}
 
-	preview.Resolution = resolution
-	preview.Duration = duration
+	preview.resolution = resolution
+	preview.duration = duration
 
 	if path[len(path)-3:] == "flv" {
-		if preview.Data, err = FLVPreviewImage(path, duration, params); err != nil {
+		if preview.data, err = FLVPreviewImage(path, duration, params); err != nil {
 			return preview, err
 		}
 
@@ -175,7 +173,7 @@ func VideoPreview(path string, params VideoParams) (preview.Data, error) {
 		return preview, fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
 	}
 
-	preview.Data = buf.Bytes()
+	preview.data = buf.Bytes()
 
 	return preview, nil
 }
@@ -202,7 +200,7 @@ func videoProbe(path string, timeOut time.Duration) (string, error) {
 	return buf.String(), nil
 }
 
-func ProcessorProbe() error {
+func processorProbe() error {
 	if err := probeFFmpeg("ffmpeg"); err != nil {
 		return err
 	}
@@ -245,7 +243,7 @@ func probeFFmpeg(com string) error {
 	return nil
 }
 
-func PullVideoParams() (VideoParams, error) {
+func pullVideoParams() (VideoParams, error) {
 	result := VideoParams{}
 	ctx := context.Background()
 	cmd := exec.CommandContext(ctx, "ffmpeg", "-hwaccels")

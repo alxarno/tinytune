@@ -8,12 +8,6 @@ func WithPreview(gen PreviewGenerator) Option {
 	}
 }
 
-func WithID(f func(m FileMeta) (string, error)) Option {
-	return func(i *indexBuilder) {
-		i.params.id = f
-	}
-}
-
 func WithFiles(files []FileMeta) Option {
 	return func(i *indexBuilder) {
 		i.params.files = files
@@ -34,13 +28,13 @@ func WithNewFiles(f func()) Option {
 
 func WithMaxNewImageItems(param int64) Option {
 	return func(i *indexBuilder) {
-		i.params.maxNewImageItems = param
+		i.params.maxImageProcessCount = param
 	}
 }
 
 func WithMaxNewVideoItems(param int64) Option {
 	return func(i *indexBuilder) {
-		i.params.maxNewVideoItems = param
+		i.params.maxVideoProcessCount = param
 	}
 }
 

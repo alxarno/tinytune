@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -24,9 +23,9 @@ func TestIndexEncodeDecode(t *testing.T) {
 	indexOriginal, err := NewIndex(context.Background(), nil)
 	require.NoError(t, err)
 
-	indexOriginal.meta = map[string]*Meta{
+	indexOriginal.meta = map[ID]*Meta{
 		"5762029e772": {
-			Path:         "/home/test/",
+			AbsolutePath: "/home/test/",
 			Name:         "test",
 			ID:           "5762029e772",
 			RelativePath: "test/",
@@ -35,14 +34,14 @@ func TestIndexEncodeDecode(t *testing.T) {
 			IsDir:        true,
 		},
 		"2cf24dba5fb": {
-			Path:         "/home/test/abc.jpg",
+			AbsolutePath: "/home/test/abc.jpg",
 			Name:         "abc.jpg",
 			ID:           "2cf24dba5fb",
 			RelativePath: "test/abc.jpg",
 			ModTime:      time.Date(2024, 11, 5, 5, 5, 5, 0, time.UTC),
 			Type:         ContentTypeImage,
 			IsDir:        false,
-			Preview: Preview{
+			Preview: PreviewLocation{
 				Length: 100,
 				Offset: 0,
 			},
@@ -55,8 +54,8 @@ func TestIndexEncodeDecode(t *testing.T) {
 	buff := new(bytes.Buffer)
 	wrote, err := indexOriginal.Encode(buff)
 	require.NoError(t, err)
-	assert.EqualValues(t, 466, wrote)
-	assert.EqualValues(t, 466, buff.Len())
+	assert.EqualValues(t, 482, wrote)
+	assert.EqualValues(t, 482, buff.Len())
 	// Parse
 	indexDerivative, err := NewIndex(context.Background(), bufio.NewReader(buff))
 	require.NoError(t, err)
@@ -106,12 +105,25 @@ type mockPreviewGenerator struct {
 	sampleData []byte
 }
 
-func (mock mockPreviewGenerator) Pull(_ string) (preview.Data, error) {
-	return preview.Data{Duration: 0, ContentType: ContentTypeOther, Resolution: "", Data: mock.sampleData}, nil
+type mockPreviewData struct {
+	data []byte
 }
 
-func (mock mockPreviewGenerator) ContentType(_ string) int {
-	return ContentTypeOther
+func (m mockPreviewData) Data() []byte {
+	return m.data
+}
+
+func (m mockPreviewData) Resolution() string {
+	return "0x0"
+}
+
+func (m mockPreviewData) Duration() time.Duration {
+	return 0
+}
+
+//nolint:ireturn
+func (mock mockPreviewGenerator) Pull(_ preview.Source) (preview.Data, error) {
+	return mockPreviewData{data: mock.sampleData}, nil
 }
 
 func TestIndexFiles(t *testing.T) {
@@ -119,6 +131,7 @@ func TestIndexFiles(t *testing.T) {
 
 	testFolderPath, _ := strings.CutSuffix(os.Getenv("PWD"), "pkg/index")
 	testFolderPath = filepath.Join(testFolderPath, "test")
+	filesWithPreview := 5
 	filesNames := []string{
 		filepath.Join(testFolderPath, "image.jpg"),
 		filepath.Join(testFolderPath, "sample.mp4"),
@@ -148,36 +161,35 @@ func TestIndexFiles(t *testing.T) {
 	}
 
 	sampleData := make([]byte, 1000)
+	previewer := mockPreviewGenerator{sampleData: sampleData}
 	index, err := NewIndex(
 		context.Background(),
 		nil,
 		WithFiles(filesMeta),
-		WithPreview(mockPreviewGenerator{sampleData: sampleData}),
-		WithID(func(p FileMeta) (string, error) {
-			return fmt.Sprintf("%s%s", p.RelativePath(), p.ModTime()), nil
-		}),
+		WithPreview(previewer.Pull),
 	)
 	require.NoError(t, err)
 	assert.Len(t, index.meta, 7)
-	assert.Len(t, index.data, len(filesNames)*len(sampleData))
+	assert.Len(t, index.data, filesWithPreview*len(sampleData))
 }
 
 func TestIndexUpdatedFile(t *testing.T) {
 	t.Parallel()
+	require := require.New(t)
 
 	indexOriginal, err := NewIndex(context.Background(), nil)
-	require.NoError(t, err)
+	require.NoError(err)
 
-	indexOriginal.meta = map[string]*Meta{
+	indexOriginal.meta = map[ID]*Meta{
 		"2cf24dba5fb": {
-			Path:         "/home/test/abc.jpg",
+			AbsolutePath: "/home/test/abc.jpg",
 			Name:         "abc.jpg",
 			ID:           "2cf24dba5fb",
 			RelativePath: "test/abc.jpg",
 			ModTime:      time.Date(2024, 11, 5, 5, 5, 5, 0, time.UTC),
 			Type:         ContentTypeImage,
 			IsDir:        false,
-			Preview: Preview{
+			Preview: PreviewLocation{
 				Length: 100,
 				Offset: 0,
 			},
@@ -185,22 +197,23 @@ func TestIndexUpdatedFile(t *testing.T) {
 	}
 	buff := new(bytes.Buffer)
 	_, err = indexOriginal.Encode(buff)
-	require.NoError(t, err)
+	require.NoError(err)
 	// Parse
-	originalMeta, _ := indexOriginal.meta["2cf24dba5fb"] //nolint:gosimple
+	originalMeta, ok := indexOriginal.meta["2cf24dba5fb"]
+	require.True(ok)
+
 	indexDerivative, err := NewIndex(
 		context.Background(),
 		bufio.NewReader(buff),
-		WithID(func(_ FileMeta) (string, error) { return "2cf24123123", nil }),
 		WithFiles([]FileMeta{&mockFile{
-			relativePath: originalMeta.RelativePath,
+			relativePath: string(originalMeta.RelativePath),
 			dir:          originalMeta.IsDir,
-			path:         originalMeta.Path,
+			path:         string(originalMeta.AbsolutePath),
 			modTime:      originalMeta.ModTime.Add(time.Hour * 48),
 			name:         originalMeta.Name,
 			size:         100,
 		}}),
 	)
-	require.NoError(t, err)
+	require.NoError(err)
 	assert.Len(t, indexDerivative.meta, len(indexOriginal.meta))
 }

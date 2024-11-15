@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/fs"
@@ -18,6 +16,7 @@ import (
 	"github.com/alxarno/tinytune/pkg/bytesutil"
 	"github.com/alxarno/tinytune/pkg/index"
 	"github.com/alxarno/tinytune/pkg/logging"
+	"github.com/alxarno/tinytune/pkg/preview"
 	"github.com/urfave/cli/v2"
 )
 
@@ -226,10 +225,10 @@ func start(config Config) {
 
 	slog.Info("Indexing started")
 
-	previewer, err := internal.NewPreviewer(
-		internal.WithImagePreview(config.imageProcessing),
-		internal.WithVideoPreview(config.videoProcessing),
-		internal.WithAcceleration(config.acceleration),
+	previewer, err := preview.NewPreviewer(
+		preview.WithImagePreview(config.imageProcessing),
+		preview.WithVideoPreview(config.videoProcessing),
+		preview.WithAcceleration(config.acceleration),
 	)
 	internal.PanicError(err)
 
@@ -242,9 +241,8 @@ func start(config Config) {
 	index, err := index.NewIndex(
 		ctx,
 		indexFileReader,
-		index.WithID(idGenerator),
 		index.WithFiles(files),
-		index.WithPreview(previewer),
+		index.WithPreview(previewer.Pull),
 		index.WithWorkers(config.parallel),
 		index.WithProgress(progressBarAdd),
 		index.WithNewFiles(func() { indexNewFiles++ }),
@@ -286,13 +284,6 @@ func start(config Config) {
 	slog.Info("Server started", slog.Int("port", config.port), slog.String("mode", Mode))
 	<-ctx.Done()
 	slog.Info("Successful shutdown")
-}
-
-func idGenerator(p index.FileMeta) (string, error) {
-	idSource := []byte(fmt.Sprintf("%s%s", p.RelativePath(), p.ModTime()))
-	fileID := sha256.Sum256(idSource)
-
-	return hex.EncodeToString(fileID[:5]), nil
 }
 
 func gracefulShutdownCtx() context.Context {
