@@ -280,7 +280,7 @@ func start(config internal.Config) {
 		slog.String("total preview data size", bytesutil.PrettyByteSize(previewsSize)),
 	)
 
-	if index.OutDated() && !config.IndexFileSave {
+	if index.OutDated() && config.IndexFileSave {
 		err = indexFile.Truncate(0)
 		internal.PanicError(err)
 		_, err = indexFile.Seek(0, 0)

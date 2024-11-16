@@ -22,22 +22,22 @@ type Path string
 type RelativePath string
 
 type Meta struct {
-	ID           ID
-	AbsolutePath Path
-	RelativePath RelativePath
-	OriginSize   int64
-	Name         string
-	ModTime      time.Time
-	IsDir        bool
-	Preview      PreviewLocation
-	Duration     time.Duration
-	Resolution   string
-	Type         int
+	ID           ID              `json:"id"`
+	AbsolutePath Path            `json:"absolutePath"`
+	RelativePath RelativePath    `json:"relativePath"`
+	OriginSize   int64           `json:"originSize"`
+	Name         string          `json:"name"`
+	ModTime      time.Time       `json:"modTime"`
+	IsDir        bool            `json:"isDir"`
+	Preview      PreviewLocation `json:"preview"`
+	Duration     time.Duration   `json:"duration"`
+	Resolution   string          `json:"resolution"`
+	Type         int             `json:"type"`
 }
 
 type PreviewLocation struct {
-	Length uint32
-	Offset uint32
+	Length uint32 `json:"length"`
+	Offset uint32 `json:"offset"`
 }
 
 func (m *Meta) Size() int64 {

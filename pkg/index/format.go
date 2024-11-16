@@ -2,8 +2,10 @@ package index
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/binary"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -30,12 +32,20 @@ var (
 	ErrWriteMetaPartSize   = errors.New("failed to write meta's part size")
 	ErrWriteMetaPart       = errors.New("failed to write meta items")
 	ErrWriteBinaryData     = errors.New("failed to write binary data")
+
+	ErrJSONEncode       = errors.New("failed to JSON encode item")
+	ErrGZIPDecode       = errors.New("failed to decode gzip")
+	ErrGZIPDecoderClose = errors.New("failed to close gzip decoder")
+	ErrGZIPEncode       = errors.New("failed to encode gzip")
+	ErrGZIPEncoderClose = errors.New("failed to close gzip encoder")
+
+	ErrMetaDecode = errors.New("failed to decode meta data")
+	ErrMetaEncode = errors.New("failed to encode meta data")
 )
 
 const indexHeader = "TINYTUNE_INDEX"
 const metaItemsCountSize = 4
 
-//nolint:cyclop
 func (index *Index) Decode(r io.Reader) error {
 	if r == nil {
 		return nil
@@ -76,15 +86,8 @@ func (index *Index) Decode(r io.Reader) error {
 		return fmt.Errorf("%w: %w", ErrReadMetaPart, err)
 	}
 
-	decoder := gob.NewDecoder(bytes.NewReader(metaPartBuffer))
-
-	for range metaItemsCount {
-		m := Meta{}
-		if err := decoder.Decode(&m); err != nil {
-			return fmt.Errorf("%w: %w", ErrMetaItemDecode, err)
-		}
-
-		index.meta[m.ID] = &m
+	if err := index.metaDecode(bytes.NewReader(metaPartBuffer), metaItemsCount); err != nil {
+		return fmt.Errorf("%w: %w", ErrMetaDecode, err)
 	}
 
 	// read binary data
@@ -110,12 +113,9 @@ func (index *Index) Encode(w io.Writer) (uint64, error) {
 	}
 	// prepare meta items
 	metaBuffer := bytes.NewBuffer(make([]byte, 0))
-	enc := gob.NewEncoder(metaBuffer)
 
-	for _, v := range index.meta {
-		if err := enc.Encode(v); err != nil {
-			return 0, fmt.Errorf("%w: %w", ErrEncodeMetaItem, err)
-		}
+	if err := index.metaEncode(metaBuffer); err != nil {
+		return 0, fmt.Errorf("%w: %w", ErrMetaDecode, err)
 	}
 
 	// write meta part size
@@ -135,4 +135,48 @@ func (index *Index) Encode(w io.Writer) (uint64, error) {
 	}
 
 	return writer.Count(), nil
+}
+
+func (index *Index) metaEncode(w io.Writer) error {
+	gzipEncoder := gzip.NewWriter(w)
+	jsonEncoder := json.NewEncoder(gzipEncoder)
+
+	for _, v := range index.meta {
+		err := jsonEncoder.Encode(v)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrJSONEncode, err)
+		}
+	}
+
+	err := gzipEncoder.Close()
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrGZIPEncoderClose, err)
+	}
+
+	return nil
+}
+
+func (index *Index) metaDecode(r io.Reader, count uint32) error {
+	gzipDecoder, err := gzip.NewReader(r)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrGZIPDecode, err)
+	}
+
+	jsonDecoder := json.NewDecoder(gzipDecoder)
+
+	for range count {
+		m := Meta{}
+		if err := jsonDecoder.Decode(&m); err != nil {
+			return fmt.Errorf("%w: %w", ErrMetaItemDecode, err)
+		}
+
+		index.meta[m.ID] = &m
+	}
+
+	err = gzipDecoder.Close()
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrGZIPDecoderClose, err)
+	}
+
+	return nil
 }
