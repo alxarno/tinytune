@@ -78,7 +78,7 @@ func (h *loggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wrapped := wrapResponseWriter(w)
 	h.handler.ServeHTTP(wrapped, r)
 	printFunc := h.logger.Info
-	maxUserAgentLength := 45
+	maxUserAgentLength := 30
 
 	if wrapped.status == http.StatusNotFound {
 		printFunc = h.logger.Error

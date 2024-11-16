@@ -10,7 +10,7 @@ import (
 type MetaHTTPHandler func(dir *index.Meta, file *index.Meta, w http.ResponseWriter, r *http.Request)
 
 type source interface {
-	Pull(id index.ID) (index.Meta, error)
+	Pull(id index.ID) (*index.Meta, error)
 }
 
 type metaHandler struct {
@@ -18,9 +18,10 @@ type metaHandler struct {
 	source  source
 }
 
-func MetaHandler(handler MetaHTTPHandler) http.Handler {
+func MetaHandler(handler MetaHTTPHandler, source source) http.Handler {
 	return &metaHandler{
 		handler: handler,
+		source:  source,
 	}
 }
 
@@ -37,7 +38,7 @@ func (h *metaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dir = &meta
+		dir = meta
 	}
 
 	if len(r.PathValue("fileID")) != 0 {
@@ -49,7 +50,7 @@ func (h *metaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		file = &meta
+		file = meta
 	}
 
 	h.handler(dir, file, w, r)

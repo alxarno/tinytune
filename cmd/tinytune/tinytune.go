@@ -133,7 +133,7 @@ func main() {
 				Value:       rawConfig.MaxFileSize,
 				Destination: &rawConfig.MaxFileSize,
 				Aliases:     []string{"mfs"},
-				Category:    ServerCLICategory,
+				Category:    ProcessingCLICategory,
 			},
 			&cli.BoolFlag{
 				Name:        "acceleration",
@@ -142,6 +142,14 @@ func main() {
 				Usage:       "allows to utilize GPU computing power for ffmpeg",
 				Destination: &rawConfig.Acceleration,
 				Category:    FFmpegCLICategory,
+			},
+			&cli.StringFlag{
+				Name:        "streaming",
+				Usage:       "",
+				Value:       rawConfig.Streaming,
+				Destination: &rawConfig.Streaming,
+				Aliases:     []string{"s"},
+				Category:    ServerCLICategory,
 			},
 			&cli.IntFlag{
 				Name:        "port",
@@ -203,7 +211,16 @@ func start(config internal.Config) {
 
 	slog.Info("Indexing started")
 
-	excludedFromPreview := internal.GetExcludedFiles(files, config.Process.Includes, config.Process.Excludes)
+	excludedFromPreview := internal.GetExcludedFiles(
+		files,
+		config.Process.Includes,
+		config.Process.Excludes,
+	)
+
+	if len(excludedFromPreview) != 0 {
+		slog.Info(fmt.Sprintf("Got %v excluded files from media processing", len(excludedFromPreview)))
+	}
+
 	previewer, err := preview.NewPreviewer(
 		preview.WithImage(config.Process.Image.Process),
 		preview.WithVideo(config.Process.Video.Process),
@@ -228,20 +245,21 @@ func start(config internal.Config) {
 		index.WithPreview(previewer.Pull),
 		index.WithWorkers(config.Process.Parallel),
 		index.WithProgress(progressBarAdd),
-		index.WithNewFiles(func() { indexNewFiles++ }))
+	)
 	internal.PanicError(err)
 
 	if indexNewFiles != 0 {
 		slog.Info("New files found", slog.Int("count", indexNewFiles))
 	}
 
-	previewFilesCount, previewsSize := index.FilesWithPreviewStat()
+	totalFiles, previewFilesCount, previewsSize := index.FilesWithPreviewStat()
 
 	slog.Info("Indexing done")
 	slog.Info(
-		"Preview stat",
-		slog.Int("files", previewFilesCount),
-		slog.String("size", bytesutil.PrettyByteSize(previewsSize)),
+		"Stat",
+		slog.Int("total files", totalFiles),
+		slog.Int("files with preview", previewFilesCount),
+		slog.String("total preview data size", bytesutil.PrettyByteSize(previewsSize)),
 	)
 
 	if index.OutDated() {
@@ -254,12 +272,18 @@ func start(config internal.Config) {
 		slog.Info("Index file saved", slog.String("size", bytesutil.PrettyByteSize(count)))
 	}
 
+	streamingFiles := internal.GetIncludedFiles(files, config.Streaming)
+	if len(streamingFiles) != 0 {
+		slog.Info(fmt.Sprintf("Got %v files for streaming", len(streamingFiles)))
+	}
+
 	_ = internal.NewServer(
 		ctx,
 		internal.WithSource(&index),
 		internal.WithPort(config.Port),
 		internal.WithPWD(config.Dir),
 		internal.WithDebug(Mode == DebugMode),
+		internal.WithStreaming(streamingFiles),
 	)
 
 	slog.Info("Server started", slog.Int("port", config.Port), slog.String("mode", Mode))

@@ -22,6 +22,10 @@ func GetExcludedFiles(files []index.FileMeta, included, excluded []*regexp.Regex
 	return excludedFiles
 }
 
+func GetIncludedFiles(files []index.FileMeta, included []*regexp.Regexp) map[string]struct{} {
+	return filter(files, filterHandler(included))
+}
+
 func filter(items []index.FileMeta, filterFunc func(index.FileMeta) bool) map[string]struct{} {
 	dst := map[string]struct{}{}
 

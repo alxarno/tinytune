@@ -148,7 +148,7 @@ func (index *Index) Search(query string, dirID ID) []*Meta {
 	return result
 }
 
-func (index *Index) FilesWithPreviewStat() (int, uint32) {
+func (index *Index) FilesWithPreviewStat() (int, int, uint32) {
 	count := 0
 	size := uint32(0)
 
@@ -159,5 +159,5 @@ func (index *Index) FilesWithPreviewStat() (int, uint32) {
 		}
 	}
 
-	return count, size
+	return len(index.meta), count, size
 }

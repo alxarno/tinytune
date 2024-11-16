@@ -27,6 +27,7 @@ type source interface {
 
 type Server struct {
 	templates map[string]*template.Template
+	streaming map[string]struct{}
 	source    source
 	pwd       string
 	port      int
@@ -75,6 +76,12 @@ func WithPWD(dir string) ServerOption {
 	}
 }
 
+func WithStreaming(files map[string]struct{}) ServerOption {
+	return func(s *Server) {
+		s.streaming = files
+	}
+}
+
 func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 	server := &Server{}
 
@@ -82,7 +89,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 		opt(server)
 	}
 
-	server.templates = loadTemplates(server.getTemplates())
+	server.templates = loadTemplates(server.getTemplates(), server.streaming)
 
 	mux := http.NewServeMux()
 	serverTimeoutSeconds := 30
@@ -94,7 +101,7 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 	}
 	chain := alice.New(httputil.LoggingHandler)
 	register := func(route string, h httputil.MetaHTTPHandler) {
-		mux.Handle(route, chain.Then(httputil.MetaHandler(h)))
+		mux.Handle(route, chain.Then(httputil.MetaHandler(h, server.source)))
 	}
 
 	register("GET /", server.indexHandler())

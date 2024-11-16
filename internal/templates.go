@@ -4,14 +4,12 @@ import (
 	"html/template"
 	"io/fs"
 	"path"
-	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/alxarno/tinytune/pkg/timeutil"
 )
 
-func loadTemplates(src fs.FS) map[string]*template.Template {
+func loadTemplates(src fs.FS, streaming map[string]struct{}) map[string]*template.Template {
 	templates := make(map[string]*template.Template)
 	funcs := template.FuncMap{
 		"ext":    extension,
@@ -21,7 +19,7 @@ func loadTemplates(src fs.FS) map[string]*template.Template {
 			return x == y-1
 		},
 		"dur":       timeutil.String,
-		"streaming": streaming,
+		"streaming": getStreaming(streaming),
 	}
 	templates["index.html"] = template.Must(template.New("index.html").Funcs(funcs).ParseFS(src, "*.html"))
 
@@ -45,18 +43,10 @@ func height(res string) string {
 	return strings.Split(res, "x")[1]
 }
 
-func streaming(path string) bool {
-	streamingFormats := []string{"avi", "f4v", "flv"}
-	ext := filepath.Ext(path)
-	minExtensionLength := 2
+func getStreaming(files map[string]struct{}) func(path string) bool {
+	return func(path string) bool {
+		_, ok := files[path]
 
-	if len(ext) < minExtensionLength {
-		return false
+		return ok
 	}
-
-	if slices.Contains(streamingFormats, ext[1:]) {
-		return true
-	}
-
-	return false
 }

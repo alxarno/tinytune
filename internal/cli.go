@@ -25,6 +25,7 @@ type RawConfig struct {
 	Includes     string
 	Excludes     string
 	MaxFileSize  string
+	Streaming    string
 	Port         int
 }
 
@@ -97,13 +98,24 @@ func (c ProcessConfig) Print() {
 }
 
 type Config struct {
-	Dir     string
-	Port    int
-	Process ProcessConfig
+	Dir       string
+	Port      int
+	Streaming []*regexp.Regexp
+	Process   ProcessConfig
 }
 
 func (c Config) Print() {
-	slog.Info("Config:", slog.String("dir", c.Dir), slog.Int("port", c.Port))
+	streamingOriginalPatterns := make([]string, len(c.Streaming))
+	for i, v := range c.Streaming {
+		streamingOriginalPatterns[i] = v.String()
+	}
+
+	slog.Info(
+		"Config:",
+		slog.String("dir", c.Dir),
+		slog.Int("port", c.Port),
+		slog.String("streaming", strings.Join(streamingOriginalPatterns, ",")),
+	)
 	c.Process.Print()
 }
 
@@ -117,6 +129,8 @@ func DefaultRawConfig() RawConfig {
 		Acceleration: true,
 		MaxImages:    -1,
 		MaxVideos:    -1,
+		MaxFileSize:  "-1.0B",
+		Streaming:    "\\.(flv|f4v|avi)$",
 	}
 }
 
@@ -126,8 +140,9 @@ func NewConfig(raw RawConfig) Config {
 	}
 
 	return Config{
-		Dir:  raw.Dir,
-		Port: raw.Port,
+		Dir:       raw.Dir,
+		Port:      raw.Port,
+		Streaming: getRegularExpressions(raw.Streaming),
 		Process: ProcessConfig{
 			Parallel:     raw.Parallel,
 			Video:        MediaTypeConfig{raw.Video, raw.MaxVideos},

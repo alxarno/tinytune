@@ -73,7 +73,7 @@ func ifMaxPass(maxNewItems *int64) bool {
 	return true
 }
 
-//nolint:cyclop,ireturn //it's very simple method...
+//nolint:cyclop //it's very simple method...
 func (p Previewer) Pull(src Source) (Data, error) {
 	defaultPreview := data{resolution: "0x0"}
 
