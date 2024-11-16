@@ -1,6 +1,7 @@
 package preview
 
 import (
+	"log/slog"
 	"sync/atomic"
 	"time"
 )
@@ -73,7 +74,7 @@ func ifMaxPass(maxNewItems *int64) bool {
 	return true
 }
 
-//nolint:cyclop //it's very simple method...
+//nolint:cyclop,ireturn //it's very simple method...
 func (p Previewer) Pull(src Source) (Data, error) {
 	defaultPreview := data{resolution: "0x0"}
 
@@ -95,6 +96,11 @@ func (p Previewer) Pull(src Source) (Data, error) {
 	}
 
 	if toVideo {
+		timer := time.AfterFunc(time.Minute, func() {
+			slog.Warn("File media processing run for more than a minute", slog.String("file", src.Path()))
+		})
+		defer timer.Stop()
+
 		preview, err := videoPreview(src.Path(), p.videoParams)
 		if err != nil || preview.Duration() == 0 {
 			return defaultPreview, err

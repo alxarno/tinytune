@@ -20,9 +20,13 @@ var (
 	ErrPreviewPull      = errors.New("failed to pull preview")
 )
 
-type (
-	PreviewGenerator func(item preview.Source) (preview.Data, error)
-)
+type PreviewGenerator interface {
+	Pull(item preview.Source) (preview.Data, error)
+}
+
+// type (
+// 	PreviewGenerator func(item preview.Source) (preview.Data, error)
+// )
 
 type indexBuilderParams struct {
 	preview  PreviewGenerator
@@ -120,7 +124,7 @@ func (ib *indexBuilder) loadFile(
 		defer sem.Release(1)
 		defer wg.Done()
 
-		preview, err := ib.params.preview(metaItem)
+		preview, err := ib.params.preview.Pull(metaItem)
 		if err != nil {
 			slog.Error(fmt.Errorf("%w: %w", ErrPreviewPull, err).Error())
 			dst <- loadedFile{metaItem, nil}

@@ -242,7 +242,7 @@ func start(config internal.Config) {
 		ctx,
 		indexFileReader,
 		index.WithFiles(files),
-		index.WithPreview(previewer.Pull),
+		index.WithPreview(previewer),
 		index.WithWorkers(config.Process.Parallel),
 		index.WithProgress(progressBarAdd),
 	)

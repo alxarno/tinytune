@@ -166,7 +166,7 @@ func TestIndexFiles(t *testing.T) {
 		context.Background(),
 		nil,
 		WithFiles(filesMeta),
-		WithPreview(previewer.Pull),
+		WithPreview(previewer),
 	)
 	require.NoError(t, err)
 	assert.Len(t, index.meta, 7)
