@@ -22,10 +22,10 @@ type Previewer struct {
 	excludedFiles map[string]struct{}
 	videoParams   VideoParams
 	maxFileSize   int64
+	timeout       time.Duration
 }
 
 func NewPreviewer(opts ...Option) (*Previewer, error) {
-	timeoutMinutes := 10
 	preview := &Previewer{
 		maxImages:     -1,
 		maxVideos:     -1,
@@ -50,7 +50,7 @@ func NewPreviewer(opts ...Option) (*Previewer, error) {
 		}
 
 		preview.videoParams = params
-		preview.videoParams.timeout = time.Minute * time.Duration(timeoutMinutes)
+		preview.videoParams.timeout = preview.timeout
 	}
 
 	if !preview.acceleration {

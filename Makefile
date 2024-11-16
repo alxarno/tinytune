@@ -22,7 +22,7 @@ build: ## build
 
 .PHONY: run
 run: ## run
-	go run cmd/tinytune/tinytune.go ./test/
+	go run cmd/tinytune/tinytune.go --index-save=false ./test/ 
 
 
 .PHONY: watch

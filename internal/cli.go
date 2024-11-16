@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/alxarno/tinytune/pkg/bytesutil"
 )
@@ -15,18 +16,20 @@ const defaultPort = 8080
 const maxPortNumber = 65536
 
 type RawConfig struct {
-	Dir          string
-	Parallel     int
-	Video        bool
-	Images       bool
-	Acceleration bool
-	MaxImages    int64
-	MaxVideos    int64
-	Includes     string
-	Excludes     string
-	MaxFileSize  string
-	Streaming    string
-	Port         int
+	Dir           string
+	Parallel      int
+	Video         bool
+	Images        bool
+	Acceleration  bool
+	MaxImages     int64
+	MaxVideos     int64
+	Includes      string
+	Excludes      string
+	MaxFileSize   string
+	Streaming     string
+	MediaTimeout  string
+	IndexFileSave bool
+	Port          int
 }
 
 type MediaTypeConfig struct {
@@ -52,6 +55,7 @@ func (c MediaTypeConfig) Print(name string) {
 type ProcessConfig struct {
 	Parallel     int
 	Video        MediaTypeConfig
+	Timeout      time.Duration
 	Image        MediaTypeConfig
 	Acceleration bool
 	Includes     []*regexp.Regexp
@@ -84,6 +88,10 @@ func (c ProcessConfig) Print() {
 		params = append(params, slog.String("excludes", excludes))
 	}
 
+	if c.Timeout != 0 {
+		params = append(params, slog.String("timeout", c.Timeout.String()))
+	}
+
 	if c.MaxFileSize != -1 {
 		slog.String("max-file-size", bytesutil.PrettyByteSize(c.MaxFileSize))
 	}
@@ -98,10 +106,11 @@ func (c ProcessConfig) Print() {
 }
 
 type Config struct {
-	Dir       string
-	Port      int
-	Streaming []*regexp.Regexp
-	Process   ProcessConfig
+	Dir           string
+	Port          int
+	Streaming     []*regexp.Regexp
+	IndexFileSave bool
+	Process       ProcessConfig
 }
 
 func (c Config) Print() {
@@ -115,22 +124,25 @@ func (c Config) Print() {
 		slog.String("dir", c.Dir),
 		slog.Int("port", c.Port),
 		slog.String("streaming", strings.Join(streamingOriginalPatterns, ",")),
+		slog.Bool("index-file-saving", c.IndexFileSave),
 	)
 	c.Process.Print()
 }
 
 func DefaultRawConfig() RawConfig {
 	return RawConfig{
-		Dir:          os.Getenv("PWD"),
-		Parallel:     runtime.NumCPU(),
-		Port:         defaultPort,
-		Video:        true,
-		Images:       true,
-		Acceleration: true,
-		MaxImages:    -1,
-		MaxVideos:    -1,
-		MaxFileSize:  "-1.0B",
-		Streaming:    "\\.(flv|f4v|avi)$",
+		Dir:           os.Getenv("PWD"),
+		Parallel:      runtime.NumCPU(),
+		Port:          defaultPort,
+		Video:         true,
+		Images:        true,
+		Acceleration:  true,
+		IndexFileSave: true,
+		MaxImages:     -1,
+		MaxVideos:     -1,
+		MaxFileSize:   "-1B",
+		Streaming:     "\\.(flv|f4v|avi)$",
+		MediaTimeout:  "2m",
 	}
 }
 
@@ -140,10 +152,12 @@ func NewConfig(raw RawConfig) Config {
 	}
 
 	return Config{
-		Dir:       raw.Dir,
-		Port:      raw.Port,
-		Streaming: getRegularExpressions(raw.Streaming),
+		Dir:           raw.Dir,
+		Port:          raw.Port,
+		Streaming:     getRegularExpressions(raw.Streaming),
+		IndexFileSave: raw.IndexFileSave,
 		Process: ProcessConfig{
+			Timeout:      getDuration(raw.MediaTimeout),
 			Parallel:     raw.Parallel,
 			Video:        MediaTypeConfig{raw.Video, raw.MaxVideos},
 			Image:        MediaTypeConfig{raw.Images, raw.MaxImages},
@@ -155,10 +169,19 @@ func NewConfig(raw RawConfig) Config {
 	}
 }
 
+func getDuration(durationEncoded string) time.Duration {
+	duration, err := time.ParseDuration(durationEncoded)
+	if err != nil {
+		panic(err)
+	}
+
+	return duration
+}
+
 func getMaxFileSize(value string) int64 {
 	maxFileSize := int64(-1)
 	if value != "" {
-		maxFileSize = 1024
+		maxFileSize = bytesutil.ParseByteSize(value)
 	}
 
 	return maxFileSize

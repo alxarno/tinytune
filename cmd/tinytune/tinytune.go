@@ -34,6 +34,7 @@ var (
 
 const (
 	IndexFileName         = "index.tinytune"
+	CommonCLICategory     = "Common:"
 	ProcessingCLICategory = "Processing:"
 	FFmpegCLICategory     = "FFmpeg:"
 	ServerCLICategory     = "Server:"
@@ -71,6 +72,14 @@ func main() {
 			},
 		},
 		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "index-save",
+				Value:       rawConfig.IndexFileSave,
+				Aliases:     []string{"is"},
+				Usage:       "",
+				Destination: &rawConfig.IndexFileSave,
+				Category:    CommonCLICategory,
+			},
 			&cli.BoolFlag{
 				Name:        "video",
 				Value:       rawConfig.Video,
@@ -133,6 +142,14 @@ func main() {
 				Value:       rawConfig.MaxFileSize,
 				Destination: &rawConfig.MaxFileSize,
 				Aliases:     []string{"mfs"},
+				Category:    ProcessingCLICategory,
+			},
+			&cli.StringFlag{
+				Name:        "timeout",
+				Usage:       "",
+				Value:       rawConfig.MediaTimeout,
+				Destination: &rawConfig.MediaTimeout,
+				Aliases:     []string{"t"},
 				Category:    ProcessingCLICategory,
 			},
 			&cli.BoolFlag{
@@ -229,6 +246,7 @@ func start(config internal.Config) {
 		preview.WithMaxImages(config.Process.Image.MaxItems),
 		preview.WithMaxVideos(config.Process.Video.MaxItems),
 		preview.WithMaxFileSize(config.Process.MaxFileSize),
+		preview.WithTimeout(config.Process.Timeout),
 	)
 	internal.PanicError(err)
 
@@ -262,7 +280,7 @@ func start(config internal.Config) {
 		slog.String("total preview data size", bytesutil.PrettyByteSize(previewsSize)),
 	)
 
-	if index.OutDated() {
+	if index.OutDated() && !config.IndexFileSave {
 		err = indexFile.Truncate(0)
 		internal.PanicError(err)
 		_, err = indexFile.Seek(0, 0)

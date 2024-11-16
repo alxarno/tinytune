@@ -1,5 +1,7 @@
 package preview
 
+import "time"
+
 type Option func(*Previewer)
 
 func WithImage(param bool) Option {
@@ -42,5 +44,11 @@ func WithMaxVideos(param int64) Option {
 func WithMaxFileSize(param int64) Option {
 	return func(p *Previewer) {
 		p.maxFileSize = param
+	}
+}
+
+func WithTimeout(param time.Duration) Option {
+	return func(p *Previewer) {
+		p.timeout = param
 	}
 }

@@ -84,6 +84,6 @@ func (m *Meta) setContentType() {
 	case slices.Contains(imageFormats, ext[1:]):
 		m.Type = ContentTypeImage
 	case slices.Contains(videoFormats, ext[1:]):
-		m.Type = ContentTypeImage
+		m.Type = ContentTypeVideo
 	}
 }
