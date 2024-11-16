@@ -21,8 +21,8 @@ build: ## build
 	echo "Done"
 
 .PHONY: run
-run: ## run
-	go run cmd/tinytune/tinytune.go --index-save=false ./test/ 
+run: ## run go run cmd/tinytune/tinytune.go --index-save=false ./test/
+	go run cmd/tinytune/tinytune.go --help
 
 
 .PHONY: watch

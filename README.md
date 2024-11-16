@@ -15,6 +15,15 @@ It allows you to watch **videos**, **images** and also has a **search** feature.
 
 </div>
 
+## 🎯 Features
+
+ - [x] **one** executable file
+ - [x] searching
+ - [x] **animated** previews for video
+ - [x] streaming **.flv**, **.avi**, etc
+ - [x] rich settings for **optimize** indexing big media folders
+
+
 ## ⚡️ Install
 
 The latest version of the TinyTune can be found on the GitHub [releases page](https://github.com/alxarno/tinytune/releases).
@@ -43,7 +52,7 @@ USAGE:
    tinytune [data folder path] [global options]
 
 VERSION:
-   n/a
+   1.1.0
 
 AUTHOR:
    alxarno <alexarnowork@gmail.com>
@@ -55,25 +64,44 @@ GLOBAL OPTIONS:
    --help, -h           show help
    --print-version, -v  print only the version (default: false)
 
-   FFmpeg:
+   Common:
 
-   --acceleration, -a  allows to utilize GPU computing power for ffmpeg (default: true)
+   --index-save, --is  the program creates a special file in the working directory “index.tinytune”. This file stores all necessary data obtained during indexing of the working directory.
+                You can turn off its saving, but at the next startup, the application will start processing again (default: true)
+
+   FFmpeg:
+    This application uses the FFmpeg program as a tool for interacting with video files.
+    Make sure that it is available for calling.
+
+   --acceleration  allows to utilize GPU computing power for ffmpeg (default: true)
 
    Processing:
+    In order for the web interface to be able to view thumbnails of media files, as well as play them, the program needs to process them and get meta information.
+    This process can be long, so here are the options that will help limit the number of files to process.
 
-   --image, --ai                            allows the server to process images (default: true)
-   --max-new-image-items value, --ni value  limits the number of new image files to be processed (default: -1)
-   --max-new-video-items value, --nv value  limits the number of new video files to be processed (default: -1)
-   --parallel value, --pl value             simultaneous file processing (!large values increase RAM consumption!) (default: 16)
-   --video, --av                            allows the server to process videos (default: true)
+   --excludes value  if you want to more finely restrict the files to be processed, use this option. You can specify multiple regular expressions, separated by commas.
+                Files that fall under one of these expressions will not be processed (but you will still see them in the interface).
+                Example: '\\.(mp4|avi)$' -> turn off processing for all files with .mp4 and .avi extensions
+   --image           allows the server to process images, to show thumbnails (default: true)
+   --includes value  this parameter will help to include back into processing files that were disabled by the '--exclude' parameter. Regular expressions are also used here, separated by commas.
+                Example: 'video/sample[.]mp4$' -> will return the sample.mp4 file, which is located in the video folder (no matter at what level the folder is located) to processing
+   --max-file-size value  this option restricts files from being processed if their size exceeds a certain value. Values can be specified as follows: 25KB, 10mb, 1GB, 2gb (default: "-1B")
+   --max-images value     limits the number of image files to be processed (thumbnails producing) (default: -1)
+   --max-videos value     limits the number of video files to be processed (thumbnails producing) (default: -1)
+   --parallel value       simultaneous image/video processing (!large values increase RAM consumption!) (default: 16)
+   --timeout value        sometimes some files take too long to process, here you can specify a time limit in which they should be processed. Examples of values: 5m, 120s (default: "2m")
+   --video                allows the server to process videos, for playing them in browser and show thumbnails (default: true)
 
    Server:
 
    --port value, -p value  http server port (default: 8080)
+   --streaming value       some files cannot be played in the browser, such as flv and avi. Therefore, such files need to be transcoded.
+                Specify here, using regular expressions, which files you would like to transcode on the fly for browser viewing (default: "\\.(flv|f4v|avi)$")
 
 
 COPYRIGHT:
    (c) github.com/alxarno/tinytune
+
 ```
 ## 🖥️ Development
 

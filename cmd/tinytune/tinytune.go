@@ -32,14 +32,20 @@ var (
 	Mode           = DebugMode
 )
 
+//nolint:lll
 const (
 	IndexFileName         = "index.tinytune"
 	CommonCLICategory     = "Common:"
-	ProcessingCLICategory = "Processing:"
-	FFmpegCLICategory     = "FFmpeg:"
-	ServerCLICategory     = "Server:"
+	ProcessingCLICategory = `Processing:
+    In order for the web interface to be able to view thumbnails of media files, as well as play them, the program needs to process them and get meta information.
+    This process can be long, so here are the options that will help limit the number of files to process.`
+	FFmpegCLICategory = `FFmpeg:
+    This application uses the FFmpeg program as a tool for interacting with video files.
+    Make sure that it is available for calling.`
+	ServerCLICategory = "Server:"
 )
 
+//nolint:lll
 func main() {
 	cli.VersionPrinter = func(cCtx *cli.Context) {
 		slog.Info(
@@ -73,99 +79,93 @@ func main() {
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:        "index-save",
-				Value:       rawConfig.IndexFileSave,
-				Aliases:     []string{"is"},
-				Usage:       "",
+				Name:    "index-save",
+				Value:   rawConfig.IndexFileSave,
+				Aliases: []string{"is"},
+				Usage: `the program creates a special file in the working directory “index.tinytune”. This file stores all necessary data obtained during indexing of the working directory.
+                You can turn off its saving, but at the next startup, the application will start processing again`,
 				Destination: &rawConfig.IndexFileSave,
 				Category:    CommonCLICategory,
 			},
 			&cli.BoolFlag{
 				Name:        "video",
 				Value:       rawConfig.Video,
-				Aliases:     []string{"av"},
-				Usage:       "allows the server to process videos",
+				Usage:       "allows the server to process videos, for playing them in browser and show thumbnails",
 				Destination: &rawConfig.Video,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.BoolFlag{
 				Name:        "image",
 				Value:       rawConfig.Images,
-				Aliases:     []string{"ai"},
-				Usage:       "allows the server to process images",
+				Usage:       "allows the server to process images, to show thumbnails",
 				Destination: &rawConfig.Images,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.Int64Flag{
-				Name:        "max-new-image-items",
+				Name:        "max-images",
 				Value:       rawConfig.MaxImages,
-				Aliases:     []string{"ni"},
-				Usage:       "limits the number of new image files to be processed",
+				Usage:       "limits the number of image files to be processed (thumbnails producing)",
 				Destination: &rawConfig.MaxImages,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.Int64Flag{
-				Name:        "max-new-video-items",
+				Name:        "max-videos",
 				Value:       rawConfig.MaxVideos,
-				Aliases:     []string{"nv"},
-				Usage:       "limits the number of new video files to be processed",
+				Usage:       "limits the number of video files to be processed (thumbnails producing)",
 				Destination: &rawConfig.MaxVideos,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.IntFlag{
 				Name:        "parallel",
 				Value:       rawConfig.Parallel,
-				Aliases:     []string{"pl"},
-				Usage:       "simultaneous file processing (!large values increase RAM consumption!)",
+				Usage:       "simultaneous image/video processing (!large values increase RAM consumption!)",
 				Destination: &rawConfig.Parallel,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.StringFlag{
-				Name:        "includes",
-				Value:       rawConfig.Includes,
-				Aliases:     []string{"i"},
-				Usage:       "excludes from selected by --excludes files by regexp",
+				Name:  "includes",
+				Value: rawConfig.Includes,
+				Usage: `this parameter will help to include back into processing files that were disabled by the '--exclude' parameter. Regular expressions are also used here, separated by commas.
+                Example: 'video/sample[.]mp4$' -> will return the sample.mp4 file, which is located in the video folder (no matter at what level the folder is located) to processing`,
 				Destination: &rawConfig.Includes,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.StringFlag{
-				Name:        "excludes",
-				Value:       rawConfig.Excludes,
-				Aliases:     []string{"e"},
-				Usage:       "excludes from media processing by regexp",
+				Name:  "excludes",
+				Value: rawConfig.Excludes,
+				Usage: `if you want to more finely restrict the files to be processed, use this option. You can specify multiple regular expressions, separated by commas.
+                Files that fall under one of these expressions will not be processed (but you will still see them in the interface).
+                Example: '\\.(mp4|avi)$' -> turn off processing for all files with .mp4 and .avi extensions`,
 				Destination: &rawConfig.Excludes,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.StringFlag{
 				Name:        "max-file-size",
-				Usage:       "",
+				Usage:       "this option restricts files from being processed if their size exceeds a certain value. Values can be specified as follows: 25KB, 10mb, 1GB, 2gb",
 				Value:       rawConfig.MaxFileSize,
 				Destination: &rawConfig.MaxFileSize,
-				Aliases:     []string{"mfs"},
 				Category:    ProcessingCLICategory,
 			},
 			&cli.StringFlag{
 				Name:        "timeout",
-				Usage:       "",
+				Usage:       "sometimes some files take too long to process, here you can specify a time limit in which they should be processed. Examples of values: 5m, 120s",
 				Value:       rawConfig.MediaTimeout,
 				Destination: &rawConfig.MediaTimeout,
-				Aliases:     []string{"t"},
 				Category:    ProcessingCLICategory,
 			},
 			&cli.BoolFlag{
 				Name:        "acceleration",
 				Value:       rawConfig.Acceleration,
-				Aliases:     []string{"a"},
 				Usage:       "allows to utilize GPU computing power for ffmpeg",
 				Destination: &rawConfig.Acceleration,
 				Category:    FFmpegCLICategory,
 			},
 			&cli.StringFlag{
-				Name:        "streaming",
-				Usage:       "",
+				Name: "streaming",
+				Usage: `some files cannot be played in the browser, such as flv and avi. Therefore, such files need to be transcoded.
+                Specify here, using regular expressions, which files you would like to transcode on the fly for browser viewing`,
 				Value:       rawConfig.Streaming,
 				Destination: &rawConfig.Streaming,
-				Aliases:     []string{"s"},
 				Category:    ServerCLICategory,
 			},
 			&cli.IntFlag{
