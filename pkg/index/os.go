@@ -29,6 +29,7 @@ func metaByFile(file FileMeta) *Meta {
 		RelativePath: RelativePath(file.RelativePath()),
 		Name:         file.Name(),
 		ModTime:      file.ModTime(),
+		OriginSize:   file.Size(),
 		IsDir:        file.IsDir(),
 	}
 	metaItem.generateID()

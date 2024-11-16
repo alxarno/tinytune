@@ -26,44 +26,8 @@ func WithNewFiles(f func()) Option {
 	}
 }
 
-func WithMaxNewImageItems(param int64) Option {
-	return func(i *indexBuilder) {
-		i.params.maxImageProcessCount = param
-	}
-}
-
-func WithMaxNewVideoItems(param int64) Option {
-	return func(i *indexBuilder) {
-		i.params.maxVideoProcessCount = param
-	}
-}
-
-func WithVideo(param bool) Option {
-	return func(i *indexBuilder) {
-		i.params.videoProcessing = param
-	}
-}
-
-func WithImage(param bool) Option {
-	return func(i *indexBuilder) {
-		i.params.imageProcessing = param
-	}
-}
-
 func WithWorkers(w int) Option {
 	return func(i *indexBuilder) {
 		i.params.workers = w
-	}
-}
-
-func WithInclude(p string) Option {
-	return func(i *indexBuilder) {
-		i.params.includePatterns = p
-	}
-}
-
-func WithExclude(p string) Option {
-	return func(i *indexBuilder) {
-		i.params.excludePatterns = p
 	}
 }

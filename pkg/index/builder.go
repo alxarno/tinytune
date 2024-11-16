@@ -17,7 +17,7 @@ import (
 var (
 	ErrSemaphoreAcquire = errors.New("failed to acquire the semaphore")
 	ErrFileLoad         = errors.New("failed to load file")
-	ErrGetExcludedFiles = errors.New("failed to get excluded files")
+	ErrPreviewPull      = errors.New("failed to pull preview")
 )
 
 type (
@@ -25,17 +25,11 @@ type (
 )
 
 type indexBuilderParams struct {
-	preview              PreviewGenerator
-	files                []FileMeta
-	progress             func()
-	newFiles             func()
-	workers              int
-	maxImageProcessCount int64
-	maxVideoProcessCount int64
-	imageProcessing      bool
-	videoProcessing      bool
-	includePatterns      string
-	excludePatterns      string
+	preview  PreviewGenerator
+	files    []FileMeta
+	progress func()
+	newFiles func()
+	workers  int
 }
 
 type indexBuilder struct {
@@ -45,14 +39,10 @@ type indexBuilder struct {
 
 func newBuilder(index *Index) indexBuilder {
 	return indexBuilder{index: index, params: indexBuilderParams{
-		files:                []FileMeta{},
-		progress:             func() {},
-		newFiles:             func() {},
-		workers:              1,
-		maxImageProcessCount: -1,
-		maxVideoProcessCount: -1,
-		imageProcessing:      true,
-		videoProcessing:      true,
+		files:    []FileMeta{},
+		progress: func() {},
+		newFiles: func() {},
+		workers:  1,
 	}}
 }
 
@@ -85,87 +75,90 @@ func (ib *indexBuilder) run(ctx context.Context, r io.Reader) error {
 	return nil
 }
 
-func (ib *indexBuilder) getFileLoader(
+type loadedFile struct {
+	meta *Meta
+	data []byte
+}
+
+func (ib *indexBuilder) loadFile(
 	ctx context.Context,
-	waitGroup *sync.WaitGroup,
+	wg *sync.WaitGroup,
 	sem *semaphore.Weighted,
-	processor fileProcessor,
-) func(FileMeta) error {
-	acquire := func() error {
-		err := sem.Acquire(ctx, 1)
-		if err == nil || errors.Is(err, context.Canceled) {
+	file FileMeta,
+	dst chan loadedFile,
+) error {
+	metaItem := metaByFile(file)
+
+	// if item already in map, but without preview -> create preview
+	if saved, ok := ib.index.meta[metaItem.ID]; ok && saved.Preview.Length != 0 {
+		return nil
+	}
+
+	// needs for check if file/folder was modified, and remove old version
+	if oldMeta, ok := ib.index.paths[metaItem.RelativePath]; ok {
+		delete(ib.index.meta, oldMeta.ID)
+	}
+
+	if ib.params.preview == nil || metaItem.IsDir {
+		dst <- loadedFile{metaItem, nil}
+
+		return nil
+	}
+
+	if err := sem.Acquire(ctx, 1); err != nil {
+		if errors.Is(err, context.Canceled) {
 			return nil
 		}
 
 		return fmt.Errorf("%w: %w", ErrSemaphoreAcquire, err)
 	}
 
-	return func(file FileMeta) error {
-		metaItem := metaByFile(file)
+	wg.Add(1)
+	ib.params.progress()
 
-		// if item already in map, but without preview -> create preview
-		if saved, ok := ib.index.meta[metaItem.ID]; ok && saved.Preview.Length != 0 {
-			return nil
+	go func() {
+		defer sem.Release(1)
+		defer wg.Done()
+
+		preview, err := ib.params.preview(metaItem)
+		if err != nil {
+			slog.Error(fmt.Errorf("%w: %w", ErrPreviewPull, err).Error())
+			dst <- loadedFile{metaItem, nil}
+
+			return
 		}
 
-		// needs for check if file/folder was modified, and remove old version
-		if oldMeta, ok := ib.index.paths[metaItem.RelativePath]; ok {
-			delete(ib.index.meta, oldMeta.ID)
+		metaItem.Duration = preview.Duration()
+		metaItem.Resolution = preview.Resolution()
+		metaItem.Preview = PreviewLocation{
+			Length: uint32(len(preview.Data())),
 		}
 
-		if err := acquire(); err != nil {
-			return err
-		}
+		dst <- loadedFile{metaItem, preview.Data()}
+	}()
 
-		waitGroup.Add(1)
-		ib.params.progress()
-
-		go processor.run(metaItem)
-
-		return nil
-	}
+	return nil
 }
 
 func (ib *indexBuilder) loadFiles(ctx context.Context) error {
-	waitGroup := new(sync.WaitGroup)
+	wg := new(sync.WaitGroup)
 	sem := semaphore.NewWeighted(int64(ib.params.workers))
-	resultChannel := make(chan fileProcessorResult, len(ib.params.files))
-
-	excludedFromPreview, err := ib.getExcludedFiles()
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrGetExcludedFiles, err)
-	}
-
-	if len(excludedFromPreview) != 0 {
-		slog.Info(fmt.Sprintf("Excluded %d files from media processing", len(excludedFromPreview)))
-	}
+	results := make(chan loadedFile, len(ib.params.files))
 
 	// pass biggest files first
 	slices.SortStableFunc(ib.params.files, compareFileMetaSize)
 
-	processor := fileProcessor{
-		ch:        resultChannel,
-		waitGroup: waitGroup,
-		semaphore: sem,
-		image:     ib.params.imageProcessing,
-		video:     ib.params.videoProcessing,
-		maxImage:  ib.params.maxImageProcessCount,
-		maxVideo:  ib.params.maxVideoProcessCount,
-		preview:   ib.params.preview,
-		excluded:  excludedFromPreview,
-	}
-
-	fileLoader := ib.getFileLoader(ctx, waitGroup, sem, processor)
 	for _, file := range ib.params.files {
-		if err := fileLoader(file); err != nil {
+		err := ib.loadFile(ctx, wg, sem, file, results)
+		if err != nil {
 			return fmt.Errorf("%w: %w", ErrFileLoad, err)
 		}
 	}
 
-	waitGroup.Wait()
-	close(resultChannel)
+	wg.Wait()
+	close(results)
 
-	for result := range resultChannel {
+	for result := range results {
 		ib.params.newFiles()
 
 		if result.meta.Preview.Length != 0 {

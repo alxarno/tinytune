@@ -35,6 +35,7 @@ linters-settings:
       - r *http.Request
       - r io.Reader
       - w io.Writer
+      - wg *sync.WaitGroup
 run:
   timeout: 5m
 

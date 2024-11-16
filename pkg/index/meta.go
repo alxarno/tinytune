@@ -25,6 +25,7 @@ type Meta struct {
 	ID           ID
 	AbsolutePath Path
 	RelativePath RelativePath
+	OriginSize   int64
 	Name         string
 	ModTime      time.Time
 	IsDir        bool
@@ -37,6 +38,10 @@ type Meta struct {
 type PreviewLocation struct {
 	Length uint32
 	Offset uint32
+}
+
+func (m *Meta) Size() int64 {
+	return m.OriginSize
 }
 
 func (m *Meta) IsImage() bool {
@@ -68,26 +73,17 @@ func (m *Meta) setContentType() {
 		return
 	}
 
+	m.Type = ContentTypeOther
 	//nolint:lll
 	videoFormats := []string{"3gp", "avi", "f4v", "flv", "gif", "hevc", "m4v", "mlv", "mov", "mp4", "m4a", "3g2", "mj2", "mpeg", "ogv", "webm"}
 	imageFormats := []string{"jpeg", "png", "jpg", "webp", "bmp"}
 
 	ext := filepath.Ext(string(m.AbsolutePath))
-	minExtensionLength := 2
 
-	if len(ext) < minExtensionLength {
-		m.Type = ContentTypeOther
-
-		return
-	}
-
-	if slices.Contains(imageFormats, ext[1:]) {
+	switch {
+	case slices.Contains(imageFormats, ext[1:]):
+		m.Type = ContentTypeImage
+	case slices.Contains(videoFormats, ext[1:]):
 		m.Type = ContentTypeImage
 	}
-
-	if slices.Contains(videoFormats, ext[1:]) {
-		m.Type = ContentTypeVideo
-	}
-
-	m.Type = ContentTypeOther
 }

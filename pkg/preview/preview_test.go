@@ -14,6 +14,7 @@ type mockSource struct {
 	video bool
 	image bool
 	path  string
+	size  int64
 }
 
 func (s mockSource) IsImage() bool {
@@ -28,11 +29,15 @@ func (s mockSource) Path() string {
 	return s.path
 }
 
+func (s mockSource) Size() int64 {
+	return s.size
+}
+
 func TestPreview(t *testing.T) {
 	t.Parallel()
 	require := require.New(t)
 
-	previewer, err := NewPreviewer(WithImagePreview(true), WithVideoPreview(true))
+	previewer, err := NewPreviewer(WithImage(true), WithVideo(true))
 	require.NoError(err)
 
 	testCases := []struct {

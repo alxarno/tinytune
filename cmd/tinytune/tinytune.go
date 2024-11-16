@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"syscall"
 
 	"github.com/alxarno/tinytune/internal"
@@ -38,22 +37,7 @@ const (
 	ProcessingCLICategory = "Processing:"
 	FFmpegCLICategory     = "FFmpeg:"
 	ServerCLICategory     = "Server:"
-	MaxPortNumber         = 65536
-	DefaultPort           = 8080
 )
-
-type Config struct {
-	dir              string
-	videoProcessing  bool
-	imageProcessing  bool
-	acceleration     bool
-	maxNewImageItems int64
-	maxNewVideoItems int64
-	parallel         int
-	port             int
-	includes         string
-	excludes         string
-}
 
 func main() {
 	cli.VersionPrinter = func(cCtx *cli.Context) {
@@ -71,7 +55,7 @@ func main() {
 		Aliases: []string{"v"},
 		Usage:   "print only the version",
 	}
-	config := Config{dir: os.Getenv("PWD")}
+	rawConfig := internal.DefaultRawConfig()
 	app := &cli.App{
 		Name:        "TinyTune",
 		Usage:       "the tiny media server",
@@ -89,88 +73,90 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:        "video",
-				Value:       true,
+				Value:       rawConfig.Video,
 				Aliases:     []string{"av"},
 				Usage:       "allows the server to process videos",
-				Destination: &config.videoProcessing,
+				Destination: &rawConfig.Video,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.BoolFlag{
 				Name:        "image",
-				Value:       true,
+				Value:       rawConfig.Images,
 				Aliases:     []string{"ai"},
 				Usage:       "allows the server to process images",
-				Destination: &config.imageProcessing,
+				Destination: &rawConfig.Images,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.Int64Flag{
 				Name:        "max-new-image-items",
-				Value:       -1,
+				Value:       rawConfig.MaxImages,
 				Aliases:     []string{"ni"},
 				Usage:       "limits the number of new image files to be processed",
-				Destination: &config.maxNewImageItems,
+				Destination: &rawConfig.MaxImages,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.Int64Flag{
 				Name:        "max-new-video-items",
-				Value:       -1,
+				Value:       rawConfig.MaxVideos,
 				Aliases:     []string{"nv"},
 				Usage:       "limits the number of new video files to be processed",
-				Destination: &config.maxNewVideoItems,
+				Destination: &rawConfig.MaxVideos,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.IntFlag{
 				Name:        "parallel",
-				Value:       runtime.NumCPU(),
+				Value:       rawConfig.Parallel,
 				Aliases:     []string{"pl"},
 				Usage:       "simultaneous file processing (!large values increase RAM consumption!)",
-				Destination: &config.parallel,
+				Destination: &rawConfig.Parallel,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.StringFlag{
 				Name:        "includes",
-				Value:       "",
+				Value:       rawConfig.Includes,
 				Aliases:     []string{"i"},
 				Usage:       "excludes from selected by --excludes files by regexp",
-				Destination: &config.includes,
+				Destination: &rawConfig.Includes,
 				Category:    ProcessingCLICategory,
 			},
 			&cli.StringFlag{
 				Name:        "excludes",
-				Value:       "",
+				Value:       rawConfig.Excludes,
 				Aliases:     []string{"e"},
 				Usage:       "excludes from media processing by regexp",
-				Destination: &config.excludes,
+				Destination: &rawConfig.Excludes,
 				Category:    ProcessingCLICategory,
+			},
+			&cli.StringFlag{
+				Name:        "max-file-size",
+				Usage:       "",
+				Value:       rawConfig.MaxFileSize,
+				Destination: &rawConfig.MaxFileSize,
+				Aliases:     []string{"mfs"},
+				Category:    ServerCLICategory,
 			},
 			&cli.BoolFlag{
 				Name:        "acceleration",
-				Value:       true,
+				Value:       rawConfig.Acceleration,
 				Aliases:     []string{"a"},
 				Usage:       "allows to utilize GPU computing power for ffmpeg",
-				Destination: &config.acceleration,
+				Destination: &rawConfig.Acceleration,
 				Category:    FFmpegCLICategory,
 			},
 			&cli.IntFlag{
 				Name:        "port",
 				Usage:       "http server port",
-				Value:       DefaultPort,
-				Destination: &config.port,
+				Value:       rawConfig.Port,
+				Destination: &rawConfig.Port,
 				Aliases:     []string{"p"},
 				Category:    ServerCLICategory,
-				Action: func(_ *cli.Context, v int) error {
-					if v >= MaxPortNumber {
-						return fmt.Errorf("flag port value out of range[0-65535]: %v", v) //nolint:err113
-					}
-
-					return nil
-				},
 			},
 		},
 		Action: func(ctx *cli.Context) error {
 			if ctx.Args().Len() != 0 {
-				config.dir = ctx.Args().Get(ctx.Args().Len() - 1)
+				rawConfig.Dir = ctx.Args().Get(ctx.Args().Len() - 1)
 			}
+			config := internal.NewConfig(rawConfig)
 			start(config)
 
 			return nil
@@ -180,25 +166,17 @@ func main() {
 	internal.PanicError(app.Run(os.Args))
 }
 
-func start(config Config) {
+func start(config internal.Config) {
 	slog.SetDefault(logging.Get())
 
 	ctx := gracefulShutdownCtx()
 
-	slog.Info(
-		"TinyTune",
-		slog.String("dir", config.dir),
-		slog.String("version", Version),
-		slog.Bool("image-processing", config.imageProcessing),
-		slog.Bool("video-processing", config.videoProcessing),
-		slog.Bool("acceleration", config.acceleration),
-		slog.Int64("max-new-images", config.maxNewImageItems),
-		slog.Int64("max-new-videos", config.maxNewVideoItems),
-	)
+	slog.Info("TinyTune", slog.String("version", Version))
+	config.Print()
 
-	indexFilePath := filepath.Join(config.dir, IndexFileName)
+	indexFilePath := filepath.Join(config.Dir, IndexFileName)
 
-	files, err := internal.NewCrawlerOS(config.dir).Scan(indexFilePath)
+	files, err := internal.NewCrawlerOS(config.Dir).Scan(indexFilePath)
 	internal.PanicError(err)
 
 	indexFileRights := 0755
@@ -225,10 +203,15 @@ func start(config Config) {
 
 	slog.Info("Indexing started")
 
+	excludedFromPreview := internal.GetExcludedFiles(files, config.Process.Includes, config.Process.Excludes)
 	previewer, err := preview.NewPreviewer(
-		preview.WithImagePreview(config.imageProcessing),
-		preview.WithVideoPreview(config.videoProcessing),
-		preview.WithAcceleration(config.acceleration),
+		preview.WithImage(config.Process.Image.Process),
+		preview.WithVideo(config.Process.Video.Process),
+		preview.WithAcceleration(config.Process.Acceleration),
+		preview.WithExcludedFiles(excludedFromPreview),
+		preview.WithMaxImages(config.Process.Image.MaxItems),
+		preview.WithMaxVideos(config.Process.Video.MaxItems),
+		preview.WithMaxFileSize(config.Process.MaxFileSize),
 	)
 	internal.PanicError(err)
 
@@ -243,15 +226,13 @@ func start(config Config) {
 		indexFileReader,
 		index.WithFiles(files),
 		index.WithPreview(previewer.Pull),
-		index.WithWorkers(config.parallel),
+		index.WithWorkers(config.Process.Parallel),
 		index.WithProgress(progressBarAdd),
-		index.WithNewFiles(func() { indexNewFiles++ }),
-		index.WithMaxNewImageItems(config.maxNewImageItems),
-		index.WithMaxNewVideoItems(config.maxNewVideoItems))
+		index.WithNewFiles(func() { indexNewFiles++ }))
 	internal.PanicError(err)
 
 	if indexNewFiles != 0 {
-		slog.Info("New files found", slog.Int("files", indexNewFiles))
+		slog.Info("New files found", slog.Int("count", indexNewFiles))
 	}
 
 	previewFilesCount, previewsSize := index.FilesWithPreviewStat()
@@ -276,12 +257,12 @@ func start(config Config) {
 	_ = internal.NewServer(
 		ctx,
 		internal.WithSource(&index),
-		internal.WithPort(config.port),
-		internal.WithPWD(config.dir),
+		internal.WithPort(config.Port),
+		internal.WithPWD(config.Dir),
 		internal.WithDebug(Mode == DebugMode),
 	)
 
-	slog.Info("Server started", slog.Int("port", config.port), slog.String("mode", Mode))
+	slog.Info("Server started", slog.Int("port", config.Port), slog.String("mode", Mode))
 	<-ctx.Done()
 	slog.Info("Successful shutdown")
 }
