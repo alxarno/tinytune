@@ -177,7 +177,7 @@ func (s Server) hlsChunkHandler() httputil.MetaHTTPHandler {
 	}
 }
 
-func (s *Server) registerHandlers(silent bool) http.Handler {
+func (s Server) registerHandlers(silent bool) http.Handler {
 	mux := http.NewServeMux()
 
 	chain := alice.New()

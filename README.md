@@ -28,6 +28,8 @@ It allows you to watch **videos**, **images** and also has a **search** feature.
 
 The latest version of the TinyTune can be found on the GitHub [releases page](https://github.com/alxarno/tinytune/releases).
 
+> This program uses **FFmpeg**, make sure it is available for calling. Instructions for installing it can be found [here](https://www.ffmpeg.org/download.html).
+
 ### Linux
 ```
 # check that you have ffmpeg installed
