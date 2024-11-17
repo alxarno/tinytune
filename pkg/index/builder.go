@@ -24,10 +24,6 @@ type PreviewGenerator interface {
 	Pull(item preview.Source) (preview.Data, error)
 }
 
-// type (
-// 	PreviewGenerator func(item preview.Source) (preview.Data, error)
-// )
-
 type indexBuilderParams struct {
 	preview  PreviewGenerator
 	files    []FileMeta
