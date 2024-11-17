@@ -50,7 +50,7 @@ func TestPreview(t *testing.T) {
 		},
 		{
 			source:   mockSource{video: true, path: "../../test/sample.mp4"},
-			dataHash: "913e1f20eb400f3a13aa043005204ef53e0883c122086b96d94a2b6279ec008e",
+			dataHash: "ab9e213afa42466148583b1ddab5bc00f8218ecac230cc7f8b6797e9e5179ba2",
 		},
 		{
 			source:   mockSource{path: "../../test/sample.txt"},

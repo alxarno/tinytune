@@ -14,6 +14,9 @@ const (
 	vipsMaxCacheMem   = 16 * 1024 * 1024
 	vipsMaxCacheSize  = 16 * 1024 * 1024
 	vipsMaxCacheFiles = 128
+
+	imageDefault = iota
+	imageCollage
 )
 
 var (
@@ -36,7 +39,6 @@ func init() {
 }
 
 func imagePreview(path string) (data, error) {
-	// preview := Data{Resolution: "0x0", ContentType: index.ContentTypeImage}
 	preview := data{resolution: "0x0"}
 
 	image, err := vips.NewImageFromFile(path)
@@ -47,16 +49,23 @@ func imagePreview(path string) (data, error) {
 
 	preview.resolution = fmt.Sprintf("%dx%d", image.Width(), image.Height())
 
-	preview.data, err = downScale(image)
+	preview.data, err = downScale(image, imageDefault)
 
 	return preview, err
 }
 
-func downScale(image *vips.ImageRef) ([]byte, error) {
+func downScale(image *vips.ImageRef, imageType int) ([]byte, error) {
 	scale := 1.0
 
-	if image.Width() > maxWidthHeight || image.Height() > maxWidthHeight {
-		scale = float64(maxWidthHeight) / float64(max(image.Width(), image.Height()))
+	switch imageType {
+	case imageDefault:
+		if image.Width() > maxWidthHeight || image.Height() > maxWidthHeight {
+			scale = float64(maxWidthHeight) / float64(max(image.Width(), image.Height()))
+		}
+	case imageCollage:
+		if image.Width() > maxWidthHeight {
+			scale = float64(maxWidthHeight) / float64(image.Width())
+		}
 	}
 
 	if err := image.Resize(scale, vips.KernelLanczos2); err != nil {

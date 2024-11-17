@@ -17,7 +17,7 @@ import (
 var (
 	ErrSemaphoreAcquire = errors.New("failed to acquire the semaphore")
 	ErrFileLoad         = errors.New("failed to load file")
-	ErrPreviewPull      = errors.New("failed to pull preview")
+	ErrPreviewPull      = errors.New("failed to preview")
 )
 
 type PreviewGenerator interface {
@@ -123,7 +123,7 @@ func (ib *indexBuilder) loadFile(
 
 		preview, err := ib.params.preview.Pull(metaItem)
 		if err != nil {
-			slog.Error(fmt.Errorf("%w: %w", ErrPreviewPull, err).Error())
+			slog.Error(fmt.Errorf("%w (%s): %w", ErrPreviewPull, metaItem.RelativePath, err).Error())
 			dst <- loadedFile{metaItem, nil}
 
 			return

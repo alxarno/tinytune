@@ -1,9 +1,16 @@
 package preview
 
 import (
+	"errors"
+	"fmt"
 	"log/slog"
 	"sync/atomic"
 	"time"
+)
+
+var (
+	ErrVideoPreview = errors.New("failed create preview for video")
+	ErrImagePreview = errors.New("failed create preview for image")
 )
 
 type Source interface {
@@ -44,17 +51,7 @@ func NewPreviewer(opts ...Option) (*Previewer, error) {
 			return nil, err
 		}
 
-		params, err := pullVideoParams()
-		if err != nil {
-			return nil, err
-		}
-
-		preview.videoParams = params
 		preview.videoParams.timeout = preview.timeout
-	}
-
-	if !preview.acceleration {
-		preview.videoParams.device = ""
 	}
 
 	return preview, nil
@@ -89,7 +86,7 @@ func (p Previewer) Pull(src Source) (Data, error) {
 	if toImage {
 		preview, err := imagePreview(src.Path())
 		if err != nil {
-			return defaultPreview, err
+			return defaultPreview, fmt.Errorf("%w: %w", ErrImagePreview, err)
 		}
 
 		return preview, nil
@@ -103,7 +100,7 @@ func (p Previewer) Pull(src Source) (Data, error) {
 
 		preview, err := videoPreview(src.Path(), p.videoParams)
 		if err != nil || preview.Duration() == 0 {
-			return defaultPreview, err
+			return defaultPreview, fmt.Errorf("%w: %w", ErrVideoPreview, err)
 		}
 
 		return preview, nil
