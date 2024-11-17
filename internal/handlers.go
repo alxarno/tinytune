@@ -11,6 +11,7 @@ import (
 
 	"github.com/alxarno/tinytune/pkg/httputil"
 	"github.com/alxarno/tinytune/pkg/index"
+	"github.com/justinas/alice"
 	"golang.org/x/exp/maps"
 )
 
@@ -174,4 +175,36 @@ func (s Server) hlsChunkHandler() httputil.MetaHTTPHandler {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}
+}
+
+func (s *Server) registerHandlers(silent bool) http.Handler {
+	mux := http.NewServeMux()
+
+	chain := alice.New()
+	if !silent {
+		chain = chain.Append(httputil.LoggingHandler)
+	}
+
+	register := func(route string, h httputil.MetaHTTPHandler) {
+		mux.Handle(route, chain.Then(httputil.MetaHandler(h, s.source)))
+	}
+
+	register("GET /", s.indexHandler())
+	register("GET /d/{dirID}/", s.indexHandler())
+
+	register("GET /s", s.searchHandler())
+	register("GET /s/{dirID}/", s.searchHandler())
+
+	register("GET /preview/{fileID}/", s.previewHandler())
+
+	register("GET /origin/{fileID}/", s.originHandler())
+
+	register("GET /rts/{fileID}/", s.hlsIndexHandler())
+
+	register("GET /rts/{fileID}/{chunkID}/", s.hlsChunkHandler())
+
+	staticHandler := http.StripPrefix("/static", http.FileServer(http.FS(s.getAssets())))
+	mux.Handle("GET /static/", chain.Then(staticHandler))
+
+	return mux
 }

@@ -10,11 +10,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/alxarno/tinytune/pkg/httputil"
 	"github.com/alxarno/tinytune/pkg/index"
 	"github.com/alxarno/tinytune/web/assets"
 	"github.com/alxarno/tinytune/web/templates"
-	"github.com/justinas/alice"
 )
 
 type source interface {
@@ -32,9 +30,14 @@ type Server struct {
 	pwd       string
 	port      int
 	debugMode bool
+	dryMode   bool
 }
 
 func (s Server) getTemplates() fs.FS {
+	if s.dryMode {
+		return os.DirFS("../web/templates/")
+	}
+
 	if s.debugMode {
 		return os.DirFS("./web/templates/")
 	}
@@ -43,6 +46,10 @@ func (s Server) getTemplates() fs.FS {
 }
 
 func (s Server) getAssets() fs.FS {
+	if s.dryMode {
+		return os.DirFS("../web/assets/")
+	}
+
 	if s.debugMode {
 		return os.DirFS("./web/assets/")
 	}
@@ -82,6 +89,12 @@ func WithStreaming(files map[string]struct{}) ServerOption {
 	}
 }
 
+func WithDry() ServerOption {
+	return func(s *Server) {
+		s.dryMode = true
+	}
+}
+
 func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 	server := &Server{}
 
@@ -91,37 +104,17 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 
 	server.templates = loadTemplates(server.getTemplates(), server.streaming)
 
-	mux := http.NewServeMux()
 	serverTimeoutSeconds := 30
 	httpServer := &http.Server{
 		BaseContext:       func(net.Listener) context.Context { return ctx },
 		Addr:              fmt.Sprintf(":%d", server.port),
-		Handler:           mux,
+		Handler:           server.registerHandlers(false),
 		ReadHeaderTimeout: time.Second * time.Duration(serverTimeoutSeconds),
 	}
-	chain := alice.New(httputil.LoggingHandler)
-	register := func(route string, h httputil.MetaHTTPHandler) {
-		mux.Handle(route, chain.Then(httputil.MetaHandler(h, server.source)))
+
+	if !server.dryMode {
+		go func() { PanicError(httpServer.ListenAndServe()) }()
 	}
-
-	register("GET /", server.indexHandler())
-	register("GET /d/{dirID}/", server.indexHandler())
-
-	register("GET /s", server.searchHandler())
-	register("GET /s/{dirID}/", server.searchHandler())
-
-	register("GET /preview/{fileID}/", server.previewHandler())
-
-	register("GET /origin/{fileID}/", server.originHandler())
-
-	register("GET /rts/{fileID}", server.hlsIndexHandler())
-
-	register("GET /rts/{fileID}/{chunkID}", server.hlsChunkHandler())
-
-	staticHandler := http.StripPrefix("/static", http.FileServer(http.FS(server.getAssets())))
-	mux.Handle("GET /static/", chain.Then(staticHandler))
-
-	go func() { PanicError(httpServer.ListenAndServe()) }()
 
 	return server
 }

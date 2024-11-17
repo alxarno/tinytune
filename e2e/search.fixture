@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+        <link href="/static/vendor.min.css" rel="stylesheet">
+        <link href="/static/index.min.css" rel="stylesheet">
+        <script src="/static/vendor.bundle.js"></script>
+        <script src="/static/index.min.js"></script>
+        <title>TinyTune</title>
+    </head>
+    <body class="zoom-medium">
+        <nav class="navbar navbar-expand-lg bg-dark border-bottom border-body" data-bs-theme="dark">
+    <div class="container-fluid container-xl wrapper">
+        <a class="navbar-brand" href="/"  hx-boost="true"><svg class="rounded-2" width="30px" height="30px" version="1.1" viewBox="0 0 200 200" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><linearGradient id="a" x1="159.46" x2="50.536" y1="233.87" y2="66.133" gradientUnits="userSpaceOnUse"><stop stop-color="#007c2f" offset="0"/><stop stop-color="#0dd354" offset="1"/></linearGradient></defs><g transform="translate(-5,-50)"><rect x="5" y="50" width="200" height="200" fill="url(#a)" stroke-width="105.06" style="paint-order:stroke fill markers"/><g transform="matrix(6.4362 0 0 6.4362 27.765 72.562)" fill="#1e1f22" fill-rule="evenodd"><path d="m5.4669 4.3921c0.2926 0.29319 0.29213 0.76806-0.00106 1.0607-1.6786 1.6753-2.7158 3.9894-2.7158 6.5473 0 2.5878 1.0616 4.9262 2.775 6.6059 0.29579 0.29 0.30051 0.7648 0.01054 1.0606-0.28996 0.2958-0.76481 0.3005-1.0606 0.0105-1.9893-1.9501-3.225-4.6699-3.225-7.677 0-2.9722 1.2072-5.6638 3.1562-7.609 0.29318-0.2926 0.76806-0.29213 1.0607 0.00105zm13.15 0.07239c0.2958-0.28997 0.7706-0.28525 1.0606 0.01054 1.9001 1.9383 3.073 4.5954 3.073 7.525 0 2.9645-1.2009 5.6499-3.141 7.5938-0.2926 0.2932-0.7675 0.2937-1.0606 0.0011-0.2932-0.2926-0.2937-0.7675-0.0011-1.0607 1.6709-1.6742 2.7027-3.983 2.7027-6.5342 0-2.5213-1.0078-4.8057-2.6441-6.4749-0.29-0.29579-0.2853-0.77064 0.0105-1.0606zm-10.307 3.0231c0.28303 0.30244 0.26729 0.77705-0.03515 1.0601-0.94891 0.88799-1.5241 2.1026-1.5241 3.4346 0 1.3475 0.58869 2.5751 1.5576 3.4657 0.30495 0.2803 0.32492 0.7547 0.0446 1.0597-0.28031 0.3049-0.75477 0.3249-1.0597 0.0446-1.2528-1.1516-2.0424-2.7698-2.0424-4.57 0-1.7792 0.77148-3.3809 1.9992-4.5298 0.30244-0.28303 0.77705-0.26729 1.0601 0.03515zm7.4337 0.03802c0.2863-0.29933 0.761-0.30988 1.0604-0.02357 1.1972 1.1451 1.9467 2.7266 1.9467 4.4802 0 1.7746-0.7675 3.3726-1.9896 4.5208-0.3018 0.2837-0.7765 0.2689-1.0601-0.033s-0.2688-0.7765 0.033-1.0601c0.9445-0.8874 1.5167-2.0991 1.5167-3.4277 0-1.313-0.5589-2.5117-1.4836-3.3962-0.2993-0.28631-0.3098-0.76107-0.0235-1.0604z" clip-rule="evenodd"/><polygon transform="matrix(.61742 0 0 .61742 -218.73 -2216.2)" points="371 3613 378 3609 371 3605" stroke="#1e1f22" stroke-linecap="round" stroke-linejoin="round" stroke-width=".41249" style="mix-blend-mode:normal;paint-order:stroke fill markers"/></g></g></svg></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <ol class="breadcrumb" hx-boost="true">
+                        
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        
+                            <li class="breadcrumb-item active" aria-current="page">Search</li> 
+                        
+                    </ol>
+                </li>
+            </ul>
+            <div class="col-md-2 me-4 search-form-wrapper">
+                <form class="input-group input-group-sm" role="search" onsubmit="event.preventDefault();onSearch();">
+                    <input class="form-control" type="search" placeholder="Search" aria-label="Search" aria-describedby="button-addon2" id="search-input" value="ocean_with_audio.flv">
+                    <button class="btn btn-outline-secondary" type="submit" id="button-addon2" style="border-color: #495057;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
+            <div class="btn-group btn-group-sm additional-actions" role="group" aria-label="Button group with nested dropdown">
+                <button type="button" class="btn tiny-control" onclick="zoom.dispatch('in')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                    </svg>
+                </button>
+                <button type="button" class="btn tiny-control" onclick="zoom.dispatch('out')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-lg" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8"/>
+                    </svg>
+                </button>
+                <button type="button" class="btn tiny-control" data-bs-toggle="dropdown" aria-expanded="false" id="dropdownMenuButton1">
+                    <svg class="me-1 sort-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-down-up" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5m-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5"/>
+                    </svg>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-select p-2" aria-labelledby="dropdownMenuButton1">
+                    
+                        <li>
+                            <input class="form-check-input" type="radio" name="sort" id="radioSort-0" value="A-Z" onchange="onSort(this);" >
+                            <label class="form-check-label" for="radioSort-0">
+                                A-Z
+                            </label>
+                        </li>
+                    
+                        <li>
+                            <input class="form-check-input" type="radio" name="sort" id="radioSort-1" value="First Modified" onchange="onSort(this);" >
+                            <label class="form-check-label" for="radioSort-1">
+                                First Modified
+                            </label>
+                        </li>
+                    
+                        <li>
+                            <input class="form-check-input" type="radio" name="sort" id="radioSort-2" value="Last Modified" onchange="onSort(this);" >
+                            <label class="form-check-label" for="radioSort-2">
+                                Last Modified
+                            </label>
+                        </li>
+                    
+                        <li>
+                            <input class="form-check-input" type="radio" name="sort" id="radioSort-3" value="Size" onchange="onSort(this);" >
+                            <label class="form-check-label" for="radioSort-3">
+                                Size
+                            </label>
+                        </li>
+                    
+                        <li>
+                            <input class="form-check-input" type="radio" name="sort" id="radioSort-4" value="Type" onchange="onSort(this);" checked="checked">
+                            <label class="form-check-label" for="radioSort-4">
+                                Type
+                            </label>
+                        </li>
+                    
+                        <li>
+                            <input class="form-check-input" type="radio" name="sort" id="radioSort-5" value="Z-A" onchange="onSort(this);" >
+                            <label class="form-check-label" for="radioSort-5">
+                                Z-A
+                            </label>
+                        </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</nav>
+        <div class="container-xxl wrapper" id="content">
+             <h4 id="found" class="mt-5">Found <span class="text-primary">1</span> elements</h4> 
+            <ul class="dir-list row row-cols-auto" hx-boost="true">
+           <li class="col"><a href="/origin/005f6b0265" class="image-lightbox" x-boost="false" data-extension="video/flv" data-width="960" data-height="400"><figure class="figure dir-list-item">
+            
+            <div class="wrap" style="--origin-width: 960;--origin-height: 400;">
+                <div class="spacer"></div>
+                <img
+                    id="video-005f6b0265"
+                    loading="lazy"
+                    alt="sample_960x400_ocean_with_audio.flv"
+                    src="/preview/005f6b0265" 
+                    class="figure-img img-fluid rounded preview" 
+                    hx-preserve
+                >
+                <span class="duration rounded" id="duration-005f6b0265">00:46</span>
+            </div>
+            
+            <figcaption class="figure-caption">sample_960x400_ocean_with_audio.flv</figcaption>
+        </figure></a></li>
+        </ul>
+        </div>
+    </body>
+</html>
