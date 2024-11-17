@@ -13,7 +13,7 @@ LDFLAGS=-ldflags "-X 'main.Version=${VERSION}' -X 'main.CommitHash=${COMMIT_HASH
 .PHONY: build
 build: ## build executables
 	echo "Building frontend assets"
-	make ./web build
+	make -C ./web build
 	mkdir -p out/
 	echo "Building executable"
 	GOARCH=amd64 GOOS=linux go build ${LDFLAGS} -o out/${BINARY_NAME}_linux_amd64 cmd/tinytune/tinytune.go
