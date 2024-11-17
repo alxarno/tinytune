@@ -109,9 +109,6 @@ func getIndex(ctx context.Context) *index.Index {
 	)
 	PanicError(err)
 
-	files, err := NewCrawlerOS("../test").Scan("../test/index.tinytune")
-	PanicError(err)
-
 	indexFile, err := os.OpenFile("../test/test.index.tinytune", os.O_RDWR, 0755)
 	PanicError(err)
 	defer indexFile.Close()
@@ -119,7 +116,6 @@ func getIndex(ctx context.Context) *index.Index {
 	index, err := index.NewIndex(
 		ctx,
 		indexFile,
-		index.WithFiles(files),
 		index.WithPreview(previewer),
 		index.WithWorkers(runtime.NumCPU()),
 	)
