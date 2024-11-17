@@ -73,7 +73,7 @@ func ifMaxPass(maxNewItems *int64) bool {
 
 //nolint:cyclop,ireturn,nolintlint //it's very simple method...
 func (p Previewer) Pull(src Source) (Data, error) {
-	defaultPreview := data{resolution: "0x0"}
+	defaultPreview := data{}
 
 	biggestThenMaxFileSize := p.maxFileSize != -1 && src.Size() > p.maxFileSize
 	toImage := src.IsImage() && p.image && ifMaxPass(&p.maxImages)
@@ -108,7 +108,8 @@ func (p Previewer) Pull(src Source) (Data, error) {
 
 	if src.IsVideo() {
 		// default resolution for video player
-		defaultPreview.resolution = "1280x720"
+		defaultPreview.width = 1280
+		defaultPreview.height = 720
 	}
 
 	return defaultPreview, nil

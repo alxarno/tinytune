@@ -1,5 +1,5 @@
 {{define "image-item"}}<a href="/origin/{{ .ID }}" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery" type="image"><figure class="figure dir-list-item">
-            {{ if eq .Resolution "0x0" }}
+            {{ if eq .Resolution.Width 0 }}
             {{ template "icon-image" .}}
             {{ else }}
             <div class="wrap">

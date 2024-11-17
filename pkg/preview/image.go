@@ -39,7 +39,7 @@ func init() {
 }
 
 func imagePreview(path string) (data, error) {
-	preview := data{resolution: "0x0"}
+	preview := data{}
 
 	image, err := vips.NewImageFromFile(path)
 	if err != nil {
@@ -47,7 +47,7 @@ func imagePreview(path string) (data, error) {
 	}
 	defer image.Close()
 
-	preview.resolution = fmt.Sprintf("%dx%d", image.Width(), image.Height())
+	preview.width, preview.height = image.Width(), image.Height()
 
 	preview.data, err = downScale(image, imageDefault)
 

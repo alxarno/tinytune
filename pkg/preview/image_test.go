@@ -16,7 +16,10 @@ func TestPreviewImage(t *testing.T) {
 	preview, err := imagePreview("../../test/image.jpg")
 	require.NoError(t, err)
 	assert.Len(preview.Data(), 8620)
-	assert.Equal("1527x898", preview.Resolution())
+	width, height := preview.Resolution()
+	assert.Equal(1527, width)
+	assert.Equal(898, height)
+
 	hash := sha256.Sum256(preview.Data())
 	assert.Equal("64de9c944a91c93e750d097577c8fc5992100a7bb186d376534e78705aefbbbd", hex.EncodeToString(hash[:]))
 }

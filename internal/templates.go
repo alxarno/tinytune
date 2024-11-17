@@ -12,9 +12,7 @@ import (
 func loadTemplates(src fs.FS, streaming map[string]struct{}) map[string]*template.Template {
 	templates := make(map[string]*template.Template)
 	funcs := template.FuncMap{
-		"ext":    extension,
-		"width":  width,
-		"height": height,
+		"ext": extension,
 		"eqMinusOne": func(x int, y int) bool {
 			return x == y-1
 		},
@@ -29,18 +27,10 @@ func loadTemplates(src fs.FS, streaming map[string]struct{}) map[string]*templat
 func extension(name string) string {
 	extension := path.Ext(name)
 	if extension != "" {
-		return extension[1:]
+		return strings.ToLower(extension[1:])
 	}
 
 	return ""
-}
-
-func width(res string) string {
-	return strings.Split(res, "x")[0]
-}
-
-func height(res string) string {
-	return strings.Split(res, "x")[1]
 }
 
 func getStreaming(files map[string]struct{}) func(path string) bool {

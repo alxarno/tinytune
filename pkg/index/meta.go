@@ -32,13 +32,18 @@ type Meta struct {
 	IsDir        bool            `json:"isDir"`
 	Preview      PreviewLocation `json:"preview"`
 	Duration     time.Duration   `json:"duration"`
-	Resolution   string          `json:"resolution"`
+	Resolution   Resolution      `json:"resolution"`
 	Type         int             `json:"type"`
 }
 
 type PreviewLocation struct {
 	Length uint32 `json:"length"`
 	Offset uint32 `json:"offset"`
+}
+
+type Resolution struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 func (m *Meta) Size() int64 {

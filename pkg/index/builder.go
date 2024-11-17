@@ -130,7 +130,9 @@ func (ib *indexBuilder) loadFile(
 		}
 
 		metaItem.Duration = preview.Duration()
-		metaItem.Resolution = preview.Resolution()
+		width, height := preview.Resolution()
+		metaItem.Resolution.Width = width
+		metaItem.Resolution.Height = height
 		metaItem.Preview = PreviewLocation{
 			Length: uint32(len(preview.Data())),
 		}

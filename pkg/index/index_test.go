@@ -113,8 +113,8 @@ func (m mockPreviewData) Data() []byte {
 	return m.data
 }
 
-func (m mockPreviewData) Resolution() string {
-	return "0x0"
+func (m mockPreviewData) Resolution() (int, int) {
+	return 0, 0
 }
 
 func (m mockPreviewData) Duration() time.Duration {

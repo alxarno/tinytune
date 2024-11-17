@@ -183,43 +183,41 @@ func getVideoStream(streams []probeStream) *probeStream {
 	return nil
 }
 
-func probeOutputFrames(a string) (string, time.Duration, error) {
+func probeOutputFrames(a string) (int, int, time.Duration, error) {
 	data := probeData{}
-	resolution := "0x0"
 
 	if err := json.Unmarshal([]byte(a), &data); err != nil {
-		return resolution, 0, fmt.Errorf("%w: %w", ErrMetaInfoUnmarshal, err)
+		return 0, 0, 0, fmt.Errorf("%w: %w", ErrMetaInfoUnmarshal, err)
 	}
 
 	seconds, err := strconv.ParseFloat(data.Format.Duration, 64)
 	if err != nil {
-		return resolution, 0, fmt.Errorf("%w: %w", ErrMetaInfoDurationParse, err)
+		return 0, 0, 0, fmt.Errorf("%w: %w", ErrMetaInfoDurationParse, err)
 	}
 
 	videoStream := getVideoStream(data.Streams)
 	if videoStream == nil {
-		return resolution, 0, ErrVideoStreamNotFound
+		return 0, 0, 0, ErrVideoStreamNotFound
 	}
 
-	resolution = fmt.Sprintf("%dx%d", videoStream.Width, videoStream.Height)
-
-	return resolution, time.Duration(seconds) * time.Second, nil
+	return videoStream.Width, videoStream.Height, time.Duration(seconds) * time.Second, nil
 }
 
 func videoPreview(path string, params VideoParams) (data, error) {
-	preview := data{resolution: "0x0"}
+	preview := data{}
 
 	metaJSON, err := videoProbe(path, params.timeout)
 	if err != nil {
 		return preview, err
 	}
 
-	resolution, duration, err := probeOutputFrames(metaJSON)
+	width, height, duration, err := probeOutputFrames(metaJSON)
 	if err != nil {
 		return preview, err
 	}
 
-	preview.resolution = resolution
+	preview.width = width
+	preview.height = height
 	preview.duration = duration
 
 	if preview.data, err = produceVideoPreview(path, duration, params); err != nil {

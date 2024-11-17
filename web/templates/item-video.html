@@ -1,8 +1,8 @@
-{{define "video-item"}}<a href="{{ if streaming .Path }}#/rts/{{.ID}}{{ else }}/origin/{{ .ID }}{{end}}" type="video" class="image-lightbox" hx-boost="false" data-extension="{{ if streaming .Path }}application/x-mpegURL{{else}}video/{{ ext .Name }}{{end}}" data-width="{{ width  .Resolution}}" data-height="{{ height .Resolution}}"><figure class="figure dir-list-item">
+{{define "video-item"}}<a href="{{ if streaming .Path }}#/rts/{{.ID}}{{ else }}/origin/{{ .ID }}{{end}}" type="video" class="image-lightbox" hx-boost="false" data-extension="{{ if streaming .Path }}application/x-mpegURL{{else}}video/{{ ext .Name }}{{end}}" data-width="{{ .Resolution.Width }}" data-height="{{ .Resolution.Height }}"><figure class="figure dir-list-item">
             {{ if eq .Preview.Length 0 }}
             {{ template "icon-video" .}}
             {{ else }}
-            <div class="wrap" style="--origin-width: {{ width .Resolution }};--origin-height: {{ height .Resolution }};">
+            <div class="wrap" style="--origin-width: {{ .Resolution.Width }};--origin-height: {{ .Resolution.Height }};">
                 <div class="spacer"></div>
                 <img
                     id="video-{{ .ID }}"
