@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.1.0](https://github.com/alxarno/tinytune/compare/v1.0.0...v1.1.0) (2024-11-17)
+
+
+### Features
+
+* add max-file-size filter and little refactor ([c48023d](https://github.com/alxarno/tinytune/commit/c48023d280b21d3c0b28d84d9386d7a2c23c7d6c))
+* better description for cli params ([21b7be7](https://github.com/alxarno/tinytune/commit/21b7be72959414280465ffe63ff27ce270cd601d))
+* e2e tests ([f13aa8d](https://github.com/alxarno/tinytune/commit/f13aa8d2523b7ae7f7aba5b6d0e2cbcc466de579))
+* file media processing timeout from cli parametr ([cf89436](https://github.com/alxarno/tinytune/commit/cf894367b28f10c4267c630611afd944ba6c4942))
+* flv preview support ([0625bd4](https://github.com/alxarno/tinytune/commit/0625bd40d6ff27073eb08cdc3195b795dedeeeda))
+* hls streaming ([a43051e](https://github.com/alxarno/tinytune/commit/a43051eeece4b4e1ef7095e0b9bfd135d59849f7))
+* incldue/exclude files for media processing by RegExp ([34d8e52](https://github.com/alxarno/tinytune/commit/34d8e52d22c9d32a269f1d2a140a0e489b50b2e0))
+* query for streaming files selection ([2ec9a31](https://github.com/alxarno/tinytune/commit/2ec9a3132b3a01d96a324ea843be83c4bf21539a))
+* warning about long media processing ([8dc1994](https://github.com/alxarno/tinytune/commit/8dc19947e8bd436445745b37d03afe055572f0b9))
+
+
+### Bug Fixes
+
+* add ffmpeg check for linux install ([8ee3546](https://github.com/alxarno/tinytune/commit/8ee3546aa037380a6f2737b7aa3809d8adfabe70))
+* e2e ([926c94f](https://github.com/alxarno/tinytune/commit/926c94f4b8170ddcd8343c5c322822b52315abfa))
+* e2e permanent index file ([a33aebe](https://github.com/alxarno/tinytune/commit/a33aebe86684d5c4efc218d224152f14c2949b0d))
+* install extra ([ee198b3](https://github.com/alxarno/tinytune/commit/ee198b3b226ae36de878ab40e09d9714ad4ed02c))
+* invalid duration print ([4d83a82](https://github.com/alxarno/tinytune/commit/4d83a8249c1f5d6add811b8b40852f326019894e))
+* lint issue ([4274f5e](https://github.com/alxarno/tinytune/commit/4274f5e90842180a48efbbcf86e9fb9ce997999f))
+* lint issue ([1f59ef4](https://github.com/alxarno/tinytune/commit/1f59ef4ebad769472363d3b4a91f4b3d683a40de))
+* makefile build ([da93cd0](https://github.com/alxarno/tinytune/commit/da93cd0dbe68aa18dfc58c5c24e9ed0c28ffaf93))
+* removed asserts from hls chunk test (diff result in action and my pc... idk why) ([017b0bd](https://github.com/alxarno/tinytune/commit/017b0bd6815a7eae78240e17b4c2cfbcdf430e03))
+* removed hash from hls test (diff hash in action and my pc... idk why) ([05a6602](https://github.com/alxarno/tinytune/commit/05a6602b719ad2c82e41fa75ff82cd15cd2b245c))
+* server original route invalid relative path ([060a957](https://github.com/alxarno/tinytune/commit/060a95732f4b21351a98ebb4c31120d3aa100cef))
+* updated files duplicate in index ([33fa625](https://github.com/alxarno/tinytune/commit/33fa6258e9b25e4f6a0360f9cf0eb90a80480529))
+* web: vendor-build ([db4c38a](https://github.com/alxarno/tinytune/commit/db4c38a373e15670200a47d10a5a431b50ec72af))
+
 ## 1.0.0 (2024-11-13)
 
 
