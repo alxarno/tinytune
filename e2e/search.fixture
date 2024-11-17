@@ -109,7 +109,7 @@
         <div class="container-xxl wrapper" id="content">
              <h4 id="found" class="mt-5">Found <span class="text-primary">1</span> elements</h4> 
             <ul class="dir-list row row-cols-auto" hx-boost="true">
-           <li class="col"><a href="/origin/005f6b0265" class="image-lightbox" x-boost="false" data-extension="video/flv" data-width="960" data-height="400"><figure class="figure dir-list-item">
+           <li class="col"><a href="/origin/005f6b0265" type="video" class="image-lightbox" hx-boost="false" data-extension="video/flv" data-width="960" data-height="400"><figure class="figure dir-list-item">
             
             <div class="wrap" style="--origin-width: 960;--origin-height: 400;">
                 <div class="spacer"></div>

@@ -168,7 +168,7 @@
 </svg>
             <figcaption class="figure-caption">2.ts</figcaption>
         </figure></li>
-           <li class="col"><a href="/origin/024eb2ebdb" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery"><figure class="figure dir-list-item">
+           <li class="col"><a href="/origin/024eb2ebdb" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery" type="image"><figure class="figure dir-list-item">
             
             <div class="wrap">
                 <div class="spacer"></div>
@@ -177,7 +177,7 @@
             
             <figcaption class="figure-caption">image.jpg</figcaption>
         </figure></a></li>
-           <li class="col"><a href="/origin/ff8609b730" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery"><figure class="figure dir-list-item">
+           <li class="col"><a href="/origin/ff8609b730" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery" type="image"><figure class="figure dir-list-item">
             
             <div class="wrap">
                 <div class="spacer"></div>
@@ -186,7 +186,7 @@
             
             <figcaption class="figure-caption">Anh_nude_cover.webp</figcaption>
         </figure></a></li>
-           <li class="col"><a href="/origin/39508f59cd" class="image-lightbox" x-boost="false" data-extension="video/mp4" data-width="1280" data-height="720"><figure class="figure dir-list-item">
+           <li class="col"><a href="/origin/39508f59cd" type="video" class="image-lightbox" hx-boost="false" data-extension="video/mp4" data-width="1280" data-height="720"><figure class="figure dir-list-item">
             
             <div class="wrap" style="--origin-width: 1280;--origin-height: 720;">
                 <div class="spacer"></div>

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -78,12 +79,16 @@ func (m *Meta) setContentType() {
 	videoFormats := []string{"3gp", "avi", "f4v", "flv", "gif", "hevc", "m4v", "mlv", "mov", "mp4", "m4a", "3g2", "mj2", "mpeg", "ogv", "webm"}
 	imageFormats := []string{"jpeg", "png", "jpg", "webp", "bmp"}
 
-	ext := filepath.Ext(string(m.AbsolutePath))
+	ext := strings.ToLower(filepath.Ext(string(m.AbsolutePath)))[1:]
 
 	switch {
-	case slices.Contains(imageFormats, ext[1:]):
+	case slices.Contains(imageFormats, ext):
 		m.Type = ContentTypeImage
-	case slices.Contains(videoFormats, ext[1:]):
+
+		return
+	case slices.Contains(videoFormats, ext):
 		m.Type = ContentTypeVideo
+
+		return
 	}
 }

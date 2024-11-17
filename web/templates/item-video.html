@@ -1,4 +1,4 @@
-{{define "video-item"}}<a href="{{ if streaming .Path }}#/rts/{{.ID}}{{ else }}/origin/{{ .ID }}{{end}}" class="image-lightbox" x-boost="false" data-extension="{{ if streaming .Path }}application/x-mpegURL{{else}}video/{{ ext .Name }}{{end}}" data-width="{{ width  .Resolution}}" data-height="{{ height .Resolution}}"><figure class="figure dir-list-item">
+{{define "video-item"}}<a href="{{ if streaming .Path }}#/rts/{{.ID}}{{ else }}/origin/{{ .ID }}{{end}}" type="video" class="image-lightbox" hx-boost="false" data-extension="{{ if streaming .Path }}application/x-mpegURL{{else}}video/{{ ext .Name }}{{end}}" data-width="{{ width  .Resolution}}" data-height="{{ height .Resolution}}"><figure class="figure dir-list-item">
             {{ if eq .Preview.Length 0 }}
             {{ template "icon-video" .}}
             {{ else }}
