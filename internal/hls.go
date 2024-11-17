@@ -41,11 +41,11 @@ func pullHLSIndex(meta *index.Meta, w io.Writer) error {
 
 	for c := range fullSamples {
 		data.WriteString("#EXTINF:10.0,\n")
-		data.WriteString(fmt.Sprintf("%v/%d.ts\n", meta.ID, c))
+		data.WriteString(fmt.Sprintf("%d.ts\n", c))
 	}
 
 	data.WriteString(fmt.Sprintf("#EXTINF:%d.0,\n", lastSampleDuration))
-	data.WriteString(fmt.Sprintf("%v/%d.ts\n", meta.ID, fullSamples))
+	data.WriteString(fmt.Sprintf("%d.ts\n", fullSamples))
 	data.WriteString("#EXT-X-ENDLIST")
 
 	_, err := io.Copy(w, &data)
