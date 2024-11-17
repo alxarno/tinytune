@@ -11,9 +11,9 @@ BUILD_TIMESTAMP=$(shell date '+%Y-%m-%dT%H:%M:%S')
 LDFLAGS=-ldflags "-X 'main.Version=${VERSION}' -X 'main.CommitHash=${COMMIT_HASH}' -X 'main.BuildTimestamp=${BUILD_TIMESTAMP}' -X 'main.Mode=Production'"
 
 .PHONY: build
-build: ## build
+build: ## build executables
 	echo "Building frontend assets"
-	make web
+	make ./web build
 	mkdir -p out/
 	echo "Building executable"
 	GOARCH=amd64 GOOS=linux go build ${LDFLAGS} -o out/${BINARY_NAME}_linux_amd64 cmd/tinytune/tinytune.go
@@ -21,21 +21,12 @@ build: ## build
 	echo "Done"
 
 .PHONY: run
-run: ## run go run cmd/tinytune/tinytune.go --index-save=false ./test/
-	go run cmd/tinytune/tinytune.go --help
-
+run: ## run tinytune server
+	go run cmd/tinytune/tinytune.go ./test/
 
 .PHONY: watch
-watch: ## watch
-	reflex -r '\.(html|go)$\' -s make run & make webwatch
-
-.PHONY: web
-web: ## web
-	npm run build-all --prefix web/
-
-.PHONY: webwatch
-webwatch: ## webwatch
-	npm run watch --prefix web/
+watch: ## run tinytune server and frontend in hot-reload way
+	reflex -r '\.(html|go)$\' -s make run & make -C ./web watch
 
 .PHONY: clean
 clean: ## clean
@@ -44,7 +35,7 @@ clean: ## clean
 	rm -f coverage*.out
 
 .PHONY: test
-test: ## test -coverprofile=coverage.out
+test: ## run server tests
 	go test -v -timeout 1m ./... 
 
 .PHONY: ubuntu
@@ -58,7 +49,7 @@ coverage: ## coverage
 	go tool cover -html=coverage.out
 
 .PHONY: lint
-lint: ## lint
+lint: ## run server linting
 	golangci-lint run --fix
 
 .PHONY: quality
@@ -67,7 +58,7 @@ quality: ## check-quality
 	make lint
 
 .PHONY: fmt
-fmt: ## fmt
+fmt: ## run server prettyfier
 	go fmt ./...
 
 $(VERBOSE).SILENT:

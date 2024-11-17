@@ -84,6 +84,7 @@ type loadedFile struct {
 	data []byte
 }
 
+//nolint:cyclop
 func (ib *indexBuilder) loadFile(
 	ctx context.Context,
 	wg *sync.WaitGroup,
@@ -94,7 +95,8 @@ func (ib *indexBuilder) loadFile(
 	metaItem := metaByFile(file)
 
 	// if item already in map, but without preview -> create preview
-	if saved, ok := ib.index.meta[metaItem.ID]; ok && saved.Preview.Length != 0 {
+	shouldSkipPreview := metaItem.IsDir || metaItem.IsOtherFile()
+	if saved, ok := ib.index.meta[metaItem.ID]; ok && (saved.Preview.Length != 0 || shouldSkipPreview) {
 		return nil
 	}
 
@@ -118,7 +120,6 @@ func (ib *indexBuilder) loadFile(
 	}
 
 	wg.Add(1)
-	ib.params.progress()
 
 	go func() {
 		defer sem.Release(1)
@@ -153,6 +154,8 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 	slices.SortStableFunc(ib.params.files, compareFileMetaSize)
 
 	for _, file := range ib.params.files {
+		ib.params.progress()
+
 		err := ib.loadFile(ctx, wg, sem, file, results)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrFileLoad, err)
