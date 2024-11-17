@@ -12,5 +12,5 @@ func TestCrawlerOS(t *testing.T) {
 
 	files, err := NewCrawlerOS("../test").Scan("../test/index.tinytune")
 	require.NoError(err)
-	require.Len(files, 15)
+	require.Len(files, 16)
 }

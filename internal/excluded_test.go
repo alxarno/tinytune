@@ -33,7 +33,7 @@ func TestIncludesFilter(t *testing.T) {
 
 	pattern := "\\.(mp4)$"
 	passFiles := filter(paths, filterHandler(mustCompile(t, pattern)))
-	require.Len(passFiles, 2)
+	require.Len(passFiles, 3)
 	_, ok := passFiles["../test/sample.mp4"]
 	require.True(ok)
 
@@ -52,7 +52,7 @@ func TestGetExcludedFiles(t *testing.T) {
 	excludePatterns := mustCompile(t, "\\.(mp4)$")
 
 	excludedFiles := GetExcludedFiles(files, includePatterns, excludePatterns)
-	require.Len(excludedFiles, 1)
+	require.Len(excludedFiles, 2)
 	_, ok := excludedFiles["../test/sample.mp4"]
 	require.True(ok)
 }

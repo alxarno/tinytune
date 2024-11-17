@@ -35,6 +35,7 @@ var (
 	ErrImageDecode  = errors.New("failed to decode image")
 	ErrImageEncode  = errors.New("failed to encode image")
 	ErrImageScale   = errors.New("failed to scale image")
+	ErrBufferCopy   = errors.New("failed to copy buffer")
 )
 
 type probeFormat struct {
@@ -81,7 +82,6 @@ func getVideoSnapshoter(wg *sync.WaitGroup, errCh chan error, params VideoParams
 		options := seekOptions
 		options = append(options, inputOptions...)
 		options = append(options, outputOptions...)
-
 		cmd := exec.CommandContext(ctx, "ffmpeg", options...)
 		stdErrBuf := bytes.NewBuffer(nil)
 		cmd.Stdout = w
@@ -113,7 +113,7 @@ func combineImagesToPreview(buffers []*bytes.Buffer) ([]byte, error) {
 	for i, v := range buffers[1:] {
 		img, _, err := image.Decode(v)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrImageDecode, err)
+			return nil, fmt.Errorf("%w [%d]: %w", ErrImageDecode, i, err)
 		}
 
 		s := image.Point{0, (i + 1) * height}
@@ -141,26 +141,46 @@ func combineImagesToPreview(buffers []*bytes.Buffer) ([]byte, error) {
 	return downScale(image, imageCollage)
 }
 
-func produceVideoPreview(path string, duration time.Duration, params VideoParams) ([]byte, error) {
-	minimumStart := 3
-	images := []*bytes.Buffer{}
+func getTimeCodes(duration time.Duration) ([]time.Duration, []bool) {
 	parts := 5
+	minimumStart := 2
+	timestamps := []time.Duration{}
+	repeat := make([]bool, parts)
 	step := duration / time.Duration(parts)
-	waitGroup := new(sync.WaitGroup)
-	errs := make(chan error, parts)
 
-	for v := range parts {
-		waitGroup.Add(1)
+	if step < time.Second {
+		step = time.Second
+	}
 
-		timestamp := step * time.Duration(v)
-		if timestamp == 0 {
+	for part := range parts {
+		timestamp := step * time.Duration(part)
+		if timestamp == 0 && duration > time.Second*7 {
 			timestamp = time.Second * time.Duration(minimumStart)
 		}
 
-		buff := new(bytes.Buffer)
-		images = append(images, buff)
+		// if video is small (< parts*time.Second), then just copy last images to remaining buffers
+		if timestamp > duration && part > 1 || timestamp == duration {
+			repeat[part] = true
+		}
 
-		go getVideoSnapshoter(waitGroup, errs, params)(path, timestamp, buff)
+		timestamps = append(timestamps, timestamp)
+	}
+
+	return timestamps, repeat
+}
+
+func produceVideoPreview(path string, duration time.Duration, params VideoParams) ([]byte, error) {
+	timeCodes, repeats := getTimeCodes(duration)
+	images := make([]*bytes.Buffer, len(repeats))
+	waitGroup := new(sync.WaitGroup)
+	errs := make(chan error, len(timeCodes))
+
+	for index, timestamp := range timeCodes {
+		images[index] = new(bytes.Buffer)
+
+		waitGroup.Add(1)
+
+		go getVideoSnapshoter(waitGroup, errs, params)(path, timestamp, images[index])
 	}
 
 	waitGroup.Wait()
@@ -168,6 +188,19 @@ func produceVideoPreview(path string, duration time.Duration, params VideoParams
 
 	for err := range errs {
 		return nil, fmt.Errorf("%w: %w", ErrPullSnapshot, err)
+	}
+
+	for index, repeat := range repeats {
+		if !repeat {
+			continue
+		}
+		// just copy data from previous buffer
+		images[index] = new(bytes.Buffer)
+
+		_, err := images[index].Write(images[index-1].Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", ErrBufferCopy, err)
+		}
 	}
 
 	return combineImagesToPreview(images)
