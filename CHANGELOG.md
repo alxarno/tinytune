@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/alxarno/tinytune/compare/v1.2.0...v1.2.1) (2024-11-18)
+
+
+### Bug Fixes
+
+* browser back button press processing ([756792b](https://github.com/alxarno/tinytune/commit/756792b8824d55bb29cd45c25ce653256503b1dd))
+
 ## [1.2.0](https://github.com/alxarno/tinytune/compare/v1.1.0...v1.2.0) (2024-11-18)
 
 
