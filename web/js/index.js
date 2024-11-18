@@ -44,7 +44,14 @@ const initLightBox = () => {
     }
 }
 
+const onPopState = () => {
+    initLightBox();
+    gifInit();
+    buttonUpInit();
+}
+
 window.onload = () => {
+    window.addEventListener('popstate', onPopState)
     document.addEventListener('htmx:afterSettle', () => {
         initLightBox();
         gifInit();
