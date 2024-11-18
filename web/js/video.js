@@ -8,7 +8,7 @@ export const videoInit = (element) => {
     let src = element.getAttribute("src");
     if(initializedVideos.includes(src)) return;
     initializedVideos.push(src);
-    const origin = document.querySelector(`a[href="${src}"]`)
+    const origin = document.querySelector(`a[href="${src.includes("rts") ? src.replace("rts", "origin") : src}"]`)
     const wrapper = document.createElement("div")
     element.parentElement.appendChild(wrapper)
 

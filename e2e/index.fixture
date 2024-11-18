@@ -196,7 +196,7 @@
             
             <figcaption class="figure-caption">Anh_nude_cover.webp</figcaption>
         </figure></a></li>
-           <li class="col"><a href="/origin/39508f59cd" type="video" class="image-lightbox" hx-boost="false" data-extension="video/mp4" data-width="1280" data-height="720"><figure class="figure dir-list-item">
+           <li class="col"><a href="/origin/39508f59cd" type="video" data-stream=""class="image-lightbox" hx-boost="false" data-extension="video/mp4" data-width="1280" data-height="720"><figure class="figure dir-list-item">
             
             <div class="wrap" style="--origin-width: 1280;--origin-height: 720;">
                 <div class="spacer"></div>

@@ -29,8 +29,8 @@ const initLightBox = () => {
     fsLightbox = new FsLightbox();
     const previews = Array.from(document.getElementsByClassName("image-lightbox"))
     previews.forEach((v, i) => v.setAttribute("index", i))
-    previews.forEach((v, i) => v.onclick = (e) => {e.preventDefault(); originOpen(i)});
-    fsLightbox.props.sources = previews.map(v => v.getAttribute("href"))
+    previews.forEach((v, i) => v.onclick = (e) => { e.preventDefault();originOpen(i)});
+    fsLightbox.props.sources = previews.map(v => !v.getAttribute("data-stream") ? v.getAttribute("href") : v.getAttribute("href").replace("origin", "rts"))
     fsLightbox.props.types = previews.map(v => v.getAttribute("type"));
     fsLightbox.props.loadOnlyCurrentSource = true;
     fsLightbox.props.onOpen = () => {
