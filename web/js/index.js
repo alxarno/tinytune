@@ -4,6 +4,7 @@ import { videoInit, videoClear  } from "./video";
 import { zoom } from "./zoom"
 import { observeDOM } from "./dom";
 import { onSearch, highlightSearchResults } from "./search"
+import { onButtonUpClick, buttonUpInit } from "./button-up"
 import Cookies from "js-cookie"
 import htmx from "htmx.org"
 
@@ -15,6 +16,7 @@ window.onSort = onSort
 window.htmx = require('htmx.org');
 window.zoom = zoom
 window.onSearch = onSearch
+window.onButtonUpClick = onButtonUpClick
 
 
 let fsLightbox = new FsLightbox();
@@ -47,6 +49,7 @@ window.onload = () => {
     })
     initLightBox();
     highlightSearchResults();
+    buttonUpInit();
     observeDOM()(document.body, (m) => {
         let addedNodes = []
         m.forEach(record => record.addedNodes.length & addedNodes.push(...record.addedNodes));

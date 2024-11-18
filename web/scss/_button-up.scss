@@ -1,0 +1,21 @@
+@use 'variables';
+
+#button-up {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    z-index: 99;
+    font-size: 18px;
+    border: none;
+    outline: none;
+    background-color: variables.$dark-color;
+    cursor: pointer;
+    padding: 20px;
+    opacity: 0.9;
+    border-radius: 4px;
+
+    > svg{
+        fill: variables.$accent-color;
+    }
+}

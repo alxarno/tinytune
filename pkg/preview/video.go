@@ -161,6 +161,8 @@ func getTimeCodes(duration time.Duration) ([]time.Duration, []bool) {
 		// if video is small (< parts*time.Second), then just copy last images to remaining buffers
 		if timestamp > duration && part > 1 || timestamp == duration {
 			repeat[part] = true
+
+			continue
 		}
 
 		timestamps = append(timestamps, timestamp)
@@ -194,9 +196,10 @@ func produceVideoPreview(path string, duration time.Duration, params VideoParams
 		if !repeat {
 			continue
 		}
-		// just copy data from previous buffer
+
 		images[index] = new(bytes.Buffer)
 
+		// just copy data from previous buffer
 		_, err := images[index].Write(images[index-1].Bytes())
 		if err != nil {
 			return nil, fmt.Errorf("%w: %w", ErrBufferCopy, err)

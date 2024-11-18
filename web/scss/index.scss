@@ -4,6 +4,7 @@
 @use 'video';
 @use 'preview';
 @use 'navbar';
+@use 'button-up';
 
 body {
     background-color: variables.$background-color;

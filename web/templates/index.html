@@ -7,5 +7,6 @@
             {{ if .Search }} <h4 id="found" class="mt-5">Found <span class="text-primary">{{ len .Items }}</span> elements</h4> {{ end }}
             {{template "dir" .Items }}
         </div>
+        {{ template "button-up" }}
     </body>
 </html>{{end}}
