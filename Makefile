@@ -36,7 +36,7 @@ clean: ## clean
 
 .PHONY: test
 test: ## run server tests
-	go test -v -timeout 2m -race ./... 
+	go test -timeout 2m -race -failfast ./...
 
 .PHONY: ubuntu
 ubuntu: ## Install deps for ubuntu (libvips, ffmpeg)

@@ -178,11 +178,20 @@
 </svg>
             <figcaption class="figure-caption">2.ts</figcaption>
         </figure></li>
+           <li class="col"><a href="/origin/0adb3697c8" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery" type="image"><figure class="figure dir-list-item">
+            
+            <div class="wrap">
+                <div class="spacer"></div>
+                <img src="/preview/0adb3697c8" loading="lazy" id="img-0adb3697c8" class="figure-img img-fluid rounded" alt="sample_minions.gif" data-animated="/origin/0adb3697c8" hx-preserve>
+            </div>
+            
+            <figcaption class="figure-caption">sample_minions.gif</figcaption>
+        </figure></a></li>
            <li class="col"><a href="/origin/024eb2ebdb" data-loading="lazy" class="image-lightbox" hx-boost="false" data-fslightbox="gallery" type="image"><figure class="figure dir-list-item">
             
             <div class="wrap">
                 <div class="spacer"></div>
-                <img src="/preview/024eb2ebdb" id="img-024eb2ebdb" class="figure-img img-fluid rounded" alt="image.jpg" hx-preserve>
+                <img src="/preview/024eb2ebdb" loading="lazy" id="img-024eb2ebdb" class="figure-img img-fluid rounded" alt="image.jpg"  hx-preserve>
             </div>
             
             <figcaption class="figure-caption">image.jpg</figcaption>
@@ -191,10 +200,27 @@
             
             <div class="wrap">
                 <div class="spacer"></div>
-                <img src="/preview/ff8609b730" id="img-ff8609b730" class="figure-img img-fluid rounded" alt="Anh_nude_cover.webp" hx-preserve>
+                <img src="/preview/ff8609b730" loading="lazy" id="img-ff8609b730" class="figure-img img-fluid rounded" alt="Anh_nude_cover.webp"  hx-preserve>
             </div>
             
             <figcaption class="figure-caption">Anh_nude_cover.webp</figcaption>
+        </figure></a></li>
+           <li class="col"><a href="/origin/4475bab9a5" type="video" data-stream=""class="image-lightbox" hx-boost="false" data-extension="video/mp4" data-width="1280" data-height="720"><figure class="figure dir-list-item">
+            
+            <div class="wrap" style="--origin-width: 1280;--origin-height: 720;">
+                <div class="spacer"></div>
+                <img
+                    id="video-4475bab9a5"
+                    loading="lazy"
+                    alt="short.mp4"
+                    src="/preview/4475bab9a5" 
+                    class="figure-img img-fluid rounded preview" 
+                    hx-preserve
+                >
+                <span class="duration rounded" id="duration-4475bab9a5">00:03</span>
+            </div>
+            
+            <figcaption class="figure-caption">short.mp4</figcaption>
         </figure></a></li>
            <li class="col"><a href="/origin/39508f59cd" type="video" data-stream=""class="image-lightbox" hx-boost="false" data-extension="video/mp4" data-width="1280" data-height="720"><figure class="figure dir-list-item">
             

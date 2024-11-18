@@ -5,6 +5,7 @@ import { zoom } from "./zoom"
 import { observeDOM } from "./dom";
 import { onSearch, highlightSearchResults } from "./search"
 import { onButtonUpClick, buttonUpInit } from "./button-up"
+import { gifInit } from "./gif"
 import Cookies from "js-cookie"
 import htmx from "htmx.org"
 
@@ -46,10 +47,13 @@ const initLightBox = () => {
 window.onload = () => {
     document.addEventListener('htmx:afterSettle', () => {
         initLightBox();
+        gifInit();
+        buttonUpInit();
     })
     initLightBox();
     highlightSearchResults();
     buttonUpInit();
+    gifInit();
     observeDOM()(document.body, (m) => {
         let addedNodes = []
         m.forEach(record => record.addedNodes.length & addedNodes.push(...record.addedNodes));

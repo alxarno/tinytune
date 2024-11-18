@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPreviewVideo2(t *testing.T) {
+func TestPreviewVideo(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {

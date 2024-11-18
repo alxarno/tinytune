@@ -11,10 +11,11 @@ import (
 )
 
 type mockSource struct {
-	video bool
-	image bool
-	path  string
-	size  int64
+	video     bool
+	image     bool
+	path      string
+	extension string
+	size      int64
 }
 
 func (s mockSource) IsImage() bool {
@@ -31,6 +32,10 @@ func (s mockSource) Path() string {
 
 func (s mockSource) Size() int64 {
 	return s.size
+}
+
+func (s mockSource) IsAnimatedImage() bool {
+	return s.extension == "gif"
 }
 
 func TestPreview(t *testing.T) {

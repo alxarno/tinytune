@@ -16,6 +16,7 @@ var (
 type Source interface {
 	IsImage() bool
 	IsVideo() bool
+	IsAnimatedImage() bool
 	Path() string
 	Size() int64
 }

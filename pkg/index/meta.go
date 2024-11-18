@@ -33,6 +33,7 @@ type Meta struct {
 	Preview      PreviewLocation `json:"preview"`
 	Duration     time.Duration   `json:"duration"`
 	Resolution   Resolution      `json:"resolution"`
+	Extension    string          `json:"extension"`
 	Type         int             `json:"type"`
 }
 
@@ -58,6 +59,10 @@ func (m *Meta) IsVideo() bool {
 	return m.Type == ContentTypeVideo
 }
 
+func (m *Meta) IsAnimatedImage() bool {
+	return m.Extension == "gif"
+}
+
 func (m *Meta) IsOtherFile() bool {
 	return m.Type == ContentTypeOther
 }
@@ -81,10 +86,11 @@ func (m *Meta) setContentType() {
 
 	m.Type = ContentTypeOther
 	//nolint:lll
-	videoFormats := []string{"3gp", "avi", "f4v", "flv", "gif", "hevc", "m4v", "mlv", "mov", "mp4", "m4a", "3g2", "mj2", "mpeg", "ogv", "webm"}
-	imageFormats := []string{"jpeg", "png", "jpg", "webp", "bmp"}
+	videoFormats := []string{"3gp", "avi", "f4v", "flv", "hevc", "m4v", "mlv", "mov", "mp4", "m4a", "3g2", "mj2", "mpeg", "ogv", "webm"}
+	imageFormats := []string{"jpeg", "png", "jpg", "webp", "bmp", "gif"}
 
 	ext := strings.ToLower(filepath.Ext(string(m.AbsolutePath)))[1:]
+	m.Extension = ext
 
 	switch {
 	case slices.Contains(imageFormats, ext):

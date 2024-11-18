@@ -4,7 +4,7 @@
             {{ else }}
             <div class="wrap">
                 <div class="spacer"></div>
-                <img src="/preview/{{ .ID }}" id="img-{{.ID}}" class="figure-img img-fluid rounded" alt="{{ .Name }}" hx-preserve>
+                <img src="/preview/{{ .ID }}" loading="lazy" id="img-{{.ID}}" class="figure-img img-fluid rounded" alt="{{ .Name }}" {{ if .IsAnimatedImage }}data-animated="/origin/{{ .ID }}"{{ end }} hx-preserve>
             </div>
             {{ end }}
             <figcaption class="figure-caption">{{ .Name }}</figcaption>

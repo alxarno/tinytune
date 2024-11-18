@@ -11,15 +11,47 @@ import (
 
 func TestPreviewImage(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 
-	preview, err := imagePreview("../../test/image.jpg")
-	require.NoError(t, err)
-	assert.Len(preview.Data(), 8620)
-	width, height := preview.Resolution()
-	assert.Equal(1527, width)
-	assert.Equal(898, height)
+	cases := []struct {
+		Name       string
+		SourcePath string
+		DataLength int
+		Width      int
+		Height     int
+		Hash       string
+	}{
+		{
+			Name:       ".jpg",
+			SourcePath: "../../test/image.jpg",
+			DataLength: 8620,
+			Width:      1527,
+			Height:     898,
+			Hash:       "64de9c944a91c93e750d097577c8fc5992100a7bb186d376534e78705aefbbbd",
+		},
+		{
+			Name:       ".gif",
+			SourcePath: "../../test/sample_minions.gif",
+			DataLength: 15322,
+			Width:      400,
+			Height:     200,
+			Hash:       "3639b076b0df5d917bd6f439aa8f11a3fc2cdcc638105a5a52e670d2c3105e3a",
+		},
+	}
 
-	hash := sha256.Sum256(preview.Data())
-	assert.Equal("64de9c944a91c93e750d097577c8fc5992100a7bb186d376534e78705aefbbbd", hex.EncodeToString(hash[:]))
+	for _, testCase := range cases {
+		t.Run(testCase.Name, func(t *testing.T) {
+			t.Parallel()
+
+			assert := assert.New(t)
+			preview, err := imagePreview(testCase.SourcePath)
+			require.NoError(t, err)
+			assert.Len(preview.Data(), testCase.DataLength)
+			width, height := preview.Resolution()
+			assert.Equal(testCase.Width, width)
+			assert.Equal(testCase.Height, height)
+
+			hash := sha256.Sum256(preview.Data())
+			assert.Equal(testCase.Hash, hex.EncodeToString(hash[:]))
+		})
+	}
 }

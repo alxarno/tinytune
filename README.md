@@ -35,7 +35,7 @@ The latest version of the TinyTune can be found on the GitHub [releases page](ht
 # check that you have ffmpeg installed
 ffmpeg -v
 
-wget https://github.com/alxarno/tinytune/releases/download/v1.1.0/tinytune_linux_amd64
+wget https://github.com/alxarno/tinytune/releases/download/v1.2.0/tinytune_linux_amd64
 
 mv tinytune_linux_amd64 /usr/local/bin/tinytune
 
@@ -54,7 +54,7 @@ USAGE:
    tinytune [data folder path] [global options]
 
 VERSION:
-   1.1.0
+   1.2.0
 
 AUTHOR:
    alxarno <alexarnowork@gmail.com>
