@@ -44,6 +44,38 @@ chmod +x /usr/local/bin/tinytune
 tinytune /YOUR_MEDIA_FOLDER
 ```
 
+## 🚀 Performance
+
+The first start of the program takes some time, because the initial processing of files takes place to create previews and extract meta information. The following are the statistics of the test folder with data, hardware, and the result.
+
+```
+Hardware:
+   CPU: AMD Ryzen 7 2700X (16) @ 3.700GHz
+   RAM: 32036MiB
+   Disk: Samsung SSD 970 EVO Plus 250GB
+
+Folder:
+   4 677 items, totalling 20,6 GB
+
+Folder files statistic:
+     size       type  count   
+----------------------------
+    16GiB        mp4    199
+   1,9GiB        avi      4
+   1,5GiB        jpg   4249
+   145MiB        flv      2
+    18MiB       jpeg     54
+   4,3MiB        gif      6
+   2,7MiB        png      3
+   1,9MiB        JPG     20
+----------------------------
+
+Results:
+   index.tinytune file - 33,7 MB
+   indexing time - 00:01:09
+```
+
+
 ## ⚙️ Commands & Options
 
 ```

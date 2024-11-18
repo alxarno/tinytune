@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	maxWidthHeight    = 512
+	maxWidthHeight    = 256
 	vipsMaxCacheMem   = 16 * 1024 * 1024
 	vipsMaxCacheSize  = 16 * 1024 * 1024
 	vipsMaxCacheFiles = 128

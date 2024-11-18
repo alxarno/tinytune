@@ -7,7 +7,6 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
-	"slices"
 	"sync"
 
 	"github.com/alxarno/tinytune/pkg/preview"
@@ -147,9 +146,6 @@ func (ib *indexBuilder) loadFiles(ctx context.Context) error {
 	wg := new(sync.WaitGroup)
 	sem := semaphore.NewWeighted(int64(ib.params.workers))
 	results := make(chan loadedFile, len(ib.params.files))
-
-	// pass biggest files first
-	slices.SortStableFunc(ib.params.files, compareFileMetaSize)
 
 	for _, file := range ib.params.files {
 		ib.params.progress()
