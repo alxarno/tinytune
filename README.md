@@ -71,12 +71,6 @@ GLOBAL OPTIONS:
    --index-save, --is  the program creates a special file in the working directory “index.tinytune”. This file stores all necessary data obtained during indexing of the working directory.
                 You can turn off its saving, but at the next startup, the application will start processing again (default: true)
 
-   FFmpeg:
-    This application uses the FFmpeg program as a tool for interacting with video files.
-    Make sure that it is available for calling.
-
-   --acceleration  allows to utilize GPU computing power for ffmpeg (default: true)
-
    Processing:
     In order for the web interface to be able to view thumbnails of media files, as well as play them, the program needs to process them and get meta information.
     This process can be long, so here are the options that will help limit the number of files to process.

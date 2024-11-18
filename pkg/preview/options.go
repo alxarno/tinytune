@@ -16,13 +16,7 @@ func WithVideo(param bool) Option {
 	}
 }
 
-func WithAcceleration(param bool) Option {
-	return func(p *Previewer) {
-		p.acceleration = param
-	}
-}
-
-// files = map[FilePath]struct.
+// files = map[FilePath]struct{}.
 func WithExcludedFiles(files map[string]struct{}) Option {
 	return func(p *Previewer) {
 		p.excludedFiles = files

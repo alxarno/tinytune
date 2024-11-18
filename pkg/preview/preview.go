@@ -24,7 +24,6 @@ type Source interface {
 type Previewer struct {
 	image         bool
 	video         bool
-	acceleration  bool
 	maxImages     int64
 	maxVideos     int64
 	excludedFiles map[string]struct{}

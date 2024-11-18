@@ -20,7 +20,6 @@ type RawConfig struct {
 	Parallel      int
 	Video         bool
 	Images        bool
-	Acceleration  bool
 	MaxImages     int64
 	MaxVideos     int64
 	Includes      string
@@ -53,14 +52,13 @@ func (c MediaTypeConfig) Print(name string) {
 }
 
 type ProcessConfig struct {
-	Parallel     int
-	Video        MediaTypeConfig
-	Timeout      time.Duration
-	Image        MediaTypeConfig
-	Acceleration bool
-	Includes     []*regexp.Regexp
-	Excludes     []*regexp.Regexp
-	MaxFileSize  int64
+	Parallel    int
+	Video       MediaTypeConfig
+	Timeout     time.Duration
+	Image       MediaTypeConfig
+	Includes    []*regexp.Regexp
+	Excludes    []*regexp.Regexp
+	MaxFileSize int64
 }
 
 func (c ProcessConfig) Print() {
@@ -77,7 +75,6 @@ func (c ProcessConfig) Print() {
 
 	params := []any{
 		slog.Int("parallel", c.Parallel),
-		slog.Bool("acceleration", c.Acceleration),
 	}
 
 	if includes != "" {
@@ -136,7 +133,6 @@ func DefaultRawConfig() RawConfig {
 		Port:          defaultPort,
 		Video:         true,
 		Images:        true,
-		Acceleration:  true,
 		IndexFileSave: true,
 		MaxImages:     -1,
 		MaxVideos:     -1,
@@ -157,14 +153,13 @@ func NewConfig(raw RawConfig) Config {
 		Streaming:     getRegularExpressions(raw.Streaming),
 		IndexFileSave: raw.IndexFileSave,
 		Process: ProcessConfig{
-			Timeout:      getDuration(raw.MediaTimeout),
-			Parallel:     raw.Parallel,
-			Video:        MediaTypeConfig{raw.Video, raw.MaxVideos},
-			Image:        MediaTypeConfig{raw.Images, raw.MaxImages},
-			Acceleration: raw.Acceleration,
-			Includes:     getRegularExpressions(raw.Includes),
-			Excludes:     getRegularExpressions(raw.Excludes),
-			MaxFileSize:  getMaxFileSize(raw.MaxFileSize),
+			Timeout:     getDuration(raw.MediaTimeout),
+			Parallel:    raw.Parallel,
+			Video:       MediaTypeConfig{raw.Video, raw.MaxVideos},
+			Image:       MediaTypeConfig{raw.Images, raw.MaxImages},
+			Includes:    getRegularExpressions(raw.Includes),
+			Excludes:    getRegularExpressions(raw.Excludes),
+			MaxFileSize: getMaxFileSize(raw.MaxFileSize),
 		},
 	}
 }

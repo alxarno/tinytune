@@ -153,13 +153,6 @@ func main() {
 				Destination: &rawConfig.MediaTimeout,
 				Category:    ProcessingCLICategory,
 			},
-			&cli.BoolFlag{
-				Name:        "acceleration",
-				Value:       rawConfig.Acceleration,
-				Usage:       "allows to utilize GPU computing power for ffmpeg",
-				Destination: &rawConfig.Acceleration,
-				Category:    FFmpegCLICategory,
-			},
 			&cli.StringFlag{
 				Name: "streaming",
 				Usage: `some files cannot be played in the browser, such as flv and avi. Therefore, such files need to be transcoded.
@@ -241,7 +234,6 @@ func start(config internal.Config) {
 	previewer, err := preview.NewPreviewer(
 		preview.WithImage(config.Process.Image.Process),
 		preview.WithVideo(config.Process.Video.Process),
-		preview.WithAcceleration(config.Process.Acceleration),
 		preview.WithExcludedFiles(excludedFromPreview),
 		preview.WithMaxImages(config.Process.Image.MaxItems),
 		preview.WithMaxVideos(config.Process.Video.MaxItems),
