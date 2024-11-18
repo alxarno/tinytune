@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/alxarno/tinytune/compare/v1.1.0...v1.2.0) (2024-11-18)
+
+
+### Features
+
+* up button within scrolled content ([d760fe4](https://github.com/alxarno/tinytune/commit/d760fe400c90122bdc1e203162f0d4ac24f7ea6a))
+
+
+### Bug Fixes
+
+* gifs support ([0c13a6a](https://github.com/alxarno/tinytune/commit/0c13a6afe6c21debc8cc77232040554717fbb4d1))
+* hls manifest file producing ([c513111](https://github.com/alxarno/tinytune/commit/c51311130a1d5e74414d9eec91523cd8745dde3f))
+* rts link on streaimg videos preview ([74be9b3](https://github.com/alxarno/tinytune/commit/74be9b32ac46deb5869036f6ad9988936264241b))
+* ui: images open like videos ([44129ed](https://github.com/alxarno/tinytune/commit/44129ed0981501ed90504d34fba60ea5e45b248d))
+
 ## [1.1.0](https://github.com/alxarno/tinytune/compare/v1.0.0...v1.1.0) (2024-11-17)
 
 
