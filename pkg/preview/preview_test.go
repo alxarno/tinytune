@@ -50,8 +50,8 @@ func TestPreview(t *testing.T) {
 		dataHash string
 	}{
 		{
-			source:   mockSource{image: true, path: "../../test/image.jpg"},
-			dataHash: "b9237e340eb886b5e437e4bc6fd19be612ff6653f3f733c3998ef20f320e6c20",
+			source:   mockSource{image: true, path: "../../test/img/image.jpg"},
+			dataHash: "08b43a0683e84c4b26f61c2e143f813e11f08808a792ab86d819c69434db715a",
 		},
 		{
 			source:   mockSource{video: true, path: "../../test/sample.mp4"},
