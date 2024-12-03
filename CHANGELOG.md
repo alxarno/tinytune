@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/alxarno/tinytune/compare/v1.2.2...v1.3.0) (2024-12-03)
+
+
+### Features
+
+* wmv streaming default support ([36d0dd5](https://github.com/alxarno/tinytune/commit/36d0dd529a1c9f56bf60dc9ffdbd297269026e19))
+
 ## [1.2.2](https://github.com/alxarno/tinytune/compare/v1.2.1...v1.2.2) (2024-12-03)
 
 
