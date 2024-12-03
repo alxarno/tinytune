@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/alxarno/tinytune/compare/v1.2.1...v1.2.2) (2024-12-03)
+
+
+### Bug Fixes
+
+* image preview test ([41f1783](https://github.com/alxarno/tinytune/commit/41f17836842f49b133d86ba17f594a44ec369dd2))
+* safari hls support ([9696d7d](https://github.com/alxarno/tinytune/commit/9696d7d7b87afa4badde36cd8caaaa67b092edaf))
+
 ## [1.2.1](https://github.com/alxarno/tinytune/compare/v1.2.0...v1.2.1) (2024-11-18)
 
 
