@@ -19,6 +19,10 @@ export const videoInit = (element) => {
     if (src[0] == "#") {
         src = src.substring(1)
     }
+    if (src.includes("rts")){
+        src += ".m3u8/"
+    }
+
     videoElement.innerHTML = `<source src="${src}" type="${origin.getAttribute("data-extension")}">`
     wrapper.appendChild(videoElement)
 

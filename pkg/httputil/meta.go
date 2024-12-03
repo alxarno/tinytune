@@ -3,6 +3,7 @@ package httputil
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/alxarno/tinytune/pkg/index"
 )
@@ -42,7 +43,7 @@ func (h *metaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(r.PathValue("fileID")) != 0 {
-		meta, err := h.source.Pull(index.ID(r.PathValue("fileID")))
+		meta, err := h.source.Pull(index.ID(strings.ReplaceAll(r.PathValue("fileID"), ".m3u8", "")))
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprint(w, "404")

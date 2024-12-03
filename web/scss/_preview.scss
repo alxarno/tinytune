@@ -1,7 +1,7 @@
 
 .dir-list-item{
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 
     > figcaption{
         margin-top: 1rem;
@@ -27,7 +27,7 @@
         --preview-width: min(var(--wrap-width), calc(var(--origin-width)* var(--wrap-height) / var(--origin-height)));
 
         > .figure-img{
-            height: 100%;
+            height: inherit;
             width: fit-content;
             margin: auto;
         }
