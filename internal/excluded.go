@@ -3,6 +3,7 @@ package internal
 import (
 	"errors"
 	"regexp"
+	"strings"
 
 	"github.com/alxarno/tinytune/pkg/index"
 )
@@ -45,7 +46,7 @@ func filter(items []index.FileMeta, filterFunc func(index.FileMeta) bool) map[st
 func filterHandler(patterns []*regexp.Regexp) func(index.FileMeta) bool {
 	return func(file index.FileMeta) bool {
 		for _, p := range patterns {
-			if p.MatchString(file.Path()) {
+			if p.MatchString(strings.ToLower(file.Path())) {
 				return true
 			}
 		}
