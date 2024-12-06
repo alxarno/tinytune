@@ -137,7 +137,7 @@ func DefaultRawConfig() RawConfig {
 		MaxImages:     -1,
 		MaxVideos:     -1,
 		MaxFileSize:   "-1B",
-		Streaming:     "\\.(flv|f4v|avi|wmv)$",
+		Streaming:     "\\.(flv|f4v|avi|wmv|mov)$",
 		MediaTimeout:  "2m",
 	}
 }
