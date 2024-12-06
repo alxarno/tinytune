@@ -27,9 +27,11 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         run: |
           npm i ./web
-          make build
+          make VERSION="${${{ steps.release.outputs.tag_name }}}" build
       - name: Upload Release Artifact
         if: ${{ steps.release.outputs.release_created }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ steps.release.outputs.tag_name }} ./out/tinytune_linux_amd64
+        run: |
+          gh release upload ${{ steps.release.outputs.tag_name }} ./out/tinytune_linux_amd64
+          gh release upload latest ./out/tinytune_linux_amd64
