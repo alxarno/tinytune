@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/alxarno/tinytune/compare/v1.3.3...v1.3.4) (2024-12-06)
+
+
+### Bug Fixes
+
+* release scripts fixes ([375e037](https://github.com/alxarno/tinytune/commit/375e037c040319bb9f14fb3c4aedac06093cfbd6))
+
 ## [1.3.3](https://github.com/alxarno/tinytune/compare/v1.3.2...v1.3.3) (2024-12-06)
 
 
