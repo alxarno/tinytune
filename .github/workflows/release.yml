@@ -27,7 +27,7 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         run: |
           npm i ./web
-          make VERSION="${${{ steps.release.outputs.tag_name }}}" build
+          make VERSION="${{ steps.release.outputs.tag_name }}" build
       - name: Upload Release Artifact
         if: ${{ steps.release.outputs.release_created }}
         env:
