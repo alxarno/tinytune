@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/alxarno/tinytune/compare/v1.3.0...v1.3.1) (2024-12-06)
+
+
+### Bug Fixes
+
+* add .mov to default streaming ([437ef62](https://github.com/alxarno/tinytune/commit/437ef62b046ca978d2881490af05e0f487fc3c17))
+* release scripts fixes ([3e3de65](https://github.com/alxarno/tinytune/commit/3e3de65f25cc482b644637ec93511787b426d7ba))
+
 ## [1.3.0](https://github.com/alxarno/tinytune/compare/v1.2.2...v1.3.0) (2024-12-03)
 
 
