@@ -34,4 +34,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload ${{ steps.release.outputs.tag_name }} ./out/tinytune_linux_amd64
+          gh release create latest --notes "#[${{ steps.release.outputs.tag_name }}](https://github.com/alxarno/tinytune/releases/tag/${{ steps.release.outputs.tag_name }})"
           gh release upload latest ./out/tinytune_linux_amd64
