@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/alxarno/tinytune/compare/v1.3.4...v1.4.0) (2024-12-10)
+
+
+### Features
+
+* removed video.js, hls support in chrome by hls.js ([e4e3a74](https://github.com/alxarno/tinytune/commit/e4e3a74f254f0ea1879ae48f3c9d51d593672eda))
+
 ## [1.3.4](https://github.com/alxarno/tinytune/compare/v1.3.3...v1.3.4) (2024-12-06)
 
 
