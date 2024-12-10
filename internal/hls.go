@@ -26,7 +26,7 @@ func pullHLSIndex(meta *index.Meta, w io.Writer) error {
 	fullSamples := 0
 	lastSampleDuration := int(meta.Duration.Seconds())
 
-	for lastSampleDuration >= 10 {
+	for lastSampleDuration >= hlsChunkDurationSeconds {
 		lastSampleDuration -= hlsChunkDurationSeconds
 		fullSamples++
 	}
@@ -35,17 +35,17 @@ func pullHLSIndex(meta *index.Meta, w io.Writer) error {
 
 	data.WriteString("#EXTM3U\n")
 	data.WriteString("#EXT-X-PLAYLIST-TYPE:VOD\n")
-	data.WriteString("#EXT-X-TARGETDURATION:10\n")
+	data.WriteString(fmt.Sprintf("#EXT-X-TARGETDURATION:%d\n", hlsChunkDurationSeconds))
 	data.WriteString("#EXT-X-VERSION:4\n")
 	data.WriteString("#EXT-X-MEDIA-SEQUENCE:0\n")
 
 	for c := range fullSamples {
-		data.WriteString("#EXTINF:10.0,\n")
-		data.WriteString(fmt.Sprintf("%d.ts\n", c))
+		data.WriteString(fmt.Sprintf("#EXTINF:%d.0,\n", hlsChunkDurationSeconds))
+		data.WriteString(fmt.Sprintf("%d.ts/\n", c))
 	}
 
 	data.WriteString(fmt.Sprintf("#EXTINF:%d.0,\n", lastSampleDuration))
-	data.WriteString(fmt.Sprintf("%d.ts\n", fullSamples))
+	data.WriteString(fmt.Sprintf("%d.ts/\n", fullSamples))
 	data.WriteString("#EXT-X-ENDLIST")
 
 	_, err := io.Copy(w, &data)

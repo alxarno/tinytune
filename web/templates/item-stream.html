@@ -1,0 +1,20 @@
+{{define "video-stream"}}<a href="/origin/{{.ID}}/" data-thumb="/preview/{{ .ID }}/" data-stream="stream-{{.ID}}" data-src="/hls/{{.ID}}.m3u8/" type="video" class="image-lightbox" hx-boost="false" data-extension="application/x-mpegURL" data-width="{{ .Resolution.Width }}" data-height="{{ .Resolution.Height }}"><figure class="figure dir-list-item">
+    {{ if eq .Preview.Length 0 }}
+    {{ template "icon-video" .}}
+    {{ else }}
+    <!-- <video id="stream-{{.ID}}" class="stream" width="{{ .Resolution.Width }}" height="{{ .Resolution.Height }}" controls style="display: none" src="/hls/{{.ID}}.m3u8/"  type="application/x-mpegURL"></video> -->
+    <div class="wrap" style="--origin-width: {{ .Resolution.Width }};--origin-height: {{ .Resolution.Height }};">
+        <div class="spacer"></div>
+        <img
+            id="video-{{ .ID }}"
+            loading="lazy"
+            alt="{{ .Name }}"
+            src="/preview/{{ .ID }}/"
+            class="figure-img img-fluid rounded preview" 
+            hx-preserve
+        >
+        <span class="duration rounded" id="duration-{{ .ID }}">{{ dur .Duration }}</span>
+    </div>
+    {{ end }}
+    <figcaption class="figure-caption">{{ .Name }}</figcaption>
+</figure></a>{{end}}

@@ -1,3 +1,3 @@
 {{define "dir"}}<ul class="dir-list row row-cols-auto" hx-boost="true">
-        {{range . }}   <li class="col">{{ if .IsDir }}{{template "dir-item" .}}{{ end }}{{ if .IsImage }}{{template "image-item" .}}{{ end }}{{ if .IsVideo }}{{template "video-item" .}}{{ end }}{{ if .IsOtherFile }}{{template "file-item" .}}{{ end }}</li>
+        {{range . }}   <li class="col">{{ if .IsDir }}{{template "dir-item" .}}{{ end }}{{ if .IsImage }}{{template "image-item" .}}{{ end }}{{ if .IsVideo }}{{ if streaming .Path }}{{ template "video-stream" . }}{{ else }}{{template "video-item" .}}{{ end }}{{ end }}{{ if .IsOtherFile }}{{template "file-item" .}}{{ end }}</li>
         {{end}}</ul>{{end}}

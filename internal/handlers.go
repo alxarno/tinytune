@@ -199,9 +199,9 @@ func (s Server) registerHandlers(silent bool) http.Handler {
 
 	register("GET /origin/{fileID}/", s.originHandler())
 
-	register("GET /rts/{fileID}/", s.hlsIndexHandler())
+	register("GET /hls/{fileID}/", s.hlsIndexHandler())
 
-	register("GET /rts/{fileID}/{chunkID}/", s.hlsChunkHandler())
+	register("GET /hls/{fileID}/{chunkID}/", s.hlsChunkHandler())
 
 	staticHandler := http.StripPrefix("/static", http.FileServer(http.FS(s.getAssets())))
 	mux.Handle("GET /static/", chain.Then(staticHandler))

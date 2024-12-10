@@ -7,7 +7,7 @@ module.exports = {
         maxAssetSize: 512000
     },
     entry: {
-        vendor: ['bootstrap', 'video.js', 'js-cookie', 'fslightbox']
+        vendor: ['bootstrap', 'js-cookie', 'fslightbox', 'hls.js']
     },
     output: {
         filename: 'vendor.bundle.js',

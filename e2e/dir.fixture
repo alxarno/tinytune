@@ -109,7 +109,7 @@
         <div class="container-xxl wrapper" id="content">
             
             <ul class="dir-list row row-cols-auto" hx-boost="true">
-           <li class="col"><a href="/origin/005f6b0265" type="video" data-stream=""class="image-lightbox" hx-boost="false" data-extension="video/flv" data-width="960" data-height="400"><figure class="figure dir-list-item">
+           <li class="col"><a href="/origin/005f6b0265/" type="video" class="image-lightbox" hx-boost="false" data-extension="video/flv" data-width="960" data-height="400"><figure class="figure dir-list-item">
             
             <div class="wrap" style="--origin-width: 960;--origin-height: 400;">
                 <div class="spacer"></div>
@@ -117,7 +117,7 @@
                     id="video-005f6b0265"
                     loading="lazy"
                     alt="sample_960x400_ocean_with_audio.flv"
-                    src="/preview/005f6b0265" 
+                    src="/preview/005f6b0265/" 
                     class="figure-img img-fluid rounded preview" 
                     hx-preserve
                 >
@@ -126,7 +126,7 @@
             
             <figcaption class="figure-caption">sample_960x400_ocean_with_audio.flv</figcaption>
         </figure></a></li>
-           <li class="col"><a href="/origin/65ad315541" type="video" data-stream=""class="image-lightbox" hx-boost="false" data-extension="video/mp4" data-width="720" data-height="1280"><figure class="figure dir-list-item">
+           <li class="col"><a href="/origin/65ad315541/" type="video" class="image-lightbox" hx-boost="false" data-extension="video/mp4" data-width="720" data-height="1280"><figure class="figure dir-list-item">
             
             <div class="wrap" style="--origin-width: 720;--origin-height: 1280;">
                 <div class="spacer"></div>
@@ -134,7 +134,7 @@
                     id="video-65ad315541"
                     loading="lazy"
                     alt="sample.mp4"
-                    src="/preview/65ad315541" 
+                    src="/preview/65ad315541/" 
                     class="figure-img img-fluid rounded preview" 
                     hx-preserve
                 >

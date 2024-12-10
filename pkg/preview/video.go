@@ -272,7 +272,13 @@ func videoProbe(path string, timeOut time.Duration) (string, error) {
 		defer cancel()
 	}
 
-	cmd := exec.CommandContext(ctx, "ffprobe", "-show_format", "-show_streams", "-of", "json", path)
+	logOptions := []string{"-hide_banner", "-loglevel", "quiet"}
+	jobOptions := []string{"-show_format", "-show_streams", "-of", "json", path}
+	options := []string{}
+	options = append(options, logOptions...)
+	options = append(options, jobOptions...)
+
+	cmd := exec.CommandContext(ctx, "ffprobe", options...)
 	buf := bytes.NewBuffer(nil)
 	stdErrBuf := bytes.NewBuffer(nil)
 	cmd.Stdout = buf

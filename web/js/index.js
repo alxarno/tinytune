@@ -1,6 +1,6 @@
 import { Popover } from 'bootstrap';
 require("fslightbox")
-import { videoInit, videoClear  } from "./video";
+import { videoInit  } from "./video";
 import { zoom } from "./zoom"
 import { observeDOM } from "./dom";
 import { onSearch, highlightSearchResults } from "./search"
@@ -20,27 +20,22 @@ window.onSearch = onSearch
 window.onButtonUpClick = onButtonUpClick
 
 
-let fsLightbox = new FsLightbox();
-
-const originOpen = (index) => {
-    fsLightbox.open(index)
-}
-
 const initLightBox = () => {
     fsLightbox = new FsLightbox();
     const previews = Array.from(document.getElementsByClassName("image-lightbox"))
     previews.forEach((v, i) => v.setAttribute("index", i))
-    previews.forEach((v, i) => v.onclick = (e) => { e.preventDefault();originOpen(i)});
-    fsLightbox.props.sources = previews.map(v => !v.getAttribute("data-stream") ? v.getAttribute("href") : v.getAttribute("href").replace("origin", "rts"))
+    previews.forEach((v, i) => v.onclick = (e) => {
+        e.preventDefault();
+        fsLightbox.open(i);
+    });
+    fsLightbox.props.sources = previews.map(v => v.getAttribute("data-src") ? v.getAttribute("data-src") : v.getAttribute("href"))
     fsLightbox.props.types = previews.map(v => v.getAttribute("type"));
+    fsLightbox.props.thumbs = previews.map(v => v.getAttribute("href").replace("origin", "preview"));
     fsLightbox.props.loadOnlyCurrentSource = true;
     fsLightbox.props.onOpen = () => {
-        const videosItems = Array.from(document.querySelectorAll("video.fslightbox-source"))
-        videosItems.forEach(videoInit)
-        return
-    }
-    fsLightbox.props.onClose = () => {
-        videoClear();
+        const videosItems = Array.from(document.querySelectorAll("video"))
+        const streams = videosItems.filter(e => e.getAttribute("src").includes("hls"))
+        streams.forEach(videoInit)
     }
 }
 
@@ -61,11 +56,4 @@ window.onload = () => {
     highlightSearchResults();
     buttonUpInit();
     gifInit();
-    observeDOM()(document.body, (m) => {
-        let addedNodes = []
-        m.forEach(record => record.addedNodes.length & addedNodes.push(...record.addedNodes));
-        let videoNodes = addedNodes.filter(v => v.tagName == "VIDEO" && v.classList && v.classList.contains("fslightbox-source"))
-        if(!videoNodes.length) return;
-        videoNodes.forEach((v) => videoInit(v))
-    })
 }
