@@ -255,6 +255,7 @@ func start(config internal.Config) {
 		index.WithPreview(previewer),
 		index.WithWorkers(config.Process.Parallel),
 		index.WithProgress(progressBarAdd),
+		index.WithRemovedFilesCleaning(),
 	)
 	internal.PanicError(err)
 

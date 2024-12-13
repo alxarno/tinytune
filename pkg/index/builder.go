@@ -24,11 +24,12 @@ type PreviewGenerator interface {
 }
 
 type indexBuilderParams struct {
-	preview  PreviewGenerator
-	files    []FileMeta
-	progress func()
-	newFiles func()
-	workers  int
+	preview           PreviewGenerator
+	files             []FileMeta
+	progress          func()
+	newFiles          func()
+	workers           int
+	cleanRemovedFiles bool
 }
 
 type indexBuilder struct {
@@ -52,6 +53,10 @@ func (ib *indexBuilder) run(ctx context.Context, r io.Reader) error {
 		}
 
 		slog.Warn("The index file could not be fully read, it may be corrupted or empty")
+	}
+
+	if ib.params.cleanRemovedFiles {
+		ib.clearRemovedFiles()
 	}
 
 	if err := ib.loadPaths(); err != nil {
@@ -214,4 +219,34 @@ func (ib *indexBuilder) loadPaths() error {
 	}
 
 	return nil
+}
+
+func (ib *indexBuilder) clearRemovedFiles() {
+	exist := map[RelativePath]struct{}{}
+	for _, f := range ib.params.files {
+		exist[RelativePath(f.RelativePath())] = struct{}{}
+	}
+
+	for key, m := range ib.index.meta {
+		if _, ok := exist[m.RelativePath]; !ok {
+			if m.Preview.Length != 0 {
+				ib.clearPreview(m.Preview.Offset, m.Preview.Length)
+			}
+
+			delete(ib.index.meta, key)
+		}
+	}
+}
+
+func (ib *indexBuilder) clearPreview(offset uint32, length uint32) {
+	old := ib.index.data[:offset]
+	shifted := ib.index.data[offset+length:]
+	ib.index.data = old
+	ib.index.data = append(ib.index.data, shifted...)
+
+	for _, m := range ib.index.meta {
+		if m.Preview.Length != 0 && m.Preview.Offset > offset {
+			m.Preview.Offset -= length
+		}
+	}
 }

@@ -31,3 +31,9 @@ func WithWorkers(w int) Option {
 		i.params.workers = w
 	}
 }
+
+func WithRemovedFilesCleaning() Option {
+	return func(i *indexBuilder) {
+		i.params.cleanRemovedFiles = true
+	}
+}
