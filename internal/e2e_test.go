@@ -49,7 +49,7 @@ func TestE2e(t *testing.T) {
 		},
 		{
 			Name: "dir",
-			Path: "/d/6a4afe45d4/",
+			Path: "/d/8d6ec3a5fc/",
 			Type: "text",
 		},
 		{
@@ -59,19 +59,19 @@ func TestE2e(t *testing.T) {
 		},
 		{
 			Name: "preview-image",
-			Path: `/preview/ff8609b730/`,
+			Path: `/preview/7cbd282f41/`,
 		},
 		{
 			Name: "preview-video",
-			Path: `/preview/39508f59cd/`,
+			Path: `/preview/0abf55a68e/`,
 		},
 		{
 			Name: "origin",
-			Path: `/origin/024eb2ebdb/`,
+			Path: `/origin/7cbd282f41/`,
 		},
 		{
 			Name: "hls-index",
-			Path: `/rts/005f6b0265/`,
+			Path: `/hls/623f14247e/`,
 			Type: "text",
 		},
 	}

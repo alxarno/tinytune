@@ -72,7 +72,7 @@ func (m *Meta) Path() string {
 }
 
 func (m *Meta) generateID() {
-	idSource := []byte(fmt.Sprintf("%s%s", m.RelativePath, m.ModTime))
+	idSource := []byte(fmt.Sprintf("%s%d", m.RelativePath, m.ModTime.Unix()))
 	fileID := sha256.Sum256(idSource)
 	m.ID = ID(hex.EncodeToString(fileID[:5]))
 }

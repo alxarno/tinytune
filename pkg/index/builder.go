@@ -101,6 +101,7 @@ func (ib *indexBuilder) loadFile(
 	}
 
 	// needs for check if file/folder was modified, and remove old version
+	// same path, but different ids
 	if oldMeta, ok := ib.index.paths[metaItem.RelativePath]; ok {
 		delete(ib.index.meta, oldMeta.ID)
 	}
@@ -239,9 +240,8 @@ func (ib *indexBuilder) clearRemovedFiles() {
 }
 
 func (ib *indexBuilder) clearPreview(offset uint32, length uint32) {
-	old := ib.index.data[:offset]
 	shifted := ib.index.data[offset+length:]
-	ib.index.data = old
+	ib.index.data = ib.index.data[:offset]
 	ib.index.data = append(ib.index.data, shifted...)
 
 	for _, m := range ib.index.meta {
