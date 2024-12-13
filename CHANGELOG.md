@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.5.0](https://github.com/alxarno/tinytune/compare/v1.4.1...v1.5.0) (2024-12-13)
+
+
+### Features
+
+* removed files cleaning ([f7de977](https://github.com/alxarno/tinytune/commit/f7de977c6f8314282cc7ac8757cb24273eca6681))
+
+
+### Bug Fixes
+
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* builder test ([baf7db6](https://github.com/alxarno/tinytune/commit/baf7db668ff6e8f1d06e9e2db954efcd723a4c4a))
+* removed animated scroll ([3e3748f](https://github.com/alxarno/tinytune/commit/3e3748ffb1f64d45bcfd5d9dfce952ee5fb7e871))
+
 ## [1.4.1](https://github.com/alxarno/tinytune/compare/v1.4.0...v1.4.1) (2024-12-10)
 
 
