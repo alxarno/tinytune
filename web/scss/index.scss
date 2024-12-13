@@ -6,6 +6,10 @@
 @use 'navbar';
 @use 'button-up';
 
+html {
+    scroll-behavior: auto !important;
+}
+
 body {
     background-color: variables.$background-color;
     font-family: variables.$font-family-sans-serif;
