@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/alxarno/tinytune/compare/v1.5.0...v1.5.1) (2024-12-19)
+
+
+### Bug Fixes
+
+* UI and navigation bug ([bc4c590](https://github.com/alxarno/tinytune/commit/bc4c59047065646ab1d17efc167a295a94de05d0))
+* vips stacktrase printing and navigation path items truncating ([0789f52](https://github.com/alxarno/tinytune/commit/0789f5203250e6e4b4dd821317c5cf042aad80dd))
+
 ## [1.5.0](https://github.com/alxarno/tinytune/compare/v1.4.1...v1.5.0) (2024-12-13)
 
 
