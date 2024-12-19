@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+	"strings"
 
 	"github.com/davidbyttow/govips/v2/vips"
 )
@@ -76,6 +77,13 @@ func downScale(image *vips.ImageRef, imageType int) ([]byte, error) {
 
 	bytes, _, err := image.ExportWebp(ep)
 	if err != nil {
+		// vips return stack traces for some corrupted files, so let's just hide stack trace
+		if strings.Contains(err.Error(), "Stack") {
+			errorMsg := strings.Split(err.Error(), "\n")
+			//nolint:err113
+			return nil, fmt.Errorf("%w: %w", ErrImageExport, errors.New(errorMsg[0]))
+		}
+
 		return nil, fmt.Errorf("%w: %w", ErrImageExport, err)
 	}
 

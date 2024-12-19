@@ -11,7 +11,7 @@
                         {{ $length := len .Path }}{{ if eq $length 0 }}<li class="breadcrumb-item active" aria-current="page">Home</li>{{ else }}
                         <li class="breadcrumb-item"><a href="/">Home</a></li>{{ end }}
                         {{ range $i, $e := .Path }}
-                            {{if eqMinusOne $i $length}}<li class="breadcrumb-item active" aria-current="page">{{ $e.Name }}</li> {{ else }}<li class="breadcrumb-item"><a href="/d/{{ $e.ID }}">{{ $e.Name }}</a></li> {{ end }}
+                            {{if eqMinusOne $i $length}}<li class="breadcrumb-item active" aria-current="page"><span>{{ $e.Name }}</span></li> {{ else }}<li class="breadcrumb-item"><a href="/d/{{ $e.ID }}">{{ $e.Name }}</a></li> {{ end }}
                         {{ end }}
                     </ol>
                 </li>

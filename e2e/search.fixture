@@ -24,7 +24,7 @@
                         
                         <li class="breadcrumb-item"><a href="/">Home</a></li>
                         
-                            <li class="breadcrumb-item active" aria-current="page">Search</li> 
+                            <li class="breadcrumb-item active" aria-current="page"><span>Search</span></li> 
                         
                     </ol>
                 </li>
