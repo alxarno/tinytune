@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 )
 
@@ -102,15 +101,16 @@ func (index *Index) PullPaths(id ID) ([]*Meta, error) {
 	paths := strings.Split(string(m.RelativePath), string(os.PathSeparator))
 	subDirs := []string{}
 
-	slices.Reverse(paths)
+	for i, path := range paths {
+		if i == 0 {
+			subDirs = append(subDirs, path)
 
-	for i, v := range paths {
-		buff := paths[i+1:]
-		subDirectory := filepath.Join(append(buff, v)...)
+			continue
+		}
+
+		subDirectory := filepath.Join(subDirs[len(subDirs)-1], path)
 		subDirs = append(subDirs, subDirectory)
 	}
-
-	slices.Reverse(subDirs)
 
 	for _, v := range subDirs {
 		result = append(result, index.paths[RelativePath(v)])

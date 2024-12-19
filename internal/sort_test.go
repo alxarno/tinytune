@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/index"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:dupl
 func TestSorts(t *testing.T) {
 	t.Parallel()
 
@@ -16,35 +16,59 @@ func TestSorts(t *testing.T) {
 		name   string
 		input  []*index.Meta
 		output []*index.Meta
+		equal  func(first, second *index.Meta) bool
 	}{
 		{
-			name: "A-Z",
+			name:  "A-Z",
+			equal: func(first, second *index.Meta) bool { return first.Name == second.Name },
 			input: []*index.Meta{
 				{Name: "cba"},
 				{Name: "bca"},
 				{Name: "abc"},
+				{Name: "1"},
+				{Name: "30"},
+				{Name: "200"},
+				{Name: "31"},
+				{Name: "4"},
 			},
 			output: []*index.Meta{
+				{Name: "1"},
+				{Name: "4"},
+				{Name: "30"},
+				{Name: "31"},
+				{Name: "200"},
 				{Name: "abc"},
 				{Name: "bca"},
 				{Name: "cba"},
 			},
 		},
 		{
-			name: "Z-A",
+			name:  "Z-A",
+			equal: func(first, second *index.Meta) bool { return first.Name == second.Name },
 			input: []*index.Meta{
-				{Name: "abc"},
-				{Name: "bca"},
 				{Name: "cba"},
+				{Name: "bca"},
+				{Name: "abc"},
+				{Name: "1"},
+				{Name: "30"},
+				{Name: "200"},
+				{Name: "31"},
+				{Name: "4"},
 			},
 			output: []*index.Meta{
 				{Name: "cba"},
 				{Name: "bca"},
 				{Name: "abc"},
+				{Name: "200"},
+				{Name: "31"},
+				{Name: "30"},
+				{Name: "4"},
+				{Name: "1"},
 			},
 		},
 		{
-			name: "Last Modified",
+			name:  "Last Modified",
+			equal: func(first, second *index.Meta) bool { return first.ModTime == second.ModTime },
 			input: []*index.Meta{
 				{ModTime: time.Date(2021, time.May, 12, 21, 00, 00, 00, time.UTC)},
 				{ModTime: time.Date(2021, time.May, 12, 22, 00, 00, 00, time.UTC)},
@@ -57,20 +81,22 @@ func TestSorts(t *testing.T) {
 			},
 		},
 		{
-			name: "First Modified",
+			name:  "First Modified",
+			equal: func(first, second *index.Meta) bool { return first.ModTime == second.ModTime },
 			input: []*index.Meta{
-				{ModTime: time.Date(2021, time.May, 12, 23, 00, 00, 00, time.UTC)},
-				{ModTime: time.Date(2021, time.May, 12, 22, 00, 00, 00, time.UTC)},
-				{ModTime: time.Date(2021, time.May, 12, 21, 00, 00, 00, time.UTC)},
+				{ModTime: time.Date(2022, time.May, 13, 23, 00, 00, 00, time.UTC)},
+				{ModTime: time.Date(2022, time.May, 13, 22, 00, 00, 00, time.UTC)},
+				{ModTime: time.Date(2022, time.May, 13, 21, 00, 00, 00, time.UTC)},
 			},
 			output: []*index.Meta{
-				{ModTime: time.Date(2021, time.May, 12, 21, 00, 00, 00, time.UTC)},
-				{ModTime: time.Date(2021, time.May, 12, 22, 00, 00, 00, time.UTC)},
-				{ModTime: time.Date(2021, time.May, 12, 23, 00, 00, 00, time.UTC)},
+				{ModTime: time.Date(2022, time.May, 13, 21, 00, 00, 00, time.UTC)},
+				{ModTime: time.Date(2022, time.May, 13, 22, 00, 00, 00, time.UTC)},
+				{ModTime: time.Date(2022, time.May, 13, 23, 00, 00, 00, time.UTC)},
 			},
 		},
 		{
-			name: "Type",
+			name:  "Type",
+			equal: func(first, second *index.Meta) bool { return first.Type == second.Type },
 			input: []*index.Meta{
 				{Type: index.ContentTypeImage},
 				{Type: index.ContentTypeDir},
@@ -79,13 +105,14 @@ func TestSorts(t *testing.T) {
 			},
 			output: []*index.Meta{
 				{Type: index.ContentTypeDir},
+				{Type: index.ContentTypeOther},
 				{Type: index.ContentTypeImage},
 				{Type: index.ContentTypeVideo},
-				{Type: index.ContentTypeOther},
 			},
 		},
 		{
-			name: "Size",
+			name:  "Size",
+			equal: func(first, second *index.Meta) bool { return first.OriginSize == second.OriginSize },
 			input: []*index.Meta{
 				{OriginSize: 1024 * 2},
 				{OriginSize: 1024},
@@ -111,7 +138,10 @@ func TestSorts(t *testing.T) {
 			sort, ok := sorts[tCase.name]
 			require.True(ok)
 			sort(tCase.input)
-			assert.ElementsMatch(test, tCase.input, tCase.output)
+
+			for i := range tCase.input {
+				require.True(tCase.equal(tCase.input[i], tCase.output[i]))
+			}
 		})
 	}
 }

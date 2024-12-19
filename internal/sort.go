@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"slices"
 	"sort"
+	"strconv"
 
 	"github.com/alxarno/tinytune/pkg/index"
 )
@@ -22,26 +24,33 @@ func metaSortType(slice []*index.Meta) []*index.Meta {
 
 func metaSortSize(a []*index.Meta) []*index.Meta {
 	sort.Slice(a, func(i, j int) bool {
-		return a[i].Preview.Length > a[j].Preview.Length
+		return a[i].OriginSize > a[j].OriginSize
 	})
 
 	return a
 }
 
-func metaSortAlphabet(a []*index.Meta) []*index.Meta {
-	sort.Slice(a, func(i, j int) bool {
-		return a[i].Name < a[j].Name
+func metaSortAlphabet(slice []*index.Meta) []*index.Meta {
+	sort.Slice(slice, func(first, second int) bool {
+		if firstNumber, err := strconv.Atoi(slice[first].Name); err == nil {
+			if secondNumber, err := strconv.Atoi(slice[second].Name); err == nil {
+				return firstNumber < secondNumber
+			}
+
+			return true
+		}
+
+		return slice[first].Name < slice[second].Name
 	})
 
-	return a
+	return slice
 }
 
 func metaSortAlphabetReverse(a []*index.Meta) []*index.Meta {
-	sort.Slice(a, func(i, j int) bool {
-		return a[i].Name > a[j].Name
-	})
+	result := metaSortAlphabet(a)
+	slices.Reverse(result)
 
-	return a
+	return result
 }
 
 func metaSortLastModified(a []*index.Meta) []*index.Meta {
