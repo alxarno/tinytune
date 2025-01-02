@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/alxarno/tinytune/compare/v1.5.1...v1.5.2) (2025-01-02)
+
+
+### Bug Fixes
+
+* huge memory consumption with big images and videos previews ([ee6bc11](https://github.com/alxarno/tinytune/commit/ee6bc112cfa60e5e1e7e96f4b436d067b934d30c))
+
 ## [1.5.1](https://github.com/alxarno/tinytune/compare/v1.5.0...v1.5.1) (2024-12-19)
 
 
