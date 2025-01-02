@@ -14,16 +14,18 @@ const (
 	maxWidthHeight    = 256
 	vipsMaxCacheMem   = 16 * 1024 * 1024
 	vipsMaxCacheSize  = 16 * 1024 * 1024
-	vipsMaxCacheFiles = 128
+	vipsMaxCacheFiles = 4
+	jpegShrinkFactor  = 8
 
 	imageDefault = iota
 	imageCollage
 )
 
 var (
-	ErrVipsNewImage = errors.New("failed init new image")
-	ErrImageResize  = errors.New("failed to resize the image")
-	ErrImageExport  = errors.New("failed export the image")
+	ErrVipsLoadImage   = errors.New("failed load image")
+	ErrVipsResizeImage = errors.New("failed resize image")
+	ErrImageDownScale  = errors.New("failed to downscale the image")
+	ErrImageExport     = errors.New("failed export the image")
 )
 
 //nolint:gochecknoinits
@@ -39,40 +41,33 @@ func init() {
 	})
 }
 
-func imagePreview(path string) (data, error) {
+func imagePreview(path string, size int64) (data, error) {
 	preview := data{}
+	params := &vips.ImportParams{}
 
-	image, err := vips.NewImageFromFile(path)
+	// for big jpegs (>500kb), use shrink load
+	if size > 1<<19 {
+		params.JpegShrinkFactor.Set(jpegShrinkFactor)
+	}
+
+	image, err := vips.LoadImageFromFile(path, params)
 	if err != nil {
-		return preview, fmt.Errorf("%w: %w", ErrVipsNewImage, err)
+		return preview, fmt.Errorf("%w: %w", ErrVipsLoadImage, err)
 	}
 	defer image.Close()
 
 	preview.width, preview.height = image.Width(), image.Height()
 
-	preview.data, err = downScale(image, imageDefault)
+	if err := downScale(image, imageDefault); err != nil {
+		return preview, fmt.Errorf("%w: %w", ErrImageDownScale, err)
+	}
+
+	preview.data, err = exportWebP(image)
 
 	return preview, err
 }
 
-func downScale(image *vips.ImageRef, imageType int) ([]byte, error) {
-	scale := 1.0
-
-	switch imageType {
-	case imageDefault:
-		if image.Width() > maxWidthHeight || image.Height() > maxWidthHeight {
-			scale = float64(maxWidthHeight) / float64(max(image.Width(), image.Height()))
-		}
-	case imageCollage:
-		if image.Width() > maxWidthHeight {
-			scale = float64(maxWidthHeight) / float64(image.Width())
-		}
-	}
-
-	if err := image.Resize(scale, vips.KernelLanczos2); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrImageResize, err)
-	}
-
+func exportWebP(image *vips.ImageRef) ([]byte, error) {
 	ep := vips.NewWebpExportParams()
 
 	bytes, _, err := image.ExportWebp(ep)
@@ -88,4 +83,25 @@ func downScale(image *vips.ImageRef, imageType int) ([]byte, error) {
 	}
 
 	return bytes, nil
+}
+
+func downScale(image *vips.ImageRef, imageType int) error {
+	scale := 1.0
+
+	switch imageType {
+	case imageDefault:
+		if image.Width() > maxWidthHeight || image.Height() > maxWidthHeight {
+			scale = float64(maxWidthHeight) / float64(max(image.Width(), image.Height()))
+		}
+	case imageCollage:
+		if image.Width() > maxWidthHeight {
+			scale = float64(maxWidthHeight) / float64(image.Width())
+		}
+	}
+
+	if err := image.Resize(scale, vips.KernelNearest); err != nil {
+		return fmt.Errorf("%w: %w", ErrVipsResizeImage, err)
+	}
+
+	return nil
 }

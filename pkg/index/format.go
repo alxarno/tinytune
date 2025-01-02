@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/binary"
-	"encoding/gob"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,11 +11,6 @@ import (
 
 	"github.com/alxarno/tinytune/pkg/bytesutil"
 )
-
-//nolint:gochecknoinits
-func init() {
-	gob.Register(Meta{})
-}
 
 var (
 	ErrInvalidHeader       = errors.New("invalid header")

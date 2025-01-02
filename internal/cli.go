@@ -14,6 +14,7 @@ import (
 
 const defaultPort = 8080
 const maxPortNumber = 65536
+const maxDefaultCPUs = 8
 
 type RawConfig struct {
 	Dir           string
@@ -129,7 +130,7 @@ func (c Config) Print() {
 func DefaultRawConfig() RawConfig {
 	return RawConfig{
 		Dir:           os.Getenv("PWD"),
-		Parallel:      runtime.NumCPU(),
+		Parallel:      min(runtime.NumCPU(), maxDefaultCPUs),
 		Port:          defaultPort,
 		Video:         true,
 		Images:        true,

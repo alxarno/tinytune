@@ -84,7 +84,7 @@ func (p Previewer) Pull(src Source) (Data, error) {
 	}
 
 	if toImage {
-		preview, err := imagePreview(src.Path())
+		preview, err := imagePreview(src.Path(), src.Size())
 		if err != nil {
 			return defaultPreview, fmt.Errorf("%w: %w", ErrImagePreview, err)
 		}

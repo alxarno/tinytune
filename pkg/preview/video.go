@@ -6,19 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image"
-	"image/draw"
 	"io"
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/timeutil"
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/hashicorp/go-version"
-	"golang.org/x/image/tiff"
 )
 
 var (
@@ -33,6 +29,7 @@ var (
 
 	ErrPullSnapshot = errors.New("failed to pull snapshot")
 	ErrImageDecode  = errors.New("failed to decode image")
+	ErrImagesJoin   = errors.New("failed to join images")
 	ErrImageEncode  = errors.New("failed to encode image")
 	ErrImageScale   = errors.New("failed to scale image")
 	ErrBufferCopy   = errors.New("failed to copy buffer")
@@ -59,86 +56,69 @@ type VideoParams struct {
 	timeout time.Duration
 }
 
-type videoPullSnapshot = func(string, time.Duration, io.Writer)
+func getSnapshot(path string, timestamp time.Duration, timeout time.Duration, w io.Writer) error {
+	ctx := context.Background()
 
-func getVideoSnapshoter(wg *sync.WaitGroup, errCh chan error, params VideoParams) videoPullSnapshot {
-	return func(path string, timestamp time.Duration, w io.Writer) {
-		defer wg.Done()
-
-		ctx := context.Background()
-
-		if params.timeout > 0 {
-			var cancel func()
-			ctx, cancel = context.WithTimeout(context.Background(), params.timeout)
-			defer cancel()
-		}
-
-		ffmpegTimestamp := timeutil.String(timestamp)
-
-		seekOptions := []string{"-loglevel", "quiet", "-accurate_seek", "-ss", ffmpegTimestamp}
-		inputOptions := []string{"-i", path}
-		outputOptions := []string{"-frames:v", "1", "-c:v", "bmp", "-f", "image2", "pipe:1"}
-
-		options := seekOptions
-		options = append(options, inputOptions...)
-		options = append(options, outputOptions...)
-		cmd := exec.CommandContext(ctx, "ffmpeg", options...)
-		stdErrBuf := bytes.NewBuffer(nil)
-		cmd.Stdout = w
-		cmd.Stderr = stdErrBuf
-
-		if err := cmd.Run(); err != nil {
-			errCh <- fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
-		}
+	if timeout > 0 {
+		var cancel func()
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 	}
+
+	ffmpegTimestamp := timeutil.String(timestamp)
+
+	seekOptions := []string{"-loglevel", "quiet", "-accurate_seek", "-ss", ffmpegTimestamp}
+	inputOptions := []string{"-i", path}
+	outputOptions := []string{"-vf", "scale=256:-1", "-frames:v", "1", "-c:v", "mjpeg", "-f", "image2", "pipe:1"}
+
+	options := seekOptions
+	options = append(options, inputOptions...)
+	options = append(options, outputOptions...)
+	cmd := exec.CommandContext(ctx, "ffmpeg", options...)
+	stdErrBuf := bytes.NewBuffer(nil)
+	cmd.Stdout = w
+	cmd.Stderr = stdErrBuf
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
+	}
+
+	return nil
 }
 
 func combineImagesToPreview(buffers []*bytes.Buffer) ([]byte, error) {
-	firstImage, _, err := image.Decode(buffers[0])
+	preview, err := vips.NewImageFromBuffer(buffers[0].Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrImageDecode, err)
 	}
+	defer preview.Close()
 
-	height := firstImage.Bounds().Dy()
-	previewHeight := height * len(buffers)
-	previewImage := image.NewRGBA(image.Rectangle{
-		Min: firstImage.Bounds().Min,
-		Max: image.Point{
-			X: firstImage.Bounds().Max.X,
-			Y: previewHeight,
-		},
-	})
-	draw.Draw(previewImage, previewImage.Bounds(), firstImage, image.Point{0, 0}, draw.Src)
+	images := make([]*vips.ImageRef, 0, len(buffers)-1)
 
-	for i, v := range buffers[1:] {
-		img, _, err := image.Decode(v)
+	defer func() {
+		for _, v := range images {
+			v.Close()
+		}
+	}()
+
+	for _, v := range buffers[1:] {
+		image, err := vips.NewImageFromBuffer(v.Bytes())
 		if err != nil {
-			return nil, fmt.Errorf("%w [%d]: %w", ErrImageDecode, i, err)
+			return nil, fmt.Errorf("%w: %w", ErrImageDecode, err)
 		}
 
-		s := image.Point{0, (i + 1) * height}
-		r := image.Rectangle{s, s.Add(img.Bounds().Size())}
-
-		draw.Draw(previewImage, r, img, image.Point{0, 0}, draw.Src)
+		images = append(images, image)
 	}
 
-	buff := bytes.Buffer{}
-	err = tiff.Encode(&buff, previewImage, &tiff.Options{
-		Compression: tiff.Uncompressed,
-		Predictor:   false,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrImageEncode, err)
+	if err := preview.ArrayJoin(images, 1); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrImagesJoin, err)
 	}
 
-	image, err := vips.NewImageFromReader(&buff)
-	if err != nil {
+	if err := downScale(preview, imageCollage); err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrImageScale, err)
 	}
-	defer image.Close()
 
-	return downScale(image, imageCollage)
+	return exportWebP(preview)
 }
 
 func getTimeCodes(duration time.Duration) ([]time.Duration, []bool) {
@@ -174,22 +154,13 @@ func getTimeCodes(duration time.Duration) ([]time.Duration, []bool) {
 func produceVideoPreview(path string, duration time.Duration, params VideoParams) ([]byte, error) {
 	timeCodes, repeats := getTimeCodes(duration)
 	images := make([]*bytes.Buffer, len(repeats))
-	waitGroup := new(sync.WaitGroup)
-	errs := make(chan error, len(timeCodes))
 
 	for index, timestamp := range timeCodes {
-		images[index] = new(bytes.Buffer)
+		images[index] = &bytes.Buffer{}
 
-		waitGroup.Add(1)
-
-		go getVideoSnapshoter(waitGroup, errs, params)(path, timestamp, images[index])
-	}
-
-	waitGroup.Wait()
-	close(errs)
-
-	for err := range errs {
-		return nil, fmt.Errorf("%w: %w", ErrPullSnapshot, err)
+		if err := getSnapshot(path, timestamp, params.timeout, images[index]); err != nil {
+			return nil, err
+		}
 	}
 
 	for index, repeat := range repeats {
@@ -197,13 +168,7 @@ func produceVideoPreview(path string, duration time.Duration, params VideoParams
 			continue
 		}
 
-		images[index] = new(bytes.Buffer)
-
-		// just copy data from previous buffer
-		_, err := images[index].Write(images[index-1].Bytes())
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrBufferCopy, err)
-		}
+		images[index] = images[index-1]
 	}
 
 	return combineImagesToPreview(images)

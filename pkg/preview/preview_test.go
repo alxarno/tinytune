@@ -51,11 +51,11 @@ func TestPreview(t *testing.T) {
 	}{
 		{
 			source:   mockSource{image: true, path: "../../test/img/image.jpg"},
-			dataHash: "08b43a0683e84c4b26f61c2e143f813e11f08808a792ab86d819c69434db715a",
+			dataHash: "a7dfa90ec80959dd4239a48b394c5e0e98aaabc57710f8691bf0244f6d15ce23",
 		},
 		{
 			source:   mockSource{video: true, path: "../../test/sample.mp4"},
-			dataHash: "df04235b400d9e0d623681102ca40c7424ca5efff0014e4e1b74d0452c9030fb",
+			dataHash: "b5039ea0fe138cd39b7c5b1b1bad83324fcb02f73862094a3408bc74ea522b36",
 		},
 		{
 			source:   mockSource{path: "../../test/sample.txt"},

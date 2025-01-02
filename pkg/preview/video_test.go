@@ -3,11 +3,16 @@ package preview
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+var (
+	ErrPreviewLengthMismatch = errors.New("preview length mismatch")
 )
 
 func TestPreviewVideo(t *testing.T) {
@@ -25,29 +30,29 @@ func TestPreviewVideo(t *testing.T) {
 		{
 			Name:       ".mp4",
 			SourcePath: "../../test/sample.mp4",
-			DataLength: 34428,
+			DataLength: 33492,
 			Duration:   time.Second * 5,
 			Width:      1280,
 			Height:     720,
-			Hash:       "df04235b400d9e0d623681102ca40c7424ca5efff0014e4e1b74d0452c9030fb",
+			Hash:       "b5039ea0fe138cd39b7c5b1b1bad83324fcb02f73862094a3408bc74ea522b36",
 		},
 		{
 			Name:       ".flv",
 			SourcePath: "../../test/video/sample_960x400_ocean_with_audio.flv",
-			DataLength: 12534,
+			DataLength: 12448,
 			Duration:   time.Second * 46,
 			Width:      960,
 			Height:     400,
-			Hash:       "27374409e6121e4462ae96bc36ed9dc116913da3d45a297ccb6e92b9109a9be4",
+			Hash:       "e65ce8f7043b05951ec56cfd1f141398745b66478247978f6075e695c8631af7",
 		},
 		{
 			Name:       "short",
 			SourcePath: "../../test/short.mp4",
-			DataLength: 34500,
+			DataLength: 33762,
 			Duration:   time.Second * 3,
 			Width:      1280,
 			Height:     720,
-			Hash:       "60e585b7a0ad868d2c1b3237b6d163ea58faac560e1684604a7d8cca99a165b7",
+			Hash:       "05c84f197db0752646e50fedc1156e165a2a226ef5c207aa72c2543202c9dad3",
 		},
 	}
 
@@ -55,17 +60,21 @@ func TestPreviewVideo(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			t.Parallel()
 
-			assert := assert.New(t)
+			require := require.New(t)
 			preview, err := videoPreview(testCase.SourcePath, VideoParams{timeout: time.Minute})
-			require.NoError(t, err)
-			assert.Len(preview.Data(), testCase.DataLength)
-			assert.EqualValues(testCase.Duration, preview.Duration())
+			require.NoError(err)
+			require.Len(
+				preview.Data(),
+				testCase.DataLength,
+				fmt.Errorf("%w: %d != %d", ErrPreviewLengthMismatch, len(preview.Data()), testCase.DataLength),
+			)
+			require.EqualValues(testCase.Duration, preview.Duration())
 			width, height := preview.Resolution()
-			assert.Equal(testCase.Width, width)
-			assert.Equal(testCase.Height, height)
+			require.Equal(testCase.Width, width)
+			require.Equal(testCase.Height, height)
 
 			hash := sha256.Sum256(preview.Data())
-			assert.Equal(testCase.Hash, hex.EncodeToString(hash[:]))
+			require.Equal(testCase.Hash, hex.EncodeToString(hash[:]))
 		})
 	}
 }

@@ -43,6 +43,7 @@ const (
     This application uses the FFmpeg program as a tool for interacting with video files.
     Make sure that it is available for calling.`
 	ServerCLICategory = "Server:"
+	DebugCategory     = "Debug:"
 )
 
 //nolint:lll

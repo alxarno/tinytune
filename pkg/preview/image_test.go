@@ -23,18 +23,18 @@ func TestPreviewImage(t *testing.T) {
 		{
 			Name:       ".jpg",
 			SourcePath: "../../test/img/image.jpg",
-			DataLength: 9946,
+			DataLength: 11312,
 			Width:      750,
 			Height:     1000,
-			Hash:       "08b43a0683e84c4b26f61c2e143f813e11f08808a792ab86d819c69434db715a",
+			Hash:       "a7dfa90ec80959dd4239a48b394c5e0e98aaabc57710f8691bf0244f6d15ce23",
 		},
 		{
 			Name:       ".gif",
 			SourcePath: "../../test/sample_minions.gif",
-			DataLength: 7582,
+			DataLength: 8970,
 			Width:      400,
 			Height:     200,
-			Hash:       "ac8e6312e7820089127bce5ca94242a579283428f70ec95b0777f5c6c1dba9f1",
+			Hash:       "118fbbdad8bfe93ac4982dfac7f26e418b5354eece720a78359e3ca1bc209757",
 		},
 	}
 
@@ -43,7 +43,7 @@ func TestPreviewImage(t *testing.T) {
 			t.Parallel()
 
 			assert := assert.New(t)
-			preview, err := imagePreview(testCase.SourcePath)
+			preview, err := imagePreview(testCase.SourcePath, 1<<10)
 			require.NoError(t, err)
 			assert.Len(preview.Data(), testCase.DataLength)
 			width, height := preview.Resolution()
