@@ -10,15 +10,15 @@ export const videoInit = (video) => {
     video.setAttribute("poster", originSrc.replace("origin", "preview"))
     
 
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        return
-    } else if (Hls.isSupported()) {
+    if (Hls.isSupported()) {
         var hls = new Hls();
         hls.loadSource(video.getAttribute("src"));
         hls.attachMedia(video);
         hls.on(Hls.Events.BUFFER_CREATED, () => video.removeAttribute("poster"));
     }
+}
 
+export const initVideoTransitions = (video) => {
     video.parentElement.onpointerdown = (e) => {
         e.stopImmediatePropagation();
     }

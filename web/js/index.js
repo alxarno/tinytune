@@ -1,6 +1,6 @@
 import { Popover } from 'bootstrap';
 require("fslightbox")
-import { videoInit  } from "./video";
+import { videoInit, initVideoTransitions  } from "./video";
 import { zoom } from "./zoom"
 import { observeDOM } from "./dom";
 import { onSearch, highlightSearchResults } from "./search"
@@ -34,6 +34,7 @@ const initLightBox = () => {
     fsLightbox.props.loadOnlyCurrentSource = true;
     fsLightbox.props.onOpen = () => {
         const videosItems = Array.from(document.querySelectorAll("video"))
+        videosItems.forEach(initVideoTransitions)
         const streams = videosItems.filter(e => e.getAttribute("src").includes("hls"))
         streams.forEach(videoInit)
     }

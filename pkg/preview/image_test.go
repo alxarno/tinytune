@@ -23,18 +23,18 @@ func TestPreviewImage(t *testing.T) {
 		{
 			Name:       ".jpg",
 			SourcePath: "../../test/img/image.jpg",
-			DataLength: 11312,
+			DataLength: 10332,
 			Width:      750,
 			Height:     1000,
-			Hash:       "a7dfa90ec80959dd4239a48b394c5e0e98aaabc57710f8691bf0244f6d15ce23",
+			Hash:       "182e0008de9bdd21a8af91ce6e6cbc57197e604886de71791133147f217c6fa0",
 		},
 		{
 			Name:       ".gif",
 			SourcePath: "../../test/sample_minions.gif",
-			DataLength: 8970,
+			DataLength: 7794,
 			Width:      400,
 			Height:     200,
-			Hash:       "118fbbdad8bfe93ac4982dfac7f26e418b5354eece720a78359e3ca1bc209757",
+			Hash:       "846c829de9f1e4490e7025dcba99c903a7cb93289cd669b28790ffbc838e3847",
 		},
 	}
 

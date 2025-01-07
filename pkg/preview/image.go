@@ -4,40 +4,50 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"runtime"
+	"os"
 	"strings"
 
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
 const (
-	maxWidthHeight    = 256
-	vipsMaxCacheMem   = 16 * 1024 * 1024
-	vipsMaxCacheSize  = 16 * 1024 * 1024
-	vipsMaxCacheFiles = 4
-	jpegShrinkFactor  = 8
+	maxWidthHeight   = 256
+	jpegShrinkFactor = 8
 
 	imageDefault = iota
 	imageCollage
 )
 
 var (
-	ErrVipsLoadImage   = errors.New("failed load image")
-	ErrVipsResizeImage = errors.New("failed resize image")
-	ErrImageDownScale  = errors.New("failed to downscale the image")
-	ErrImageExport     = errors.New("failed export the image")
+	ErrVipsLoadImage            = errors.New("failed load image")
+	ErrVipsResizeImage          = errors.New("failed resize image")
+	ErrImageDownScale           = errors.New("failed to downscale the image")
+	ErrImageColorSpaceTransform = errors.New("failed to transform the image's color space")
+	ErrImageExport              = errors.New("failed export the image")
 )
 
 //nolint:gochecknoinits
 func init() {
+	os.Setenv("MALLOC_ARENA_MAX", "2")
 	vips.LoggingSettings(func(domain string, level vips.LogLevel, msg string) {
-		slog.Info(msg, slog.String("domain", domain), slog.Int("level", int(level)), slog.String("source", "VIPS"))
+		domainSlog := slog.String("source", domain)
+
+		switch level {
+		case vips.LogLevelCritical:
+		case vips.LogLevelError:
+			slog.Error(msg, domainSlog)
+		case vips.LogLevelDebug:
+			slog.Debug(msg, domainSlog)
+		case vips.LogLevelWarning:
+			slog.Warn(msg, domainSlog)
+		case vips.LogLevelInfo:
+		case vips.LogLevelMessage:
+		default:
+			slog.Info(msg, domainSlog)
+		}
 	}, vips.LogLevelError)
 	vips.Startup(&vips.Config{
-		ConcurrencyLevel: runtime.NumCPU(),
-		MaxCacheMem:      vipsMaxCacheMem,
-		MaxCacheSize:     vipsMaxCacheSize,
-		MaxCacheFiles:    vipsMaxCacheFiles,
+		MaxCacheFiles: 1,
 	})
 }
 
@@ -99,7 +109,7 @@ func downScale(image *vips.ImageRef, imageType int) error {
 		}
 	}
 
-	if err := image.Resize(scale, vips.KernelNearest); err != nil {
+	if err := image.Resize(scale, vips.KernelAuto); err != nil {
 		return fmt.Errorf("%w: %w", ErrVipsResizeImage, err)
 	}
 
