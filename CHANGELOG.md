@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.3](https://github.com/alxarno/tinytune/compare/v1.5.2...v1.5.3) (2025-01-07)
+
+
+### Bug Fixes
+
+* video swaping ([47c115d](https://github.com/alxarno/tinytune/commit/47c115dd95e984bf77e3f2655d81f33b6ea739f4))
+
 ## [1.5.2](https://github.com/alxarno/tinytune/compare/v1.5.1...v1.5.2) (2025-01-02)
 
 
