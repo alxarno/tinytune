@@ -3,8 +3,6 @@ package preview
 import (
 	"errors"
 	"fmt"
-	"log/slog"
-	"os"
 	"strings"
 
 	"github.com/davidbyttow/govips/v2/vips"
@@ -26,52 +24,16 @@ var (
 	ErrImageExport              = errors.New("failed export the image")
 )
 
-//nolint:gochecknoinits
-func init() {
-	os.Setenv("MALLOC_ARENA_MAX", "2")
-	vips.LoggingSettings(func(domain string, level vips.LogLevel, msg string) {
-		domainSlog := slog.String("source", domain)
-
-		switch level {
-		case vips.LogLevelCritical:
-		case vips.LogLevelError:
-			slog.Error(msg, domainSlog)
-		case vips.LogLevelDebug:
-			slog.Debug(msg, domainSlog)
-		case vips.LogLevelWarning:
-			slog.Warn(msg, domainSlog)
-		case vips.LogLevelInfo:
-		case vips.LogLevelMessage:
-		default:
-			slog.Info(msg, domainSlog)
-		}
-	}, vips.LogLevelError)
-	vips.Startup(&vips.Config{
-		MaxCacheFiles: 1,
-	})
-}
-
-func imagePreview(path string, size int64) (data, error) {
+func imagePreview(path string) (data, error) {
 	preview := data{}
-	params := &vips.ImportParams{}
 
-	// for big jpegs (>500kb), use shrink load
-	if size > 1<<19 {
-		params.JpegShrinkFactor.Set(jpegShrinkFactor)
-	}
-
-	image, err := vips.LoadImageFromFile(path, params)
+	image, err := vips.NewThumbnailFromFile(path, maxWidthHeight, maxWidthHeight, vips.InterestingAll)
 	if err != nil {
 		return preview, fmt.Errorf("%w: %w", ErrVipsLoadImage, err)
 	}
 	defer image.Close()
 
 	preview.width, preview.height = image.Width(), image.Height()
-
-	if err := downScale(image, imageDefault); err != nil {
-		return preview, fmt.Errorf("%w: %w", ErrImageDownScale, err)
-	}
-
 	preview.data, err = exportWebP(image)
 
 	return preview, err

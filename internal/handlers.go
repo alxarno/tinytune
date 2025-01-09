@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"path/filepath"
 	"slices"
@@ -205,6 +206,11 @@ func (s Server) registerHandlers(silent bool) http.Handler {
 
 	staticHandler := http.StripPrefix("/static", http.FileServer(http.FS(s.getAssets())))
 	mux.Handle("GET /static/", chain.Then(staticHandler))
+	mux.Handle("GET /debug/pprof/", http.HandlerFunc(pprof.Index))
+	mux.Handle("GET /debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	mux.Handle("GET /debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	mux.Handle("GET /debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	mux.Handle("GET /debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 
 	return mux
 }

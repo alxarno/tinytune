@@ -126,6 +126,8 @@ func (mock mockPreviewGenerator) Pull(_ preview.Source) (preview.Data, error) {
 	return mockPreviewData{data: mock.sampleData}, nil
 }
 
+func (mock mockPreviewGenerator) Close() {}
+
 func TestIndexFiles(t *testing.T) {
 	t.Parallel()
 

@@ -21,6 +21,7 @@ var (
 
 type PreviewGenerator interface {
 	Pull(item preview.Source) (preview.Data, error)
+	Close()
 }
 
 type indexBuilderParams struct {
@@ -65,6 +66,10 @@ func (ib *indexBuilder) run(ctx context.Context, r io.Reader) error {
 
 	if err := ib.loadFiles(ctx); err != nil {
 		return err
+	}
+
+	if ib.params.preview != nil {
+		ib.params.preview.Close()
 	}
 
 	if err := ib.loadTree(); err != nil {

@@ -122,12 +122,12 @@ func TestIndexBuilderClearRemovedFiles(t *testing.T) {
 
 	itemNextPreviewDataHash := "b9237e340eb886b5e437e4bc6fd19be612ff6653f3f733c3998ef20f320e6c20"
 
-	imagePrevew, err := index.PullPreview(image.ID)
+	imagePreview, err := index.PullPreview(image.ID)
 	require.NoError(err)
-	require.NotNil(imagePrevew)
+	require.NotNil(imagePreview)
 
 	h := sha256.New()
-	h.Write(imagePrevew)
+	h.Write(imagePreview)
 
 	require.Equal(itemNextPreviewDataHash, hex.EncodeToString(h.Sum(nil)))
 }

@@ -9,6 +9,8 @@ VERSION=0.0.1
 COMMIT_HASH=$(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP=$(shell date '+%Y-%m-%dT%H:%M:%S')
 LDFLAGS=-ldflags "-X 'main.Version=${VERSION}' -X 'main.CommitHash=${COMMIT_HASH}' -X 'main.BuildTimestamp=${BUILD_TIMESTAMP}' -X 'main.Mode=Production'"
+CGO_LDFLAGS=-ljemalloc
+CGO_CFLAGS=-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free
 
 .PHONY: build
 build: ## build executables
@@ -16,13 +18,17 @@ build: ## build executables
 	make -C ./web build
 	mkdir -p out/
 	echo "Building executable"
-	GOARCH=amd64 GOOS=linux go build ${LDFLAGS} -o out/${BINARY_NAME}_linux_amd64 cmd/tinytune/tinytune.go
+	GOARCH=amd64 \
+        GOOS=linux \
+        CGO_CFLAGS="${CGO_CFLAGS}" \
+        CGO_LDFLAGS="${CGO_LDFLAGS}" \
+        go build ${LDFLAGS} -o out/${BINARY_NAME}_linux_amd64 cmd/tinytune/tinytune.go
 	chmod +x out/${BINARY_NAME}_linux_amd64
 	echo "Done"
 
 .PHONY: run
 run: ## run tinytune server
-	go run cmd/tinytune/tinytune.go ./test/
+	CGO_CFLAGS="${CGO_CFLAGS}" CGO_LDFLAGS="${CGO_LDFLAGS}" go run cmd/tinytune/tinytune.go ./test/
 
 .PHONY: watch
 watch: ## run tinytune server and frontend in hot-reload way
@@ -40,7 +46,7 @@ test: ## run server tests
 
 .PHONY: ubuntu
 ubuntu: ## Install deps for ubuntu (libvips, ffmpeg)
-	sudo apt install build-essential libvips pkg-config libvips-dev ffmpeg -y
+	sudo apt install build-essential libvips pkg-config libvips-dev libjemalloc-dev ffmpeg -y
 	npm i --prefix ./web
 
 .PHONY: coverage

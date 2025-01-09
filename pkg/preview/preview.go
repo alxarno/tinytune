@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"sync/atomic"
 	"time"
+
+	"github.com/davidbyttow/govips/v2/vips"
 )
 
 var (
@@ -30,6 +32,29 @@ type Previewer struct {
 	videoParams   VideoParams
 	maxFileSize   int64
 	timeout       time.Duration
+}
+
+//nolint:gochecknoinits
+func init() {
+	vips.LoggingSettings(func(domain string, level vips.LogLevel, msg string) {
+		domainSlog := slog.String("source", domain)
+
+		switch level {
+		case vips.LogLevelCritical, vips.LogLevelError:
+			slog.Error(msg, domainSlog)
+		case vips.LogLevelDebug:
+			slog.Debug(msg, domainSlog)
+		case vips.LogLevelWarning:
+			slog.Warn(msg, domainSlog)
+		case vips.LogLevelMessage, vips.LogLevelInfo:
+			slog.Info(msg, domainSlog)
+		default:
+			slog.Info(msg, domainSlog)
+		}
+	}, vips.LogLevelError)
+	vips.Startup(&vips.Config{
+		MaxCacheFiles: 1,
+	})
 }
 
 func NewPreviewer(opts ...Option) (*Previewer, error) {
@@ -84,7 +109,7 @@ func (p Previewer) Pull(src Source) (Data, error) {
 	}
 
 	if toImage {
-		preview, err := imagePreview(src.Path(), src.Size())
+		preview, err := imagePreview(src.Path())
 		if err != nil {
 			return defaultPreview, fmt.Errorf("%w: %w", ErrImagePreview, err)
 		}
@@ -113,4 +138,8 @@ func (p Previewer) Pull(src Source) (Data, error) {
 	}
 
 	return defaultPreview, nil
+}
+
+func (p Previewer) Close() {
+	vips.Shutdown()
 }
