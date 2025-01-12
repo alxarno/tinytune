@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/alxarno/tinytune/compare/v1.5.3...v1.6.0) (2025-01-12)
+
+
+### Features
+
+* ffmpeg cuda option ([1ac021e](https://github.com/alxarno/tinytune/commit/1ac021ee334523c1cb44455ed16a4aacb952c917))
+
+
+### Bug Fixes
+
+* huge memory consumption within previews producing stage ([13670ff](https://github.com/alxarno/tinytune/commit/13670ff9748184ebdcc791fdd2549a39142203a1))
+
 ## [1.5.3](https://github.com/alxarno/tinytune/compare/v1.5.2...v1.5.3) (2025-01-07)
 
 
