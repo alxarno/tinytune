@@ -8,9 +8,11 @@ import (
 	"github.com/alxarno/tinytune/pkg/index"
 )
 
-var ErrPathMatch = errors.New("failed to match path")
-var ErrIncludes = errors.New("failed filter includes files")
-var ErrExcludes = errors.New("failed filter exclude files")
+var (
+	ErrPathMatch = errors.New("failed to match path")
+	ErrIncludes  = errors.New("failed filter includes files")
+	ErrExcludes  = errors.New("failed filter exclude files")
+)
 
 func GetExcludedFiles(files []index.FileMeta, included, excluded []*regexp.Regexp) map[string]struct{} {
 	excludedFiles := filter(files, filterHandler(excluded))

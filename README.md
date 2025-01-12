@@ -86,7 +86,7 @@ USAGE:
    tinytune [data folder path] [global options]
 
 VERSION:
-   1.2.0
+   v1.6.0
 
 AUTHOR:
    alxarno <alexarnowork@gmail.com>
@@ -113,18 +113,19 @@ GLOBAL OPTIONS:
    --image           allows the server to process images, to show thumbnails (default: true)
    --includes value  this parameter will help to include back into processing files that were disabled by the '--exclude' parameter. Regular expressions are also used here, separated by commas.
                 Example: 'video/sample[.]mp4$' -> will return the sample.mp4 file, which is located in the video folder (no matter at what level the folder is located) to processing
-   --max-file-size value  this option restricts files from being processed if their size exceeds a certain value. Values can be specified as follows: 25KB, 10mb, 1GB, 2gb (default: "-1B")
-   --max-images value     limits the number of image files to be processed (thumbnails producing) (default: -1)
-   --max-videos value     limits the number of video files to be processed (thumbnails producing) (default: -1)
-   --parallel value       simultaneous image/video processing (!large values increase RAM consumption!) (default: 16)
-   --timeout value        sometimes some files take too long to process, here you can specify a time limit in which they should be processed. Examples of values: 5m, 120s (default: "2m")
-   --video                allows the server to process videos, for playing them in browser and show thumbnails (default: true)
+   --max-file-size value           this option restricts files from being processed if their size exceeds a certain value. Values can be specified as follows: 25KB, 10mb, 1GB, 2gb (default: "-1B")
+   --max-images value              limits the number of image files to be processed (thumbnails producing) (default: -1)
+   --max-videos value              limits the number of video files to be processed (thumbnails producing) (default: -1)
+   --parallel value                simultaneous image/video processing (!large values increase RAM consumption!) (default: 16)
+   --timeout value                 sometimes some files take too long to process, here you can specify a time limit in which they should be processed. Examples of values: 5m, 120s (default: "2m")
+   --video                         allows the server to process videos, for playing them in browser and show thumbnails (default: true)
+   --video-processing-accel value  processing type for videos: 'auto', 'hardware', 'software' (default: "auto")
 
    Server:
 
    --port value, -p value  http server port (default: 8080)
    --streaming value       some files cannot be played in the browser, such as flv and avi. Therefore, such files need to be transcoded.
-                Specify here, using regular expressions, which files you would like to transcode on the fly for browser viewing (default: "\\.(flv|f4v|avi)$")
+                Specify here, using regular expressions, which files you would like to transcode on the fly for browser viewing (default: "\\.(flv|f4v|avi|wmv|mov)$")
 
 
 COPYRIGHT:
