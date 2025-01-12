@@ -20,7 +20,7 @@ var (
 )
 
 type PreviewGenerator interface {
-	Pull(item preview.Source) (preview.Data, error)
+	Pull(ctx context.Context, item preview.Source) (preview.Data, error)
 	Close()
 }
 
@@ -131,7 +131,7 @@ func (ib *indexBuilder) loadFile(
 		defer sem.Release(1)
 		defer wg.Done()
 
-		preview, err := ib.params.preview.Pull(metaItem)
+		preview, err := ib.params.preview.Pull(ctx, metaItem)
 		if err != nil {
 			slog.Error(fmt.Errorf("%w (%s): %w", ErrPreviewPull, metaItem.RelativePath, err).Error())
 			dst <- loadedFile{metaItem, nil}

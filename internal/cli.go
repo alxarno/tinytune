@@ -10,25 +10,27 @@ import (
 	"time"
 
 	"github.com/alxarno/tinytune/pkg/bytesutil"
+	"github.com/alxarno/tinytune/pkg/preview"
 )
 
 const defaultPort = 8080
 const maxPortNumber = 65536
 
 type RawConfig struct {
-	Dir           string
-	Parallel      int
-	Video         bool
-	Images        bool
-	MaxImages     int64
-	MaxVideos     int64
-	Includes      string
-	Excludes      string
-	MaxFileSize   string
-	Streaming     string
-	MediaTimeout  string
-	IndexFileSave bool
-	Port          int
+	Dir                  string
+	Parallel             int
+	Video                bool
+	VideoProcessingAccel string
+	Images               bool
+	MaxImages            int64
+	MaxVideos            int64
+	Includes             string
+	Excludes             string
+	MaxFileSize          string
+	Streaming            string
+	MediaTimeout         string
+	IndexFileSave        bool
+	Port                 int
 }
 
 type MediaTypeConfig struct {
@@ -54,6 +56,7 @@ func (c MediaTypeConfig) Print(name string) {
 type ProcessConfig struct {
 	Parallel    int
 	Video       MediaTypeConfig
+	VideoAccel  preview.VideoProcessingAccelType
 	Timeout     time.Duration
 	Image       MediaTypeConfig
 	Includes    []*regexp.Regexp
@@ -90,7 +93,11 @@ func (c ProcessConfig) Print() {
 	}
 
 	if c.MaxFileSize != -1 {
-		slog.String("max-file-size", bytesutil.PrettyByteSize(c.MaxFileSize))
+		params = append(params, slog.String("max-file-size", bytesutil.PrettyByteSize(c.MaxFileSize)))
+	}
+
+	if c.VideoAccel != preview.Auto {
+		params = append(params, slog.String("video-processing-accel", string(c.VideoAccel)))
 	}
 
 	slog.Info(
@@ -128,8 +135,10 @@ func (c Config) Print() {
 
 func DefaultRawConfig() RawConfig {
 	return RawConfig{
-		Dir:           os.Getenv("PWD"),
-		Parallel:      runtime.NumCPU(),
+		Dir:                  os.Getenv("PWD"),
+		Parallel:             runtime.NumCPU(),
+		VideoProcessingAccel: string(preview.Auto),
+		// Parallel:             8,
 		Port:          defaultPort,
 		Video:         true,
 		Images:        true,
@@ -156,6 +165,7 @@ func NewConfig(raw RawConfig) Config {
 			Timeout:     getDuration(raw.MediaTimeout),
 			Parallel:    raw.Parallel,
 			Video:       MediaTypeConfig{raw.Video, raw.MaxVideos},
+			VideoAccel:  preview.VideoProcessingAccelType(raw.VideoProcessingAccel),
 			Image:       MediaTypeConfig{raw.Images, raw.MaxImages},
 			Includes:    getRegularExpressions(raw.Includes),
 			Excludes:    getRegularExpressions(raw.Excludes),

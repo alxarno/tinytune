@@ -122,7 +122,7 @@ func (m mockPreviewData) Duration() time.Duration {
 }
 
 //nolint:ireturn
-func (mock mockPreviewGenerator) Pull(_ preview.Source) (preview.Data, error) {
+func (mock mockPreviewGenerator) Pull(_ context.Context, _ preview.Source) (preview.Data, error) {
 	return mockPreviewData{data: mock.sampleData}, nil
 }
 

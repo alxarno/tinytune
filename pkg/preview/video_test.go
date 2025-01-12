@@ -1,6 +1,7 @@
 package preview
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -30,29 +31,29 @@ func TestPreviewVideo(t *testing.T) {
 		{
 			Name:       ".mp4",
 			SourcePath: "../../test/sample.mp4",
-			DataLength: 33492,
+			DataLength: 35134,
 			Duration:   time.Second * 5,
 			Width:      1280,
 			Height:     720,
-			Hash:       "b5039ea0fe138cd39b7c5b1b1bad83324fcb02f73862094a3408bc74ea522b36",
+			Hash:       "7eda8710470a1547e43e115a7dc98d9a24bef80d23cd4014f0848e17bb0af1b9",
 		},
 		{
 			Name:       ".flv",
 			SourcePath: "../../test/video/sample_960x400_ocean_with_audio.flv",
-			DataLength: 12448,
+			DataLength: 12476,
 			Duration:   time.Second * 46,
 			Width:      960,
 			Height:     400,
-			Hash:       "e65ce8f7043b05951ec56cfd1f141398745b66478247978f6075e695c8631af7",
+			Hash:       "daecc12d47bc6b36b0f8ff828552b9da6da98bea77727422a9d2a7cae8ef96cf",
 		},
 		{
 			Name:       "short",
 			SourcePath: "../../test/short.mp4",
-			DataLength: 33762,
+			DataLength: 35228,
 			Duration:   time.Second * 3,
 			Width:      1280,
 			Height:     720,
-			Hash:       "05c84f197db0752646e50fedc1156e165a2a226ef5c207aa72c2543202c9dad3",
+			Hash:       "8a7a907329c6670540c89a78bb6722d362c9dd635894cd3f0e1b1202891d5402",
 		},
 	}
 
@@ -61,7 +62,7 @@ func TestPreviewVideo(t *testing.T) {
 			t.Parallel()
 
 			require := require.New(t)
-			preview, err := videoPreview(testCase.SourcePath, VideoParams{timeout: time.Minute})
+			preview, err := videoPreview(context.Background(), testCase.SourcePath, VideoParams{timeout: time.Minute})
 			require.NoError(err)
 			require.Len(
 				preview.Data(),

@@ -11,9 +11,6 @@ import (
 const (
 	maxWidthHeight   = 256
 	jpegShrinkFactor = 8
-
-	imageDefault = iota
-	imageCollage
 )
 
 var (
@@ -55,25 +52,4 @@ func exportWebP(image *vips.ImageRef) ([]byte, error) {
 	}
 
 	return bytes, nil
-}
-
-func downScale(image *vips.ImageRef, imageType int) error {
-	scale := 1.0
-
-	switch imageType {
-	case imageDefault:
-		if image.Width() > maxWidthHeight || image.Height() > maxWidthHeight {
-			scale = float64(maxWidthHeight) / float64(max(image.Width(), image.Height()))
-		}
-	case imageCollage:
-		if image.Width() > maxWidthHeight {
-			scale = float64(maxWidthHeight) / float64(image.Width())
-		}
-	}
-
-	if err := image.Resize(scale, vips.KernelAuto); err != nil {
-		return fmt.Errorf("%w: %w", ErrVipsResizeImage, err)
-	}
-
-	return nil
 }

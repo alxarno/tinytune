@@ -3,129 +3,98 @@ package preview
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os/exec"
-	"strconv"
-	"strings"
+	"slices"
 	"time"
-
-	"github.com/alxarno/tinytune/pkg/timeutil"
-	"github.com/davidbyttow/govips/v2/vips"
-	"github.com/hashicorp/go-version"
 )
 
 var (
-	ErrCommandNotFound          = errors.New("not found")
-	ErrIncorrectFFmpegVersion   = errors.New("can't be parsed")
-	ErrOutdatedFFmpegVersion    = errors.New("is outdated")
-	ErrMetaInfoUnmarshal        = errors.New("failed to decode file's meta information")
-	ErrMetaInfoFramesCountParse = errors.New("failed to parse frames count from meta information")
-	ErrMetaInfoDurationParse    = errors.New("failed to parse duration from meta information")
-	ErrVideoStreamNotFound      = errors.New("video stream not found")
-	ErrParseFrameRate           = errors.New("failed to parse frame rate")
-
 	ErrPullSnapshot = errors.New("failed to pull snapshot")
 	ErrImageDecode  = errors.New("failed to decode image")
+	ErrImageCopy    = errors.New("failed to copy image")
 	ErrImagesJoin   = errors.New("failed to join images")
 	ErrImageEncode  = errors.New("failed to encode image")
 	ErrImageScale   = errors.New("failed to scale image")
 	ErrBufferCopy   = errors.New("failed to copy buffer")
 )
 
-type probeFormat struct {
-	Duration string `json:"duration"`
-}
+const (
+	VideoPreviewCollageItems = 5
+)
 
-type probeStream struct {
-	Frames       string `json:"nb_frames"` //nolint:tagliatelle
-	Width        int    `json:"width"`
-	Height       int    `json:"height"`
-	AvgFrameRate string `json:"avg_frame_rate"` //nolint:tagliatelle
-	CodecType    string `json:"codec_type"`     //nolint:tagliatelle
-}
+type VideoProcessingAccelType string
 
-type probeData struct {
-	Format  probeFormat   `json:"format"`
-	Streams []probeStream `json:"streams"`
-}
+const (
+	Auto     VideoProcessingAccelType = "auto"
+	Software VideoProcessingAccelType = "software"
+	Hardware VideoProcessingAccelType = "hardware"
+)
 
 type VideoParams struct {
-	timeout time.Duration
+	timeout              time.Duration
+	accel                ffmpegHWAccelType
+	accelSupportedCodecs []string
 }
 
-func getSnapshot(path string, timestamp time.Duration, timeout time.Duration, w io.Writer) error {
-	ctx := context.Background()
+func getScreenshots(ctx context.Context, path string, timestamps []time.Duration, params VideoParams) ([]byte, error) {
+	screenshotsOptions := []string{"-hide_banner", "-loglevel", "error"}
 
-	if timeout > 0 {
-		var cancel func()
-		ctx, cancel = context.WithTimeout(context.Background(), timeout)
-		defer cancel()
+	for i, v := range timestamps {
+		screenshotsOptions = append(screenshotsOptions, options(params.accel)(path, v, i)...)
 	}
 
-	ffmpegTimestamp := timeutil.String(timestamp)
-
-	seekOptions := []string{"-loglevel", "quiet", "-accurate_seek", "-ss", ffmpegTimestamp}
-	inputOptions := []string{"-i", path}
-	outputOptions := []string{"-vf", "scale=256:-1", "-frames:v", "1", "-c:v", "mjpeg", "-f", "image2", "pipe:1"}
-
-	options := seekOptions
-	options = append(options, inputOptions...)
-	options = append(options, outputOptions...)
-	cmd := exec.CommandContext(ctx, "ffmpeg", options...)
-	stdErrBuf := bytes.NewBuffer(nil)
-	cmd.Stdout = w
-	cmd.Stderr = stdErrBuf
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
+	for range VideoPreviewCollageItems - len(timestamps) {
+		lastOptionIndex := len(timestamps) - 1
+		currentOptions := options(params.accel)(path, timestamps[lastOptionIndex], lastOptionIndex)
+		screenshotsOptions = append(screenshotsOptions, currentOptions...)
 	}
 
-	return nil
+	pipeReader, pipeWriter := io.Pipe()
+	stdOutBuf := bytes.NewBuffer(nil)
+
+	producerCmd := exec.CommandContext(ctx, "ffmpeg", screenshotsOptions...)
+	producerErrBuff := bytes.NewBuffer(nil)
+	producerCmd.Stderr = producerErrBuff
+	producerCmd.Stdout = pipeWriter
+
+	mixerCmd := exec.CommandContext(ctx, "ffmpeg", tileOptions()...) //nolint:gosec
+	mixerErrBuff := bytes.NewBuffer(nil)
+	mixerCmd.Stdin = pipeReader
+	mixerCmd.Stdout = stdOutBuf
+	mixerCmd.Stderr = mixerErrBuff
+
+	if err := producerCmd.Start(); err != nil {
+		return nil, fmt.Errorf("producer start error %w", err)
+	}
+
+	if err := mixerCmd.Start(); err != nil {
+		return nil, fmt.Errorf("mixer start error %w", err)
+	}
+
+	producerErr := producerCmd.Wait()
+
+	pipeWriter.Close()
+
+	mixerErr := mixerCmd.Wait()
+
+	if producerErr != nil && errors.Is(producerErr, context.Canceled) {
+		return nil, fmt.Errorf("producer error [%s] %w", producerErrBuff.String(), producerErr)
+	}
+
+	if mixerErr != nil && errors.Is(mixerErr, context.Canceled) {
+		return nil, fmt.Errorf("mixer error [%s] %w", mixerErrBuff.String(), mixerErr)
+	}
+
+	return stdOutBuf.Bytes(), nil
 }
 
-func combineImagesToPreview(buffers []*bytes.Buffer) ([]byte, error) {
-	preview, err := vips.NewImageFromBuffer(buffers[0].Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrImageDecode, err)
-	}
-	defer preview.Close()
-
-	images := make([]*vips.ImageRef, 0, len(buffers)-1)
-
-	defer func() {
-		for _, v := range images {
-			v.Close()
-		}
-	}()
-
-	for _, v := range buffers[1:] {
-		image, err := vips.NewImageFromBuffer(v.Bytes())
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w", ErrImageDecode, err)
-		}
-
-		images = append(images, image)
-	}
-
-	if err := preview.ArrayJoin(images, 1); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrImagesJoin, err)
-	}
-
-	if err := downScale(preview, imageCollage); err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrImageScale, err)
-	}
-
-	return exportWebP(preview)
-}
-
-func getTimeCodes(duration time.Duration) ([]time.Duration, []bool) {
+func getTimeCodes(duration time.Duration) []time.Duration {
 	parts := 5
 	minimumStart := 2
 	timestamps := []time.Duration{}
-	repeat := make([]bool, parts)
 	step := duration / time.Duration(parts)
 
 	if step < time.Second {
@@ -140,161 +109,57 @@ func getTimeCodes(duration time.Duration) ([]time.Duration, []bool) {
 
 		// if video is small (< parts*time.Second), then just copy last images to remaining buffers
 		if timestamp > duration && part > 1 || timestamp == duration {
-			repeat[part] = true
-
 			continue
 		}
 
 		timestamps = append(timestamps, timestamp)
 	}
 
-	return timestamps, repeat
+	return timestamps
 }
 
-func produceVideoPreview(path string, duration time.Duration, params VideoParams) ([]byte, error) {
-	timeCodes, repeats := getTimeCodes(duration)
-	images := make([]*bytes.Buffer, len(repeats))
-
-	for index, timestamp := range timeCodes {
-		images[index] = &bytes.Buffer{}
-
-		if err := getSnapshot(path, timestamp, params.timeout, images[index]); err != nil {
-			return nil, err
-		}
+func produceVideoPreview(ctx context.Context, path string, duration time.Duration, params VideoParams) ([]byte, error) {
+	if params.timeout > 0 {
+		var cancel func()
+		ctx, cancel = context.WithTimeout(ctx, params.timeout)
+		defer cancel()
 	}
 
-	for index, repeat := range repeats {
-		if !repeat {
-			continue
-		}
+	screenshotTimeCodes := getTimeCodes(duration)
 
-		images[index] = images[index-1]
-	}
-
-	return combineImagesToPreview(images)
-}
-
-func getVideoStream(streams []probeStream) *probeStream {
-	for _, v := range streams {
-		if v.CodecType == "video" {
-			return &v
-		}
-	}
-
-	return nil
-}
-
-func probeOutputFrames(a string) (int, int, time.Duration, error) {
-	data := probeData{}
-
-	if err := json.Unmarshal([]byte(a), &data); err != nil {
-		return 0, 0, 0, fmt.Errorf("%w: %w", ErrMetaInfoUnmarshal, err)
-	}
-
-	seconds, err := strconv.ParseFloat(data.Format.Duration, 64)
+	data, err := getScreenshots(ctx, path, screenshotTimeCodes, params)
 	if err != nil {
-		return 0, 0, 0, fmt.Errorf("%w: %w", ErrMetaInfoDurationParse, err)
+		return nil, fmt.Errorf("%w:%w", ErrPullSnapshot, err)
 	}
 
-	videoStream := getVideoStream(data.Streams)
-	if videoStream == nil {
-		return 0, 0, 0, ErrVideoStreamNotFound
-	}
-
-	return videoStream.Width, videoStream.Height, time.Duration(seconds) * time.Second, nil
+	return data, nil
 }
 
-func videoPreview(path string, params VideoParams) (data, error) {
+func videoPreview(ctx context.Context, path string, params VideoParams) (data, error) {
 	preview := data{}
 
-	metaJSON, err := videoProbe(path, params.timeout)
+	metaJSON, err := videoProbe(ctx, path, params.timeout)
 	if err != nil {
 		return preview, err
 	}
 
-	width, height, duration, err := probeOutputFrames(metaJSON)
+	output, err := probeOutputFrames(metaJSON)
 	if err != nil {
 		return preview, err
 	}
 
-	preview.width = width
-	preview.height = height
-	preview.duration = duration
+	preview.width = output.width
+	preview.height = output.height
+	preview.duration = output.duration
 
-	if preview.data, err = produceVideoPreview(path, duration, params); err != nil {
+	// switch unsupported codecs to software processing
+	if len(params.accelSupportedCodecs) != 0 && !slices.Contains(params.accelSupportedCodecs, output.codec) {
+		params.accel = ffmpegSoftwareAccel
+	}
+
+	if preview.data, err = produceVideoPreview(ctx, path, output.duration, params); err != nil {
 		return preview, err
 	}
 
 	return preview, nil
-}
-
-func videoProbe(path string, timeOut time.Duration) (string, error) {
-	ctx := context.Background()
-
-	if timeOut > 0 {
-		var cancel func()
-		ctx, cancel = context.WithTimeout(context.Background(), timeOut)
-		defer cancel()
-	}
-
-	logOptions := []string{"-hide_banner", "-loglevel", "quiet"}
-	jobOptions := []string{"-show_format", "-show_streams", "-of", "json", path}
-	options := []string{}
-	options = append(options, logOptions...)
-	options = append(options, jobOptions...)
-
-	cmd := exec.CommandContext(ctx, "ffprobe", options...)
-	buf := bytes.NewBuffer(nil)
-	stdErrBuf := bytes.NewBuffer(nil)
-	cmd.Stdout = buf
-	cmd.Stderr = stdErrBuf
-
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
-	}
-
-	return buf.String(), nil
-}
-
-func processorProbe() error {
-	if err := probeFFmpeg("ffmpeg"); err != nil {
-		return err
-	}
-
-	if err := probeFFmpeg("ffprobe"); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func probeFFmpeg(com string) error {
-	ctx := context.Background()
-	cmd := exec.CommandContext(ctx, "bash", "-c", com+" -version | sed -n \"s/"+com+" version \\([-0-9.]*\\).*/\\1/p;\"") //nolint:gosec,lll
-	buf := bytes.NewBuffer(nil)
-	stdErrBuf := bytes.NewBuffer(nil)
-	cmd.Stdout = buf
-	cmd.Stderr = stdErrBuf
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("[%s] %w", stdErrBuf.String(), err)
-	}
-
-	if buf.Len() == 0 {
-		return fmt.Errorf("'%s' %w", com, ErrCommandNotFound)
-	}
-
-	clearVersion := strings.TrimSuffix(strings.TrimSuffix(buf.String(), "\n"), "-0")
-	required, _ := version.NewVersion("4.4.2")
-
-	existed, err := version.NewVersion(clearVersion)
-	if err != nil {
-		return fmt.Errorf("%w version(%s) of %s: %w", ErrIncorrectFFmpegVersion, buf.String(), com, err)
-	}
-
-	if existed.LessThan(required) {
-		return fmt.Errorf("%w version(%s) of %s: %w", ErrOutdatedFFmpegVersion, existed.String(), com, err)
-	}
-
-	return nil
 }

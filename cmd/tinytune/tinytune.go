@@ -95,6 +95,13 @@ func main() {
 				Destination: &rawConfig.Video,
 				Category:    ProcessingCLICategory,
 			},
+			&cli.StringFlag{
+				Name:        "video-processing-accel",
+				Value:       string(preview.Auto),
+				Usage:       "processing type for videos: 'auto', 'hardware', 'software'",
+				Destination: &rawConfig.VideoProcessingAccel,
+				Category:    ProcessingCLICategory,
+			},
 			&cli.BoolFlag{
 				Name:        "image",
 				Value:       rawConfig.Images,
@@ -240,6 +247,7 @@ func start(config internal.Config) {
 		preview.WithMaxVideos(config.Process.Video.MaxItems),
 		preview.WithMaxFileSize(config.Process.MaxFileSize),
 		preview.WithTimeout(config.Process.Timeout),
+		preview.WithVideoAccel(config.Process.VideoAccel),
 	)
 	internal.PanicError(err)
 

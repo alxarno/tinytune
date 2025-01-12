@@ -1,6 +1,7 @@
 package preview
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"path/filepath"
@@ -55,7 +56,7 @@ func TestPreview(t *testing.T) {
 		},
 		{
 			source:   mockSource{video: true, path: "../../test/sample.mp4"},
-			dataHash: "b5039ea0fe138cd39b7c5b1b1bad83324fcb02f73862094a3408bc74ea522b36",
+			dataHash: "7eda8710470a1547e43e115a7dc98d9a24bef80d23cd4014f0848e17bb0af1b9",
 		},
 		{
 			source:   mockSource{path: "../../test/sample.txt"},
@@ -67,7 +68,7 @@ func TestPreview(t *testing.T) {
 		t.Run(filepath.Ext(tCase.source.Path()), func(t *testing.T) {
 			t.Parallel()
 
-			preview, err := previewer.Pull(tCase.source)
+			preview, err := previewer.Pull(context.Background(), tCase.source)
 			require.NoError(err)
 			assert.Equal(t, preview.Data() == nil, tCase.dataHash == "")
 

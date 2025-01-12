@@ -16,6 +16,12 @@ func WithVideo(param bool) Option {
 	}
 }
 
+func WithVideoAccel(param VideoProcessingAccelType) Option {
+	return func(p *Previewer) {
+		p.videoAccelType = param
+	}
+}
+
 // files = map[FilePath]struct{}.
 func WithExcludedFiles(files map[string]struct{}) Option {
 	return func(p *Previewer) {
