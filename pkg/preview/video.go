@@ -13,12 +13,6 @@ import (
 
 var (
 	ErrPullSnapshot = errors.New("failed to pull snapshot")
-	ErrImageDecode  = errors.New("failed to decode image")
-	ErrImageCopy    = errors.New("failed to copy image")
-	ErrImagesJoin   = errors.New("failed to join images")
-	ErrImageEncode  = errors.New("failed to encode image")
-	ErrImageScale   = errors.New("failed to scale image")
-	ErrBufferCopy   = errors.New("failed to copy buffer")
 )
 
 const (
@@ -80,11 +74,11 @@ func getScreenshots(ctx context.Context, path string, timestamps []time.Duration
 
 	mixerErr := mixerCmd.Wait()
 
-	if producerErr != nil && errors.Is(producerErr, context.Canceled) {
+	if producerErr != nil && !errors.Is(producerErr, context.Canceled) {
 		return nil, fmt.Errorf("producer error [%s] %w", producerErrBuff.String(), producerErr)
 	}
 
-	if mixerErr != nil && errors.Is(mixerErr, context.Canceled) {
+	if mixerErr != nil && !errors.Is(mixerErr, context.Canceled) {
 		return nil, fmt.Errorf("mixer error [%s] %w", mixerErrBuff.String(), mixerErr)
 	}
 

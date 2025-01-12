@@ -9,16 +9,12 @@ import (
 )
 
 const (
-	maxWidthHeight   = 256
-	jpegShrinkFactor = 8
+	maxWidthHeight = 256
 )
 
 var (
-	ErrVipsLoadImage            = errors.New("failed load image")
-	ErrVipsResizeImage          = errors.New("failed resize image")
-	ErrImageDownScale           = errors.New("failed to downscale the image")
-	ErrImageColorSpaceTransform = errors.New("failed to transform the image's color space")
-	ErrImageExport              = errors.New("failed export the image")
+	ErrVipsLoadImage = errors.New("failed load image")
+	ErrImageExport   = errors.New("failed export the image")
 )
 
 func imagePreview(path string) (data, error) {

@@ -151,7 +151,7 @@ func ifMaxPass(maxNewItems *int64) bool {
 	return true
 }
 
-//nolint:cyclop,ireturn,nolintlint //it's very simple method...
+//nolint:cyclop,ireturn,nolintlint
 func (p Previewer) Pull(ctx context.Context, src Source) (Data, error) {
 	defaultPreview := data{}
 
