@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/alxarno/tinytune/compare/v1.6.1...v1.6.2) (2025-01-13)
+
+
+### Bug Fixes
+
+* missed dependencies in README ([1bb3caf](https://github.com/alxarno/tinytune/commit/1bb3cafcc9053ab7397782caf702ceb3813357ed))
+
 ## [1.6.1](https://github.com/alxarno/tinytune/compare/v1.6.0...v1.6.1) (2025-01-12)
 
 
