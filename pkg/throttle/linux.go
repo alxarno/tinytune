@@ -1,4 +1,4 @@
-package preview
+package throttle
 
 import (
 	"bufio"
@@ -69,14 +69,14 @@ func isMemoryPassCheck(maxMemoryOccupied float64) bool {
 	return memoryOccupied < maxMemoryOccupied
 }
 
-func throttle(ctx context.Context, maxMemoryOccupied float64, maxWaitingTime time.Duration) error {
-	if isMemoryPassCheck(maxMemoryOccupied) {
+func (t throttler) Throttle(ctx context.Context) error {
+	if isMemoryPassCheck(t.maxMemoryOccupied) {
 		return nil
 	}
 
 	ticker := time.NewTicker(time.Second)
 
-	timeout, cancel := context.WithTimeout(ctx, maxWaitingTime)
+	timeout, cancel := context.WithTimeout(ctx, t.maxWaitingTime)
 	defer cancel()
 
 	for {
@@ -88,7 +88,7 @@ func throttle(ctx context.Context, maxMemoryOccupied float64, maxWaitingTime tim
 
 			return nil
 		case <-ticker.C:
-			if isMemoryPassCheck(maxMemoryOccupied) {
+			if isMemoryPassCheck(t.maxMemoryOccupied) {
 				return nil
 			}
 		}

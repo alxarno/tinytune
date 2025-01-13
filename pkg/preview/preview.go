@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/alxarno/tinytune/pkg/throttle"
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
@@ -176,8 +177,12 @@ func (p Previewer) Pull(ctx context.Context, src Source) (Data, error) {
 		if src.Size() > BigVideoSizeB {
 			p.bigVideoQueue <- struct{}{}
 
-			err := throttle(ctx, BigVideoThrottleMaxOccupiedPercent, BigVideoThrottleMaxWaiting)
-			if errors.Is(err, context.Canceled) {
+			throttler := throttle.NewThrottler(
+				BigVideoThrottleMaxOccupiedPercent,
+				BigVideoThrottleMaxWaiting,
+			)
+
+			if errors.Is(throttler.Throttle(ctx), context.Canceled) {
 				return defaultPreview, context.Canceled
 			}
 

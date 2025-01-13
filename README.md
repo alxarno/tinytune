@@ -32,8 +32,9 @@ The latest version of the TinyTune can be found on the GitHub [releases page](ht
 
 ### Linux
 ```
-# check that you have ffmpeg installed
-ffmpeg -v
+# install dependencies
+
+apt install ffmpeg libvips libjemalloc2
 
 wget https://github.com/alxarno/tinytune/releases/download/latest/tinytune_linux_amd64
 

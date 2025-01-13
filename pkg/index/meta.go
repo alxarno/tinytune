@@ -89,7 +89,13 @@ func (m *Meta) setContentType() {
 	videoFormats := []string{"3gp", "avi", "f4v", "flv", "hevc", "m4v", "mlv", "mov", "mp4", "m4a", "3g2", "mj2", "mpeg", "ogv", "webm", "wmv"}
 	imageFormats := []string{"jpeg", "png", "jpg", "webp", "bmp", "gif"}
 
-	ext := strings.ToLower(filepath.Ext(string(m.AbsolutePath)))[1:]
+	ext := strings.ToLower(filepath.Ext(string(m.AbsolutePath)))
+	ext = strings.TrimPrefix(ext, ".")
+
+	if ext == "" {
+		return
+	}
+
 	m.Extension = ext
 
 	switch {
