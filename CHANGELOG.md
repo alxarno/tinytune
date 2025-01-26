@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/alxarno/tinytune/compare/v1.6.2...v1.7.0) (2025-01-26)
+
+
+### Features
+
+* .vob files support ([0f61865](https://github.com/alxarno/tinytune/commit/0f618657f1e1e1186d6c06cd4f72f6abf3ca527e))
+
 ## [1.6.2](https://github.com/alxarno/tinytune/compare/v1.6.1...v1.6.2) (2025-01-13)
 
 
