@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
@@ -13,7 +14,6 @@ import (
 	"github.com/alxarno/tinytune/pkg/httputil"
 	"github.com/alxarno/tinytune/pkg/index"
 	"github.com/justinas/alice"
-	"golang.org/x/exp/maps"
 )
 
 type PageData struct {
@@ -40,9 +40,7 @@ func logWriteErr(_ int, err error) {
 }
 
 func applyCookies(r *http.Request, data PageData) PageData {
-	sorts := maps.Keys(getSorts())
-	slices.Sort(sorts)
-	data.Sorts = sorts
+	data.Sorts = slices.Sorted(maps.Keys(getSorts()))
 
 	if cookie, err := r.Cookie("zoom"); err == nil {
 		data.Zoom = cookie.Value

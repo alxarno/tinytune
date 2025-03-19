@@ -1,6 +1,7 @@
 module github.com/alxarno/tinytune
 
-go 1.22.5
+go 1.23.0
+
 toolchain go1.24.1
 
 require (
@@ -12,7 +13,6 @@ require (
 	github.com/schollz/progressbar/v3 v3.17.1
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v2 v2.27.5
-	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 	golang.org/x/sync v0.11.0
 )
 
