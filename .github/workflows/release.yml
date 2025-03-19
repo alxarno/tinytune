@@ -22,7 +22,7 @@ jobs:
       - uses: ./.github/actions/setup
         if: ${{ steps.release.outputs.release_created }}
         with:
-          go-version: "1.22.x"
+          go-version: "1.24.1"
       - name: Build
         if: ${{ steps.release.outputs.release_created }}
         run: |
