@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.1](https://github.com/alxarno/tinytune/compare/v1.7.0...v1.7.1) (2025-03-19)
+
+
+### Bug Fixes
+
+* bump golang version in CI ([148e353](https://github.com/alxarno/tinytune/commit/148e353faaeffe474b293a031d0e28d9b2e33e36))
+* bump golang version in CI ([7d5213c](https://github.com/alxarno/tinytune/commit/7d5213cf7c3cdb63c72fbc5770257e7e47d89ce8))
+* deps tidy after bump ([f3d799f](https://github.com/alxarno/tinytune/commit/f3d799fc2745125abb04e6c9b56fd53e4a6f1014))
+
 ## [1.7.0](https://github.com/alxarno/tinytune/compare/v1.6.2...v1.7.0) (2025-01-26)
 
 
