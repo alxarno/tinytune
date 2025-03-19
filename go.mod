@@ -1,8 +1,6 @@
 module github.com/alxarno/tinytune
 
-go 1.23.0
-
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	github.com/davidbyttow/govips/v2 v2.15.0
